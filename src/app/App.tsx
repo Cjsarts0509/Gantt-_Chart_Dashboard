@@ -142,7 +142,7 @@ export default function App() {
       완료: { bg: "#81C784", prog: "#4CAF50" },
       진행중: { bg: "#64B5F6", prog: "#2196F3" },
       대기: { bg: "#E0E0E0", prog: "#9E9E9E" },
-      지연: { bg: "#E57373",পতি "#F44336" },
+      지연: { bg: "#E57373",prog: "#F44336" },
       이슈발생: { bg: "#EF5350", prog: "#D32F2F" },
       보류: { bg: "#FFB74D", prog: "#FF9800" },
       취소: { bg: "#90A4AE", prog: "#607D8B" },
