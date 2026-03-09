@@ -1,163 +1,60 @@
-/* ═══ Gantt chart style overrides – light modern theme ═══ */
-/* Class mappings (gantt-task-react v0.3.9):
-   ._CZjuD = ganttVerticalContainer (root)
-   ._2B2zv = horizontalContainer (chart body with fixed ganttHeight)
-   ._3eULf = wrapper (task list + svg flex row)
-   ._2k9Ys = scrollWrapper (horizontal scrollbar)
-   ._19jgW = scroll (h-scroll inner)
-   ._1eT-t = vertical scroll
-   ._35nLX = calendarHeader rect
-   ._9w8d5 = calendarBottomText
-   ._2q1Kt = calendarTopText
-   ._1rLuZ = calendarTopTick
-   ._2dZTy = gridRow
-   ._3rUKi = gridRowLine
-   ._RuwuK = gridTick
-   ._3_ygE = taskListWrapper
-*/
-
-/* ─── Font ─── */
-._CZjuD,
-._CZjuD *,
-._3_ygE,
-._3_ygE * {
-  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+/* 오른쪽 캘린더/간트차트 영역 배경을 깔끔한 흰색으로 */
+.gantt {
+  background-color: #ffffff;
 }
 
-/* ─── Root container ─── */
-._CZjuD {
-  overflow: hidden !important;
+/* 캘린더 헤더(월/일) 스타일 */
+.gantt .calendar-header {
+  fill: #F8FAFC !important;
 }
-
-/* ─── Calendar Header ─── */
-
-/* Calendar header rect background */
-._35nLX {
-  fill: #f8f9fa !important;
-  stroke: #d5d5d5 !important;
-  stroke-width: 1 !important;
-}
-
-/* Calendar top row text (months) */
-._2q1Kt {
-  fill: #444444 !important;
-  font-size: 11px !important;
+.gantt .calendar-header text {
+  fill: #475569 !important;
   font-weight: 600 !important;
+  font-family: 'Pretendard', sans-serif !important;
 }
 
-/* Calendar bottom row text (days/weeks) */
-._9w8d5 {
-  fill: #666666 !important;
-  font-size: 10px !important;
+/* 세로 그리드 선 (날짜 구분선) 아주 연하게 */
+.gantt .grid-tick {
+  stroke: #F1F5F9 !important;
+}
+
+/* 가로 그리드 선 (행 구분선) 아주 연하게 */
+.gantt .grid-row {
+  stroke: #F1F5F9 !important;
+}
+
+/* 짝수 줄 배경색 제거 (전체 통일감 향상) */
+.gantt .grid-row-background {
+  fill: transparent !important;
+}
+
+/* 막대바(Task Bar) 호버 효과 및 그림자 (요즘 SaaS 느낌) */
+.gantt-task-bar {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+.gantt-task-bar:hover {
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+  cursor: pointer;
+}
+
+/* 막대 안의 진행률(Progress) 색상 부드럽게 */
+.gantt-task-progress {
+  opacity: 0.9;
+}
+
+/* 막대 오른쪽의 텍스트(이름) 스타일 */
+.gantt .bar-label {
+  fill: #334155 !important;
   font-weight: 500 !important;
+  font-family: 'Pretendard', sans-serif !important;
+  text-shadow: 0 0 2px rgba(255,255,255,0.8); /* 글씨가 배경에 묻히지 않도록 흰색 테두리 효과 */
 }
 
-/* Calendar top tick line */
-._1rLuZ {
-  stroke: #d5d5d5 !important;
-}
-
-/* ─── Grid Body ─── */
-
-/* Grid row backgrounds */
-._2dZTy {
-  fill: #ffffff !important;
-}
-
-/* Grid row lines – clearly visible */
-._3rUKi {
-  stroke: #e0e0e0 !important;
-  stroke-width: 1 !important;
-}
-
-/* Grid vertical ticks – visible */
-._RuwuK {
-  stroke: #ebebeb !important;
-  stroke-width: 1 !important;
-}
-
-/* Today highlight */
-._RRr12 {
-  fill: rgba(59, 130, 246, 0.06) !important;
-}
-
-/* ─── Task Bars ─── */
-
-/* Bar hover handles */
-._3w_5u {
-  fill: #bdbdbd !important;
-}
-
-/* ─── Task List divider ─── */
-._3_ygE {
-  border-right: 1px solid #d0d0d0 !important;
-}
-
-/* ─── Vertical Scrollbar ─── */
-._1eT-t {
-  scrollbar-width: thin !important;
-  scrollbar-color: #b0b0b0 #f0f0f0 !important;
-}
-
-._1eT-t::-webkit-scrollbar {
-  width: 10px !important;
-}
-
-._1eT-t::-webkit-scrollbar-thumb {
-  background: #b0b0b0 !important;
-  border-radius: 5px !important;
-  border: 2px solid #f0f0f0 !important;
-  background-clip: padding-box !important;
-}
-
-._1eT-t::-webkit-scrollbar-thumb:hover {
-  background: #888 !important;
-}
-
-._1eT-t::-webkit-scrollbar-track {
-  background: #f0f0f0 !important;
-}
-
-/* ─── Horizontal Scrollbar ─── */
-._2k9Ys {
-  background: #ffffff !important;
-  border-top: 1px solid #d5d5d5 !important;
-  height: 14px !important;
-  scrollbar-width: thin !important;
-  scrollbar-color: #b0b0b0 #f0f0f0 !important;
-}
-
-._2k9Ys::-webkit-scrollbar {
-  height: 10px !important;
-}
-
-._2k9Ys::-webkit-scrollbar-thumb {
-  background: #b0b0b0 !important;
-  border-radius: 5px !important;
-  border: 2px solid #fff !important;
-  background-clip: padding-box !important;
-}
-
-._2k9Ys::-webkit-scrollbar-thumb:hover {
-  background: #888 !important;
-}
-
-._2k9Ys::-webkit-scrollbar-track {
-  background: #f0f0f0 !important;
-}
-
-/* ─── Tooltip ─── */
-._3T42e {
-  background: #ffffff !important;
-  color: #333333 !important;
-  border-radius: 8px !important;
-  font-size: 12px !important;
-  padding: 10px 14px !important;
-  border: 1px solid #d0d0d0 !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
-}
-
-/* ─── Wrapper (for outer container) ─── */
-.gantt-sticky-scroll {
-  position: relative;
+/* '오늘'을 가리키는 세로 선 부드럽게 강조 */
+.gantt .today-line {
+  stroke: #3B82F6 !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: 4 4 !important; /* 점선으로 변경 */
+  opacity: 0.4;
 }
