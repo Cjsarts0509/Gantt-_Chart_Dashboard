@@ -60,6 +60,32 @@ export default function App() {
   const [activityCollapsed, setActivityCollapsed] = useState(false);
   const [deliverableCollapsed, setDeliverableCollapsed] = useState(false);
 
+  // 🚀 n8n에서 깃허브로 쏜 data.json 자동 불러오기 (Vite base 경로 완벽 대응)
+  useEffect(() => {
+    // import.meta.env.BASE_URL이 vite.config.ts의 base(/Gantt-_Chart_Dashboard/)를 자동으로 가져옵니다.
+    fetch(`${import.meta.env.BASE_URL}data.json`)
+      .then(res => res.json())
+      .then(data => {
+        if (!Array.isArray(data)) return;
+
+        // 문자열로 된 날짜 데이터를 Date 객체로 변환
+        const parsedTasks = data.map((t: any, index: number) => ({
+          ...t,
+          id: t.id || `task-${index}`,
+          type: "task",
+          start: new Date(t.start),
+          end: new Date(t.end)
+        }));
+
+        setTasks(parsedTasks);
+
+        // 초기 화면에서 좌측 트리 메뉴의 '영역' 부분을 모두 열어두기
+        const allAreas = new Set<string>(parsedTasks.map((t: any) => t.area).filter(Boolean));
+        setExpandedAreas(allAreas);
+      })
+      .catch(err => console.log("데이터 로드 실패 (아직 깃허브에 파일이 없거나 오류 발생):", err));
+  }, []);
+
   const toggleAreaColumn = useCallback(() => setAreaCollapsed((p) => !p), []);
   const togglePhaseColumn = useCallback(() => setPhaseCollapsed((p) => !p), []);
   const toggleActivityColumn = useCallback(() => setActivityCollapsed((p) => !p), []);
@@ -449,9 +475,9 @@ export default function App() {
                     <Database className="w-8 h-8 text-slate-200 mx-auto mb-3" />
                     <p className="text-[11px] text-slate-400 mb-1">데이터가 없습니다</p>
                     <p className="text-[10px] text-slate-300 leading-relaxed">
-                      엑셀 업로드로
+                      자동 연동을 기다리거나
                       <br />
-                      시작하세요
+                      엑셀을 업로드하세요
                     </p>
                   </div>
                 ) : (
@@ -638,13 +664,11 @@ export default function App() {
                   <p className="text-[16px] text-slate-600 mb-2">데이터를 불러와 주세요</p>
                   <div className="space-y-2 text-[12px] text-slate-400">
                     <div className="flex items-start gap-2 text-left bg-slate-50 rounded-lg px-3 py-2">
-                      <Upload className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                      <Database className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
                       <div>
-                        <span className="text-slate-600">엑셀 업로드</span>
+                        <span className="text-slate-600">자동 연동</span>
                         <span className="text-slate-300 mx-1">—</span>
-                        상단 <span className="text-blue-500">양식</span>을 다운로드하고
-                        데이터를 채운 후{" "}
-                        <span className="text-blue-500">업로드</span>하세요
+                        n8n에서 깃허브로 데이터 전송이 <span className="text-blue-500">완료되면 자동으로 표시</span>됩니다
                       </div>
                     </div>
                   </div>
