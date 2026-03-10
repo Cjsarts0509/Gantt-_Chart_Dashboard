@@ -1,67 +1,69 @@
-/* 우측 캘린더 영역 전체 배경 */
-.gantt {
+/* 전체 래퍼 영역 배경 */
+.gantt-wrapper {
   background-color: #ffffff;
 }
 
-/* 🚀 캘린더 헤더(월/일) 스타일 - 좌측 표 헤더(#CFD8DC)와 완벽히 동일하게 맞춤 */
-.gantt .calendar-header {
+/* 🚀 캘린더 헤더 배경 (좌측 표 헤더 #CFD8DC와 완벽 동기화) */
+.gantt-wrapper svg rect[class*="calendarHeader"],
+.gantt-wrapper svg rect[class*="calendarTick"] {
   fill: #CFD8DC !important;
 }
-.gantt .calendar-header text {
+
+/* 캘린더 헤더 텍스트 */
+.gantt-wrapper svg text[class*="calendarHeaderName"],
+.gantt-wrapper svg text[class*="calendarTickName"] {
   fill: #1E293B !important;
   font-weight: bold !important;
   font-family: 'Pretendard', 'Noto Sans KR', sans-serif !important;
   font-size: 12px !important;
 }
 
-/* 헤더 가로선(위아래 테두리) 색상을 좌측 표 테두리와 맞춤 */
-.gantt .calendar-header path,
-.gantt .calendar-header line {
+/* 캘린더 헤더 가로선/세로선 (좌측 표 테두리와 맞춤) */
+.gantt-wrapper svg line[class*="calendarBottomLine"],
+.gantt-wrapper svg line[class*="calendarTopLine"],
+.gantt-wrapper svg rect[class*="calendarHeader"] {
   stroke: #94A3B8 !important; /* border-slate-400 */
   stroke-width: 1px !important;
 }
 
-/* 🚀 세로/가로 격자 선 - 좌측 칼럼 셀 테두리(#CBD5E1)와 완벽히 동일하게 맞춤 */
-.gantt .grid-tick {
+/* 🚀 간트 차트 격자선 (좌측 칼럼 셀 테두리와 완벽 동기화) */
+.gantt-wrapper svg line[class*="gridTick"],
+.gantt-wrapper svg line[class*="gridRowLine"] {
   stroke: #CBD5E1 !important; /* border-slate-300 */
   stroke-width: 1px !important;
 }
-.gantt .grid-row {
-  stroke: #CBD5E1 !important;
-  stroke-width: 1px !important;
-}
 
-/* 짝수 줄 배경색 제거 (전체 통일감 향상) */
-.gantt .grid-row-background {
+/* 짝수 줄 배경색 제거 */
+.gantt-wrapper svg rect[class*="gridRowBackground"] {
   fill: transparent !important;
 }
 
-/* 🚀 간트 차트 막대(Task Bar) 테두리를 추가해 엑셀 스타일로 뚜렷하게 */
-.gantt-task-bar {
+/* 🚀 간트 차트 막대(Task Bar) 테두리를 추가해 엑셀 느낌 강화 */
+.gantt-wrapper svg rect[class*="barBackground"] {
   stroke: rgba(0, 0, 0, 0.25) !important;
   stroke-width: 1px !important;
   transition: filter 0.2s ease, transform 0.2s ease;
 }
-.gantt-task-bar:hover {
+.gantt-wrapper svg rect[class*="barBackground"]:hover {
   cursor: pointer;
   filter: brightness(0.9);
 }
 
-/* 막대 안의 진행률(Progress) 색상 뚜렷하게 */
-.gantt-task-progress {
+/* 막대 안의 진행률(Progress) 투명도 */
+.gantt-wrapper svg rect[class*="barProgress"] {
   fill-opacity: 0.95;
 }
 
-/* 막대 오른쪽의 텍스트(작업명) 스타일 */
-.gantt .bar-label {
+/* 막대 우측 텍스트 스타일 */
+.gantt-wrapper svg text[class*="barLabel"] {
   fill: #1E293B !important;
   font-weight: 600 !important;
   font-family: 'Pretendard', 'Noto Sans KR', sans-serif !important;
   text-shadow: 0 0 3px rgba(255,255,255,0.9);
 }
 
-/* '오늘'을 가리키는 세로 선 명확하게 얇은 빨간선으로 변경 */
-.gantt .today-line {
+/* 오늘 날짜 선을 명확한 빨간색으로 변경 */
+.gantt-wrapper svg line[class*="todayLine"] {
   stroke: #EF4444 !important;
   stroke-width: 2px !important;
   opacity: 0.8;
