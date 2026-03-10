@@ -139,7 +139,6 @@ export default function App() {
   }, [filteredTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
   const ganttTasks = useMemo(() => {
-    // 🎨 상태와 무관하게 모든 간트 막대를 스카이 블루로 픽스
     const barBgColor = "#38BDF8";   
     const barProgColor = "#0284C7"; 
     const BASE_START_DATE = new Date("2026-03-01T00:00:00");
@@ -180,52 +179,37 @@ export default function App() {
   }, [visibleTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
 
-  // 🚀 [무적의 스크롤바 & 텍스트 추적 로직] 🚀
-  // (클래스 해시값 무시하고 DOM 속성으로 100% 정확하게 찾아냅니다)
+  // 🔥 [핵심 1] 해시(Hash)에 의존하지 않고 DOM 요소를 직접 사냥해서 커스텀 클래스를 부여하는 로직
+  // 🔥 [핵심 2] 화면 스크롤 시 SVG 텍스트 'x' 좌표를 내 눈앞(뷰포트) 정중앙으로 강제 재계산하는 로직
   useEffect(() => {
     const container = ganttWrapperRef.current;
     if (!container) return;
 
     let chartScrollContainer: HTMLElement | null = null;
     let bottomScrollbar: HTMLElement | null = null;
-    let rightScrollbar: HTMLElement | null = null;
 
-    // 1단계: 스크롤바와 차트 영역 자동 색출 및 커스텀 클래스 부여
-    const allDivs = Array.from(container.querySelectorAll('div'));
-    
-    // 차트 영역 (SVG를 품고 있는 유일한 스크롤 컨테이너)
-    const svgs = Array.from(container.querySelectorAll('svg'));
-    const ganttSvg = svgs.find(svg => svg.querySelector('rect[class*="barBackground"]'));
-    if (ganttSvg && ganttSvg.parentElement) {
-      chartScrollContainer = ganttSvg.parentElement;
-      chartScrollContainer.classList.add('custom-safe-chart');
-    }
-
-    // 가로 및 세로 스크롤바 색출 (비어있는 가짜 스크롤 영역을 찾음)
+    // 1단계: 해시 클래스 무시하고, 특징만으로 스크롤바와 차트 영역 색출
+    const allDivs = container.querySelectorAll('div');
     allDivs.forEach(div => {
       const style = window.getComputedStyle(div);
-      const isOverflowX = style.overflowX === 'auto' || style.overflowX === 'scroll';
-      const isOverflowY = style.overflowY === 'auto' || style.overflowY === 'scroll';
-      const isDummyContainer = div.children.length === 1 && div.children[0].tagName === 'DIV' && div !== chartScrollContainer;
-
-      if (isOverflowX && isDummyContainer) {
-        bottomScrollbar = div;
-        div.classList.add('custom-safe-scrollbar'); // CSS와 연동
-      }
-      if (isOverflowY && isDummyContainer && div !== bottomScrollbar) {
-        rightScrollbar = div;
-        div.classList.add('custom-safe-vertical-scrollbar'); // CSS와 연동
+      if (style.overflowX === 'auto' || style.overflowX === 'scroll') {
+        if (div.querySelector('svg')) {
+          chartScrollContainer = div; // SVG를 품고 있으면 차트 영역!
+          div.classList.add('custom-safe-chart');
+        } else if (div.children.length === 1 && !div.querySelector('svg')) {
+          bottomScrollbar = div; // 텅 비어있고 스크롤만 되면 하단 스크롤바!
+          div.classList.add('custom-safe-scrollbar');
+        }
       }
     });
 
     if (!chartScrollContainer) return;
 
-    // 2단계: 뷰포트(화면) 정중앙에 텍스트 X좌표를 꽂아버리는 함수
+    // 2단계: 뷰포트 중앙에 텍스트 붙들어 매기 (마법의 수학 연산)
     const updateTextPositions = () => {
       if (!chartScrollContainer) return;
-      
       const scrollLeft = chartScrollContainer.scrollLeft;
-      const clientWidth = chartScrollContainer.clientWidth;
+      const clientWidth = chartContainer.clientWidth;
       
       const backgroundRects = chartScrollContainer.querySelectorAll('rect[class*="barBackground"]');
       
@@ -238,16 +222,14 @@ export default function App() {
         const rectX = parseFloat(rect.getAttribute('x') || '0');
         const rectWidth = parseFloat(rect.getAttribute('width') || '0');
         
-        // 내 화면에 보이는 부분만 잘라냅니다
+        // 내 화면에 보이는 막대 부분만 커팅
         const visibleStart = Math.max(rectX, scrollLeft);
         const visibleEnd = Math.min(rectX + rectWidth, scrollLeft + clientWidth);
 
         if (visibleStart < visibleEnd) {
-          // 화면에 보이는 영역의 정중앙 픽셀
+          // 보이는 화면의 정중앙에 글씨 X좌표 박아버리기
           const visibleCenter = (visibleStart + visibleEnd) / 2;
-          // SVG text의 고유 속성인 x값을 강제로 바꿔버림 (가장 확실한 방법)
           textNode.setAttribute('x', visibleCenter.toString());
-          textNode.setAttribute('text-anchor', 'middle');
         }
       });
     };
@@ -258,19 +240,16 @@ export default function App() {
       rafId = requestAnimationFrame(updateTextPositions);
     };
 
-    // 스크롤 이벤트 바인딩 (가로 스크롤 시 즉시 텍스트 이동)
+    // 스크롤 동기화 및 텍스트 렌더링 즉시 실행
     if (chartScrollContainer) chartScrollContainer.addEventListener('scroll', onScroll, { passive: true });
     if (bottomScrollbar) bottomScrollbar.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     
-    // 리액트가 차트를 다시 그릴 때마다 텍스트 위치 보정 감시
+    // 차트가 새로 렌더링될 때도 텍스트가 뷰포트 중앙으로 오도록 감시
     const observer = new MutationObserver(updateTextPositions);
-    if (chartScrollContainer) {
-      observer.observe(chartScrollContainer, { childList: true, subtree: true });
-    }
+    observer.observe(chartScrollContainer, { childList: true, subtree: true });
 
-    // 첫 렌더링 시 보장
-    const timeouts = [50, 150, 300, 500].map(t => setTimeout(updateTextPositions, t));
+    const timeouts = [50, 200, 500].map(t => setTimeout(updateTextPositions, t));
 
     return () => {
       if (chartScrollContainer) chartScrollContainer.removeEventListener('scroll', onScroll);
