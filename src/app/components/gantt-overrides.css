@@ -6,8 +6,7 @@
    - 헤더 텍스트: slate-800 (#1E293B)
    - 테두리(강): slate-400 (#94A3B8)  → 헤더 외곽
    - 테두리(약): slate-300 (#CBD5E1)  → 셀 구분선
-   - 행 배경: #FFFFFF / hover: blue-50/70
-   - 상태 색상: #81C784, #64B5F6, #E0E0E0, #E57373 등
+   - 행 배경: #FFFFFF / hover: blue-50/70 (rgba(239, 246, 255, 0.7))
    - 폰트: Pretendard, 12px, bold
    ═══════════════════════════════════════════════════════════ */
 
@@ -46,9 +45,17 @@
   stroke-width: 1px !important;
 }
 
-/* ── 짝수 줄 배경 (칼럼영역은 순수 white이므로 투명 처리) ── */
+/* 🚀 핵심 수정 부분: 행(Row) 배경색 및 호버 효과 완벽 동기화 🚀 */
+/* 좌측 리스트의 흰색 배경과 hover:bg-blue-50/70 효과를 우측 간트 SVG 영역에도 동일하게 적용 */
 .gantt-wrapper svg rect[class*="gridRowBackground"] {
-  fill: transparent !important;
+  fill: #ffffff !important;
+  transition: fill 0.15s ease-in-out !important;
+  pointer-events: all !important; /* 마우스 오버 이벤트 감지 보장 */
+}
+
+/* 마우스 호버 시 Tailwind의 bg-blue-50/70 효과를 RGBA로 변환하여 적용 */
+.gantt-wrapper svg rect[class*="gridRowBackground"]:hover {
+  fill: rgba(239, 246, 255, 0.7) !important; 
 }
 
 /* ── 간트 막대(Bar) 테두리 – 칼럼 셀 테두리(slate-300)와 톤 맞춤 ── */
@@ -59,6 +66,7 @@
   ry: 2px;
   transition: filter 0.2s ease;
 }
+
 .gantt-wrapper svg rect[class*="barBackground"]:hover {
   cursor: pointer;
   filter: brightness(0.92);
