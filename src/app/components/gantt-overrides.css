@@ -1,143 +1,96 @@
 /* ═══════════════════════════════════════════════════════════
-   간트 영역 스타일 - 요즘 스타일의 밝고 시인성 좋은 테마 리프레시
+   🔥 완벽한 가로 스크롤 & 안정적인 단단한 디자인 원복 🔥
    ═══════════════════════════════════════════════════════════ */
 
-/* ── 폰트 세팅 ── */
-.gantt-wrapper, .custom-task-list-header, .custom-task-list-table {
-  font-family: 'Pretendard', sans-serif !important;
-  -webkit-font-smoothing: antialiased;
+/* ── 1. 래퍼 초기화 (전역 스크롤 절대 금지! 순정 틀고정 복구) ── */
+.gantt-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
-/* ── 1. 간트 차트 헤더 (날짜 및 타임라인) 개편 ── */
-/* 🎨 DESIGN UPDATE: 헤더 배경색 Slate 100으로 변경, 테두리 Slate 300 */
-._35nLX {
-  fill: #F1F5F9 !important; /* bg-slate-100 */
-  stroke: #CBD5E1 !important; /* border-slate-300 */
-  stroke-width: 1px !important;
+/* 하단 스크롤바가 들어갈 바닥 공간 확보 */
+._CZjuD {
+  padding-bottom: 18px !important; 
 }
 
-/* 타임라인 텍스트 (주, 월 등 상위 날짜) */
-/* 🎨 DESIGN UPDATE: 텍스트 컬러 Slate 900, 폰트 굵기 Semi-bold */
-._2q1Kt {
-  fill: #0F172A !important;
-  font-size: 13px !important;
-  font-weight: 700 !important;
+/* ── 2. 🚀 스크롤바 100% 확장 & margin 버그 완벽 픽스 ── */
+._2k9Ys {
+  margin-left: 0 !important; /* 라이브러리 강제 우측정렬 무력화 */
+  width: 100% !important;    /* 화면 왼쪽 끝부터 100% 가로지름 */
+  position: absolute !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  height: 18px !important;
+  background: #F1F5F9 !important;
+  border-top: 1px solid #e2e8f0 !important;
+  z-index: 100 !important;
+  display: block !important;
 }
 
-/* 타임라인 텍스트 (일, 시간 등 하위 날짜) */
-/* 🎨 DESIGN UPDATE: 텍스트 컬러 Slate 500 */
-._9w8d5 {
-  fill: #64748B !important;
-  font-size: 11px !important;
-  font-weight: 600 !important;
+/* ── 3. 🚀 스크롤 내부 여백(Padding) 보정 트릭 ── */
+._19jgW {
+  box-sizing: content-box !important;
+  /* App.tsx에서 계산한 TOTAL_WIDTH(1155px)만큼 내부를 뛰어넘어 싱크를 완벽히 맞춤 */
+  padding-left: var(--task-list-width, 1155px) !important; 
 }
 
-/* 헤더와 차트 사이의 하단 선 */
-._1rLuZ {
-  stroke: #CBD5E1 !important;
-  stroke-width: 1px !important;
+/* 굵고 편한 가로 스크롤바 */
+._2k9Ys::-webkit-scrollbar { height: 18px !important; }
+._2k9Ys::-webkit-scrollbar-thumb {
+  background: #94A3B8 !important;
+  border-radius: 9px !important;
+  border: 3px solid #F1F5F9 !important;
 }
 
-
-/* ── 2. 간트 차트 바디 및 그리드 ── */
-/* 🎨 DESIGN UPDATE: 바디 격자 선 컬러를 매우 연하게 변경 (Slate 200) */
-._3rUKi, ._RuwuK {
-  stroke: #E2E8F0 !important; 
-  stroke-width: 1px !important;
+/* ── 4. 세로 스크롤바 화면 우측 제자리 고정 ── */
+._1eT-t {
+  bottom: 18px !important;
+  z-index: 90 !important;
 }
+._1eT-t::-webkit-scrollbar { width: 10px !important; }
+._1eT-t::-webkit-scrollbar-thumb { background: #B0BEC5 !important; border-radius: 5px !important; }
 
-/* 홀수 행 배경색 지우기 (더 깨끗한 뷰) */
-._2dZTy {
-  fill: #FFFFFF !important;
-}
-
-/* 행 호버 효과 개선 (헤더와 동일한 Indigo 계열 적용) */
-._2dZTy:hover {
-  fill: #EEF2FF !important; /* bg-indigo-50 */
-}
-
-/* 오늘 날짜 선 스타일 변경 (밝은 레드) */
-._RRr12 {
-  stroke: #EF4444 !important;
-  stroke-width: 1.5px !important;
-  stroke-dasharray: 4, 3 !important; /* 점선으로 변경 */
-}
-
-
-/* ── 3. 간트 차트 막대 (Bar) 디자인 핵심 개편 (시인성 극대화) ── */
-/* 🎨 DESIGN UPDATE: 막대의 라운딩 값 증가 (rx, ry: 6px) */
-rect[class*="barBackground"], rect[class*="barProgress"] {
-  rx: 6px !important;
-  ry: 6px !important;
-}
-
-/* 간트 배경 막대 (전체 기간) */
-/* 🎨 DESIGN UPDATE: 배경 막대의 투명도를 살짝 주어 부드럽게 */
-rect[class*="barBackground"] {
-  stroke-width: 0px !important; /* 테두리 삭제 */
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.05)); /* 부드러운 그림자 추가 */
-}
-
-/* 간트 진행 막대 (실제 진행률) */
-rect[class*="barProgress"] {
-  stroke-width: 0px !important;
-}
-
-/* 🎨 DESIGN UPDATE: 막대 내부 텍스트 스타일 개선 (시인성 확보) */
-._2B2zv text:not(._2q1Kt):not(._9w8d5) {
-  fill: #1E293B !important; /* Slate 800 */
-  font-weight: 700 !important; /* Bold */
-  font-size: 12px !important;
-  /* 텍스트 시인성을 위한 White Out-line 효과 */
-  text-shadow: -1px -1px 0 #FFF, 1px -1px 0 #FFF, -1px 1px 0 #FFF, 1px 1px 0 #FFF, 
-               0 -1px 0 #FFF, 0 1px 0 #FFF, -1px 0 0 #FFF, 1px 0 0 #FFF !important; 
-}
-
-/* 막대 핸들러 스타일 */
-._3k8w4 {
-  rx: 3px !important;
-  ry: 3px !important;
-}
-
-
-/* ── 4. 기타 간트 차트 세부 스타일 ── */
-/* 🎨 DESIGN UPDATE: 스크롤바 스타일링을 요즘 스타일의 연하고 굵게 변경 */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-track {
-  background: #F8FAFC; /* bg-slate-50 */
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1; /* border-slate-300 */
-  border-radius: 10px;
-  border: 2px solid #F8FAFC;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8; /* border-slate-400 */
-}
-
-/* 고정 컬럼 테두리 (Slate 300) */
+/* ── 5. 좌측 리스트(고정영역) 순정 상태 보존 & 그림자 ── */
 ._3_ygE {
   border-right: 1px solid #CBD5E1 !important;
-}
-
-/* 가로/세로 스크롤바 */
-._2k9Ys, ._1eT-t {
-  background: #F1F5F9 !important; /* bg-slate-100 */
+  box-shadow: 4px 0 10px rgba(0,0,0,0.05) !important;
+  z-index: 50 !important;
 }
 
 
-/* ── 5. WBS 상태 기반 간트 막대 스타일 (App.tsx의 statusColors와 연동) ── */
-/* 호버 시 채도와 명도를 조절하여 세련된 강조 효과 */
-rect[class*="barBackground"]:hover {
-  filter: brightness(0.9) saturate(1.2) !important;
-  cursor: pointer;
+/* ═══════════════════════════════════════════════════════════
+   헤더 및 바디 디자인 (단단하고 명확한 톤으로 원복)
+   ═══════════════════════════════════════════════════════════ */
+
+._CZjuD, ._CZjuD *, ._3_ygE, ._3_ygE * { font-family: 'Pretendard', sans-serif !important; }
+
+/* 🚀 간트차트 헤더 색상을 좌측과 완벽히 맞춘 #CFD8DC로 원복 */
+._35nLX { fill: #CFD8DC !important; stroke: #94A3B8 !important; stroke-width: 1px !important; }
+._2q1Kt { fill: #1E293B !important; font-size: 12px !important; font-weight: 800 !important; }
+._9w8d5 { fill: #1E293B !important; font-size: 11px !important; font-weight: 800 !important; }
+._1rLuZ { stroke: #94A3B8 !important; }
+
+._2dZTy { fill: #FFFFFF !important; transition: fill 0.15s ease-in-out !important; pointer-events: all !important; }
+/* 마우스 오버 시 좌측 영역과 동일한 연파랑 음영 원복 */
+._2dZTy:hover { fill: rgba(239, 246, 255, 0.7) !important; }
+
+/* 격자 선 색상 명확하게 원복 */
+._3rUKi, ._RuwuK { stroke: #CBD5E1 !important; stroke-width: 1px !important; }
+._RRr12 { fill: rgba(59, 130, 246, 0.08) !important; }
+
+/* 간트 막대 텍스트 */
+._2B2zv text:not(._2q1Kt):not(._9w8d5) {
+  fill: #1E293B !important;
+  font-weight: 900 !important; 
+  font-size: 12px !important;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.9);
 }
 
-rect[class*="barProgress"]:hover {
-  filter: brightness(0.9) saturate(1.2) !important;
-  cursor: pointer;
+/* 간트 막대 둥글기 및 호버 액션 */
+rect[class*="barBackground"], rect[class*="barProgress"] { rx: 4px !important; ry: 4px !important; }
+rect[class*="barBackground"] { stroke: rgba(0, 0, 0, 0.15) !important; stroke-width: 1px !important; transition: filter 0.2s ease !important; }
+rect[class*="barBackground"]:hover, rect[class*="barProgress"]:hover { 
+  cursor: pointer; 
+  filter: brightness(0.85) saturate(1.5) !important; 
 }
