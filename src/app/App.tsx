@@ -360,7 +360,7 @@ export default function App() {
                 TaskListHeader={CustomTaskListHeader} 
                 TaskListTable={CustomTaskListTable} 
                 todayColor="rgba(99, 102, 241, 0.04)" 
-                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 48 - 36 : 500} 
+                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 48 - 26 : 500} 
               />
             ) : (<div className="flex flex-col items-center justify-center h-full text-slate-400 gap-5"><Database className="w-12 h-12 text-slate-200" /><p className="text-[15px] font-bold text-slate-400">데이터를 불러오는 중입니다.</p></div>)}
           </div>
