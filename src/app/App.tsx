@@ -189,7 +189,10 @@ export default function App() {
   const filterBreadcrumb = [ treeFilter.selectedArea, treeFilter.selectedPhase, treeFilter.selectedActivity ].filter(Boolean).join(" → ");
   
   const toggleArea = (area: string) => { setExpandedAreas((prev) => { const next = new Set(prev); if (next.has(area)) { next.delete(area); setExpandedPhases((pp) => { const np = new Set(pp); for (const key of pp) { if (key.startsWith(`${area}||`)) np.delete(key); } return np; }); } else { next.add(area); } return next; }); };
-  const togglePhase = (area: string, phase: string) => { const key = `${area}||${phase}`; setExpandedPhases((prev) => { const next = new Set(prev); if (next.has(key)) next delete(key); else next.add(key); return next; }); };
+  
+  // 🚀 오류 수정: next delete(key) -> next.delete(key)
+  const togglePhase = (area: string, phase: string) => { const key = `${area}||${phase}`; setExpandedPhases((prev) => { const next = new Set(prev); if (next.has(key)) next.delete(key); else next.add(key); return next; }); };
+  
   const selectFilter = (area: string | null, phase: string | null, activity: string | null) => { setTreeFilter({ selectedArea: area, selectedPhase: phase, selectedActivity: activity }); };
 
   return (
@@ -229,7 +232,7 @@ export default function App() {
           <div className="flex items-center gap-3 ml-auto text-[11px] font-bold text-slate-500"><span>전체 <span className="text-slate-800">{tasks.length}</span></span><span className="text-slate-300">|</span><span>표시 <span className="text-blue-600">{visibleTasks.length}</span></span></div>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden min-w-0">
           <div className="shrink-0 bg-white border-r border-slate-300 overflow-hidden transition-all duration-300 ease-in-out" style={{ width: filterPanelOpen ? 220 : 0, minWidth: filterPanelOpen ? 220 : 0 }}>
             <div className="w-[220px] h-full overflow-y-auto">
               <div className="p-2">
@@ -289,7 +292,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* 🚀 라이브러리 순정 구조 복원 (이상한 래퍼 전부 제거) */}
           <div ref={ganttWrapperRef} className="flex-1 relative bg-white overflow-hidden shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper" style={{ '--task-list-width': `${TOTAL_WIDTH}px` } as React.CSSProperties}>
             {ganttTasks.length > 0 ? (
               <Gantt 
