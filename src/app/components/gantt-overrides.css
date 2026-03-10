@@ -16,14 +16,14 @@
   position: absolute !important;
   left: 0 !important;
   bottom: 0 !important;
-  height: 100px !important; 
+  height: 28px !important; 
   background: #F1F5F9 !important;
   border-top: 1px solid #E2E8F0 !important;
   z-index: 100 !important;
   display: block;
 }
 
-._2k9Ys::-webkit-scrollbar { height: 48px !important; }
+._2k9Ys::-webkit-scrollbar { height: 28px !important; }
 ._2k9Ys::-webkit-scrollbar-track { background: #F1F5F9 !important; }
 
 /* border: 2px를 주어 트랙(24px)보다 핸들이 상하좌우 2px씩 작게(얇게) 보이게 함 */
