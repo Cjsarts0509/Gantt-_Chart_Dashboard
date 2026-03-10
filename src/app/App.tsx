@@ -35,7 +35,6 @@ export default function App() {
   const isStandaloneDashboard = new URLSearchParams(window.location.search).get('view') === 'dashboard';
 
   useEffect(() => {
-    // 🚀 데이터 독립 구조: 'data' 브랜치에서 우선적으로 가져옴
     const remoteDataUrl = `https://raw.githubusercontent.com/cjsarts0509/gantt-_chart_dashboard/data/data.json?t=${new Date().getTime()}`;
     const localDataUrl = `${import.meta.env.BASE_URL}data.json`;
 
@@ -79,8 +78,6 @@ export default function App() {
     ro.observe(el);
     return () => ro.disconnect();
   }, [isStandaloneDashboard]);
-
-  if (isStandaloneDashboard) return <DashboardPopup tasks={tasks} isStandalone={true} />;
 
   const areas = useMemo(() => [...new Set(tasks.map((t) => t.area))].filter(Boolean), [tasks]);
   const phasesByArea = useMemo(() => {
@@ -142,9 +139,8 @@ export default function App() {
   }, [filteredTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
   const ganttTasks = useMemo(() => {
-    // 🚀 간트 막대 색상: 상태와 무관하게 무조건 '스카이 블루' 통일
-    const barBgColor = "#38BDF8";   // 배경 막대: 밝은 스카이블루 (Tailwind sky-400)
-    const barProgColor = "#0284C7"; // 진행률 막대: 선명한 딥 스카이블루 (Tailwind sky-600)
+    const barBgColor = "#38BDF8";   
+    const barProgColor = "#0284C7"; 
 
     const BASE_START_DATE = new Date("2026-03-01T00:00:00");
 
@@ -175,7 +171,6 @@ export default function App() {
         originalStart,
         originalEnd,       
         progress: prog,
-        // 상태 색상 연결을 끊고 스카이 블루 주입
         styles: { 
           backgroundColor: barBgColor, 
           backgroundSelectedColor: barBgColor, 
@@ -186,6 +181,79 @@ export default function App() {
     });
   }, [visibleTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
+  // 🚀 신규 추가: 화면 스크롤 시 간트바 텍스트를 뷰포트 내 십자중앙으로 끌어오는 마법의 로직!
+  useEffect(() => {
+    const container = ganttWrapperRef.current;
+    if (!container) return;
+
+    // 간트 차트가 들어있는 스크롤 영역
+    const chartContainer = container.querySelector('._3eULf') as HTMLElement;
+    // 우리가 100%로 늘려놓은 하단 가로 스크롤바
+    const scrollBar = container.querySelector('._2k9Ys') as HTMLElement;
+    
+    if (!chartContainer || !scrollBar) return;
+
+    const updateTextPositions = () => {
+      const scrollLeft = chartContainer.scrollLeft;
+      const clientWidth = chartContainer.clientWidth;
+      
+      // 간트차트 안의 모든 배경 막대 찾기
+      const backgroundRects = chartContainer.querySelectorAll('rect[class*="barBackground"]');
+      
+      backgroundRects.forEach((rect) => {
+        const parent = rect.parentElement;
+        if (!parent) return;
+        const textNode = parent.querySelector('text') as SVGTextElement;
+        if (!textNode) return;
+
+        // 막대의 실제 X 시작 좌표와 너비
+        const rectX = parseFloat(rect.getAttribute('x') || '0');
+        const rectWidth = parseFloat(rect.getAttribute('width') || '0');
+        const rectEnd = rectX + rectWidth;
+
+        // 🌟 핵심 연산: 현재 화면 안에 "보이는" 막대의 시작점과 끝점 계산
+        const visibleStart = Math.max(rectX, scrollLeft);
+        const visibleEnd = Math.min(rectEnd, scrollLeft + clientWidth);
+
+        // 막대가 화면에 조금이라도 보이고 있다면?
+        if (visibleStart < visibleEnd) {
+          // 화면에 보이는 부분의 정중앙 계산
+          const visibleCenter = (visibleStart + visibleEnd) / 2;
+          const originalCenter = rectX + rectWidth / 2;
+          
+          // 본래 위치(막대 중앙)에서 화면 안 중앙으로 얼마나 옮겨야 하는지(오프셋) 계산
+          const offsetX = visibleCenter - originalCenter;
+          
+          // SVG 텍스트를 실시간으로 뷰포트에 맞게 이동
+          textNode.style.transform = `translateX(${offsetX}px)`;
+        } else {
+          textNode.style.transform = `translateX(0px)`;
+        }
+      });
+    };
+
+    let animationFrameId: number;
+    const onScroll = () => {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = requestAnimationFrame(updateTextPositions);
+    };
+
+    // 스크롤 시 텍스트 위치 보정 함수 실행
+    scrollBar.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    
+    // 첫 화면 렌더링 시에도 즉시 계산 반영
+    const timeouts = [100, 300, 500].map(t => setTimeout(updateTextPositions, t));
+
+    return () => {
+      scrollBar.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      cancelAnimationFrame(animationFrameId);
+      timeouts.forEach(clearTimeout);
+    };
+  }, [ganttTasks, viewMode, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
+
+
   const resetFilter = () => { setTreeFilter({ selectedArea: null, selectedPhase: null, selectedActivity: null }); };
   const isFiltered = treeFilter.selectedArea || treeFilter.selectedPhase || treeFilter.selectedActivity;
   const filterBreadcrumb = [ treeFilter.selectedArea, treeFilter.selectedPhase, treeFilter.selectedActivity ].filter(Boolean).join(" → ");
@@ -194,12 +262,12 @@ export default function App() {
   const togglePhase = (area: string, phase: string) => { const key = `${area}||${phase}`; setExpandedPhases((prev) => { const next = new Set(prev); if (next.has(key)) next.delete(key); else next.add(key); return next; }); };
   const selectFilter = (area: string | null, phase: string | null, activity: string | null) => { setTreeFilter({ selectedArea: area, selectedPhase: phase, selectedActivity: activity }); };
 
+  if (isStandaloneDashboard) return <DashboardPopup tasks={tasks} isStandalone={true} />;
+
   return (
     <GanttGroupContext.Provider value={groupContextValue}>
-      {/* 🎨 2025 트렌드: 전체 배경을 라이트 그레이(F1F5F9)로 깔고 내부 요소들을 흰색 카드로 띄움 */}
       <div className="w-screen h-screen bg-[#F1F5F9] flex flex-col overflow-hidden" style={{ fontFamily: "'Pretendard', sans-serif" }}>
         
-        {/* 🎨 2025 트렌드: Glassmorphism 느낌의 헤더 */}
         <header className="flex items-center justify-between px-6 py-4 bg-white/95 backdrop-blur-md border-b border-slate-200 shrink-0 shadow-sm z-10">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shadow-indigo-200 shadow-md"><BarChart2 className="w-5 h-5 text-white" /></div>
@@ -224,7 +292,6 @@ export default function App() {
           </div>
         </header>
 
-        {/* 🎨 2025 트렌드: 둥근 Pill 스타일의 필터 바 */}
         <div className="flex items-center gap-2 px-5 py-2.5 bg-white border-b border-slate-200 shrink-0">
           <button onClick={() => setFilterPanelOpen(!filterPanelOpen)} className={`flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-bold transition-all shadow-sm ${filterPanelOpen ? "bg-indigo-50 text-indigo-600 border border-indigo-100" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}>
             {filterPanelOpen ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeftOpen className="w-3.5 h-3.5" />} 필터 {isFiltered && <span className="ml-0.5 w-1.5 h-1.5 rounded-full bg-indigo-500" />}
@@ -233,10 +300,7 @@ export default function App() {
           <div className="flex items-center gap-3 ml-auto text-[11px] font-bold text-slate-400 bg-slate-50 px-3 py-1 rounded-full border border-slate-100"><span>전체 <span className="text-slate-700">{tasks.length}</span></span><span className="text-slate-300">|</span><span>표시 <span className="text-indigo-600">{visibleTasks.length}</span></span></div>
         </div>
 
-        {/* 🎨 2025 트렌드: Bento Box 형식의 여백(p-3, gap-3)과 모서리 라운딩(rounded-xl) 적용 */}
         <div className="flex flex-1 overflow-hidden min-w-0 p-3 gap-3">
-          
-          {/* 트리 필터 패널 */}
           <div className="shrink-0 bg-white border border-slate-200 rounded-xl overflow-hidden transition-all duration-300 ease-in-out shadow-sm" style={{ width: filterPanelOpen ? 230 : 0, minWidth: filterPanelOpen ? 230 : 0 }}>
             <div className="w-[230px] h-full overflow-y-auto">
               <div className="p-3">
@@ -296,7 +360,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* 🚀 라이브러리 순정 구조 및 가로 스크롤 매커니즘 철통 방어 */}
           <div ref={ganttWrapperRef} className="flex-1 relative bg-white overflow-hidden shadow-sm border border-slate-200 rounded-xl gantt-wrapper" style={{ '--task-list-width': `${TOTAL_WIDTH}px` } as React.CSSProperties}>
             {ganttTasks.length > 0 ? (
               <Gantt 
@@ -304,9 +367,9 @@ export default function App() {
                 viewMode={viewMode} 
                 listCellWidth={String(TOTAL_WIDTH)} 
                 columnWidth={columnWidth} 
-                rowHeight={38} /* 2025 트렌드: 여백 확보 */
+                rowHeight={38} 
                 headerHeight={48} 
-                barCornerRadius={6} /* 2025 트렌드: 둥근 모서리 */
+                barCornerRadius={6} 
                 barFill={70} 
                 fontSize="12" 
                 locale="ko-KR" 
