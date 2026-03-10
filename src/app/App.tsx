@@ -179,26 +179,26 @@ export default function App() {
   }, [visibleTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
 
-  // 🔥 [핵심 로직] 리액트의 화면 갱신(리렌더링)을 무력화시키는 무적의 텍스트 뷰포트 고정 추적기
+  // 🔥 [핵심 로직] 간트 차트 스크롤 시 막대 텍스트를 뷰포트 중앙에 동적으로 맞추는 추적기
   useEffect(() => {
     const container = ganttWrapperRef.current;
     if (!container) return;
 
+    // gantt-task-react의 내부 클래스 선택
     const chartContainer = container.querySelector('._3eULf') as HTMLElement;
     const scrollBar = container.querySelector('._2k9Ys') as HTMLElement;
     
     if (!chartContainer || !scrollBar) return;
 
-    // 텍스트 위치를 화면 중앙에 찍어버리는 함수
     const updateTextPositions = () => {
       const scrollLeft = scrollBar.scrollLeft;
       const clientWidth = chartContainer.clientWidth;
       
-      // 간트 차트 안의 모든 텍스트 요소를 가져옴
+      // 간트 차트 안의 막대 텍스트 요소들 선택
       const texts = chartContainer.querySelectorAll('g > text');
       
       texts.forEach(text => {
-        // 이 텍스트의 부모 그룹 안에 간트 막대(rect)가 있는지 확인
+        // 이 텍스트가 속한 그룹 안의 간트 배경 막대(rect) 찾기
         const rect = text.parentElement?.querySelector('rect[class*="barBackground"]');
         if (!rect) return;
 
@@ -206,20 +206,18 @@ export default function App() {
         const rectWidth = parseFloat(rect.getAttribute('width') || '0');
         if (rectWidth === 0) return;
 
-        // 내 화면(뷰포트)에 보이는 막대 부분의 시작점과 끝점
+        // 현재 내 화면(뷰포트)에 실제로 보이고 있는 막대의 시작점과 끝점 계산
         const visibleStart = Math.max(rectX, scrollLeft);
         const visibleEnd = Math.min(rectX + rectWidth, scrollLeft + clientWidth);
 
-        // 화면에 조금이라도 걸쳐 있다면?
+        // 막대가 화면에 조금이라도 보인다면 텍스트를 그 보이는 부분의 정중앙으로 이동
         if (visibleStart < visibleEnd) {
-          // 화면 중앙의 X 좌표
           const visibleCenter = (visibleStart + visibleEnd) / 2;
           const targetX = visibleCenter.toString();
 
-          // 현재 텍스트의 X좌표가 화면 중앙이 아니라면 강제 이동!
+          // 리액트가 원래 위치로 되돌리려는 것을 덮어씀
           if (text.getAttribute('x') !== targetX) {
             text.setAttribute('x', targetX);
-            // 리액트가 덮어쓸 것에 대비해, 우리가 맞춘 좌표라는 것을 'data-fixed-x'로 낙인찍어둠
             text.setAttribute('data-fixed-x', targetX); 
             text.setAttribute('text-anchor', 'middle');
           }
@@ -227,15 +225,14 @@ export default function App() {
       });
     };
 
-    // 🚀 마우스를 올리거나 클릭할 때 리액트가 원래 좌표로 되돌리는 것을 감시(Observer)
+    // DOM 변화 감지 (리액트가 x좌표를 리셋하는 것을 감시하고 즉시 방어)
     const observer = new MutationObserver((mutations) => {
       let needUpdate = false;
       for (const m of mutations) {
-        // 리액트가 'x' 속성을 원래 데이터로 돌려버렸는지 확인
         if (m.type === 'attributes' && m.attributeName === 'x') {
           const target = m.target as HTMLElement;
           if (target.tagName === 'text' && target.getAttribute('x') !== target.getAttribute('data-fixed-x')) {
-            needUpdate = true; // "어? 리액트가 위치 바꿨다! 다시 중앙으로 옮겨라!"
+            needUpdate = true;
             break;
           }
         }
@@ -245,14 +242,13 @@ export default function App() {
         }
       }
       if (needUpdate) {
-        updateTextPositions(); // 즉시 복구
+        updateTextPositions(); 
       }
     });
 
-    // 감시 시작
     observer.observe(chartContainer, { childList: true, subtree: true, attributes: true, attributeFilter: ['x'] });
 
-    // 스크롤 시 위치 업데이트
+    // 스크롤 이벤트에 맞춰 부드럽게 위치 업데이트
     let rafId: number;
     const onScroll = () => {
       cancelAnimationFrame(rafId);
@@ -263,7 +259,7 @@ export default function App() {
     chartContainer.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
 
-    // 첫 화면 렌더링 시 적용
+    // 초기 로딩 시 적용을 위한 지연 호출
     const timeouts = [50, 150, 300].map(t => setTimeout(updateTextPositions, t));
 
     return () => {
