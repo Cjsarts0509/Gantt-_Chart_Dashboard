@@ -3,15 +3,15 @@ import { Task } from "gantt-task-react";
 import { GanttGroupContext } from "./GanttGroupContext";
 import { ChevronRight, ChevronDown } from "lucide-react";
 
-// 🚀 칼럼 넓이 크게 조정 & 담당자 칼럼 폭 확보
+// 🚀 칼럼 넓이 조정 (활동 15% 증가, 담당자 10% 증가)
 const COL_WIDTHS = {
   area: 65, 
   phase: 85, 
-  activity: 140,      // 기존 110 -> 140
+  activity: 160,      // 기존 140 -> 160 (+15%)
   deliverable: 140, 
-  taskName: 200,      // 기존 170 -> 200
-  assigneePlan: 90,   // 기존 75 -> 90 (텍스트 길이에 맞춤)
-  assigneeIT: 90,     // 기존 75 -> 90
+  taskName: 200,      
+  assigneePlan: 100,  // 기존 90 -> 100 (+10%)
+  assigneeIT: 100,    // 기존 90 -> 100 (+10%)
   start: 80, 
   end: 80, 
   status: 75,
@@ -46,7 +46,6 @@ export const CustomTaskListHeader: React.FC<any> = ({ headerHeight, rowWidth, fo
   
   return (
     <div className="flex border-y border-slate-400 text-[12px] relative z-10" style={{ height: headerHeight, width: rowWidth, fontFamily, fontSize }}>
-      {/* 🚀 잃어버렸던 필터 버튼(Chevron) 완벽 복구 */}
       <div className={headerClass} style={{ width: COL_WIDTHS.area }}>
         구분 <button onClick={ctx.toggleAreaColumn} className={btnClass}>{ctx.areaCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button>
       </div>
@@ -60,7 +59,6 @@ export const CustomTaskListHeader: React.FC<any> = ({ headerHeight, rowWidth, fo
         산출물 <button onClick={ctx.toggleDeliverableColumn} className={btnClass}>{ctx.deliverableCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button>
       </div>
       <div className={headerClass} style={{ width: COL_WIDTHS.taskName }}>작업</div>
-      {/* 🚀 헤더명 요구사항 반영 */}
       <div className={headerClass} style={{ width: COL_WIDTHS.assigneePlan }}>담당자(기획)</div>
       <div className={headerClass} style={{ width: COL_WIDTHS.assigneeIT }}>담당자(IT)</div>
       <div className={headerClass} style={{ width: COL_WIDTHS.start }}>시작일</div>
