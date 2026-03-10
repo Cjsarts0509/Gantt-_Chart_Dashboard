@@ -288,30 +288,25 @@ export default function App() {
             </div>
           </div>
 
-          {/* 🚀 1. 가장 중요한 래퍼 영역! 여기서 전체 화면(좌+우) 가로 스크롤을 직접 통제합니다. 🚀 */}
-          <div ref={ganttWrapperRef} className="flex-1 relative bg-white flex flex-col overflow-hidden min-w-0 shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)]">
+          {/* 🚀 라이브러리 순정 구조 복원: 불필요한 스크롤 래퍼를 완전히 제거했습니다. */}
+          <div ref={ganttWrapperRef} className="flex-1 relative bg-white flex flex-col overflow-hidden min-w-0 shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper" style={{ '--task-list-width': `${TOTAL_WIDTH}px` } as React.CSSProperties}>
             {ganttTasks.length > 0 ? (
-              <div className="flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar w-full h-full relative">
-                <div className="gantt-wrapper w-max min-w-full">
-                  <Gantt 
-                    tasks={ganttTasks} 
-                    viewMode={viewMode} 
-                    listCellWidth={String(TOTAL_WIDTH)} 
-                    columnWidth={columnWidth} 
-                    rowHeight={36} 
-                    headerHeight={46} 
-                    barCornerRadius={4} 
-                    barFill={65} 
-                    fontSize="12" 
-                    locale="ko-KR" 
-                    TaskListHeader={CustomTaskListHeader} 
-                    TaskListTable={CustomTaskListTable} 
-                    todayColor="rgba(59, 130, 246, 0.15)" 
-                    // 하단 스크롤바 높이(25px)를 고려해 세로 높이 보정
-                    ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 46 - 25 : 500} 
-                  />
-                </div>
-              </div>
+              <Gantt 
+                tasks={ganttTasks} 
+                viewMode={viewMode} 
+                listCellWidth={String(TOTAL_WIDTH)} 
+                columnWidth={columnWidth} 
+                rowHeight={36} 
+                headerHeight={46} 
+                barCornerRadius={4} 
+                barFill={65} 
+                fontSize="12" 
+                locale="ko-KR" 
+                TaskListHeader={CustomTaskListHeader} 
+                TaskListTable={CustomTaskListTable} 
+                todayColor="rgba(59, 130, 246, 0.15)" 
+                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 46 - 25 : 500} 
+              />
             ) : (<div className="flex flex-col items-center justify-center h-full text-slate-400 gap-5"><Database className="w-12 h-12 text-slate-300" /><p className="text-[15px] font-bold text-slate-500">데이터를 불러오는 중입니다.</p></div>)}
           </div>
         </div>
