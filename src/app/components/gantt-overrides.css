@@ -1,4 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
+<<<<<<< HEAD
    간트 영역 스타일 - 순정 레이아웃 복원 & 가로 스크롤바 물리적 확장
    ═══════════════════════════════════════════════════════════ */
 
@@ -14,6 +15,41 @@
 ._CZjuD, ._CZjuD *, ._3_ygE, ._3_ygE * { font-family: 'Pretendard', sans-serif !important; }
 
 /* ── 2. 헤더 및 바디 디자인 유지 ── */
+=======
+   간트 영역 스타일 - 해시 클래스 적용 및 디자인 완벽 동기화
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── 1. Root & Wrapper Overflows (🚀틀고정 완벽 복원🚀) ── */
+/* 전체를 통째로 스크롤하게 만들었던 이전의 잘못된 강제 확장을 모두 폐기하고,
+   라이브러리의 네이티브 고정 레이아웃을 100% 존중합니다. */
+.gantt-wrapper {
+  width: 100%;
+  height: 100%;
+  overflow: hidden !important; /* 🚀 절대 전역 스크롤 불가 (틀고정 풀림 원인 제거) */
+  position: relative;
+}
+
+._CZjuD {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important; /* 🚀 네이티브 틀고정 부활 */
+  position: relative !important;
+  padding-bottom: 18px !important; /* 커스텀 가로 스크롤바가 들어갈 공간 확보 */
+}
+
+._3eULf {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+/* 폰트 세팅 */
+._CZjuD, ._CZjuD *, ._3_ygE, ._3_ygE * {
+  font-family: 'Pretendard', sans-serif !important;
+}
+
+/* ── 2. 헤더 및 바디 디자인 ── */
+>>>>>>> fea00bbaade3376ac9663d2b9c50b82217cefaf2
 ._35nLX { fill: #CFD8DC !important; stroke: #94A3B8 !important; stroke-width: 1px !important; }
 ._2q1Kt { fill: #1E293B !important; font-size: 12px !important; font-weight: 800 !important; }
 ._9w8d5 { fill: #1E293B !important; font-size: 11px !important; font-weight: 800 !important; }
@@ -25,7 +61,11 @@
 ._3rUKi, ._RuwuK { stroke: #CBD5E1 !important; stroke-width: 1px !important; }
 ._RRr12 { fill: rgba(59, 130, 246, 0.08) !important; }
 
+<<<<<<< HEAD
 /* 간트 막대 텍스트 및 호버 이펙트 */
+=======
+/* ── 3. 간트 막대(Bar) 텍스트 및 호버 이펙트 ── */
+>>>>>>> fea00bbaade3376ac9663d2b9c50b82217cefaf2
 ._2B2zv text:not(._2q1Kt):not(._9w8d5) {
   fill: #1E293B !important;
   font-weight: 900 !important; 
@@ -33,6 +73,7 @@
   text-shadow: 0 0 5px rgba(255, 255, 255, 0.9);
 }
 
+<<<<<<< HEAD
 rect[class*="barBackground"], rect[class*="barProgress"] { rx: 4px !important; ry: 4px !important; }
 rect[class*="barBackground"] { stroke: rgba(0, 0, 0, 0.15) !important; stroke-width: 1px !important; transition: filter 0.2s ease !important; }
 rect[class*="barBackground"]:hover, rect[class*="barProgress"]:hover { cursor: pointer; filter: brightness(0.8) saturate(1.5) !important; }
@@ -56,19 +97,64 @@ rect[class*="barBackground"]:hover, rect[class*="barProgress"]:hover { cursor: p
   bottom: 0 !important;  
   width: 100% !important; /* 좌측 구분~상태 칼럼 아래까지 확장 */
   height: 18px !important;
+=======
+rect[class*="barBackground"], rect[class*="barProgress"] {
+  rx: 4px !important; ry: 4px !important;
+}
+
+rect[class*="barBackground"] {
+  stroke: rgba(0, 0, 0, 0.15) !important;
+  stroke-width: 1px !important;
+  transition: filter 0.2s ease !important;
+}
+
+rect[class*="barBackground"]:hover,
+rect[class*="barProgress"]:hover {
+  cursor: pointer;
+  filter: brightness(0.8) saturate(1.5) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   🚀 가로 스크롤 범위 분리 트릭 (유저님 아이디어 적용) 🚀
+   ═══════════════════════════════════════════════════════════ */
+
+/* 좌측 리스트: 억지로 sticky를 쓰지 않고 네이티브 고정 상태 유지 */
+._3_ygE {
+  background-color: #ffffff !important;
+  border-right: 1px solid #CBD5E1 !important; 
+  z-index: 10 !important;
+}
+
+/* 하단 가로 스크롤바를 화면 100% 넓이로 쫙 늘림 (가짜 스크롤바) */
+._2k9Ys {
+  position: absolute !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important; /* 좌측 칼럼 아래까지 확장하여 잡기 편하게 만듦 */
+  height: 18px !important;
+  display: block !important;
+>>>>>>> fea00bbaade3376ac9663d2b9c50b82217cefaf2
   background: #F1F5F9 !important;
   border-top: 1px solid #e2e8f0 !important;
   z-index: 100 !important;
 }
 
+<<<<<<< HEAD
 /* 3. 🚀 마법의 수식: 늘어난 폭만큼 스크롤 내부 비율 보정 */
 /* 스크롤바 길이를 억지로 늘렸기 때문에, App.tsx에서 받아온 좌측 칼럼 너비만큼 
    내부 여백(Padding)을 주어 스크롤 조작 거리와 차트 이동 거리를 1:1로 맞춥니다. */
+=======
+/* 🚀 핵심: "범위만큼 뛰어넘고 스크롤 가게 하던가" 🚀 */
+/* App.tsx에서 전달받은 좌측 칼럼 너비(var(--task-list-width))만큼 
+   스크롤 내부 여백을 강제로 주어, 스크롤 이동 거리와 차트 이동 거리를 완벽히 1:1로 맞춤 */
+>>>>>>> fea00bbaade3376ac9663d2b9c50b82217cefaf2
 ._19jgW {
   box-sizing: content-box !important;
   padding-left: var(--task-list-width, 1155px) !important; 
 }
 
+<<<<<<< HEAD
 /* 가로 스크롤바 두껍고 잡기 편하게 디자인 */
 ._2k9Ys::-webkit-scrollbar { height: 18px !important; }
 ._2k9Ys::-webkit-scrollbar-thumb {
@@ -93,3 +179,23 @@ rect[class*="barBackground"]:hover, rect[class*="barProgress"]:hover { cursor: p
   border-right: 1px solid #CBD5E1 !important;
   box-shadow: 4px 0 10px rgba(0,0,0,0.05) !important; /* 분리감을 위한 그림자만 추가 */
 }
+=======
+._2k9Ys::-webkit-scrollbar {
+  height: 18px !important; 
+}
+._2k9Ys::-webkit-scrollbar-thumb {
+  background: #94A3B8 !important;
+  border-radius: 9px !important; 
+  border: 3px solid #F1F5F9 !important; 
+}
+
+/* 세로 스크롤바 제자리(화면 우측 끝) 완벽 고정 */
+._1eT-t {
+  bottom: 18px !important; /* 가로 스크롤바와 안 겹치게 위로 올림 */
+  background: #f8fafc !important;
+  border-left: 1px solid #e2e8f0 !important;
+  z-index: 60 !important;
+}
+._1eT-t::-webkit-scrollbar { width: 10px !important; }
+._1eT-t::-webkit-scrollbar-thumb { background: #B0BEC5 !important; border-radius: 5px !important; }
+>>>>>>> fea00bbaade3376ac9663d2b9c50b82217cefaf2

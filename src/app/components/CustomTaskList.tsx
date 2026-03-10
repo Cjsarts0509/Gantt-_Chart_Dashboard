@@ -3,9 +3,19 @@ import { Task } from "gantt-task-react";
 import { GanttGroupContext } from "./GanttGroupContext";
 import { ChevronRight, ChevronDown } from "lucide-react";
 
+// 🚀 진행률(progress) 칼럼 60px 추가
 const COL_WIDTHS = {
-  area: 65, phase: 85, activity: 110, deliverable: 140, taskName: 170,
-  assigneePlan: 75, assigneeIT: 75, start: 80, end: 80, status: 75,
+  area: 65, 
+  phase: 85, 
+  activity: 160, 
+  deliverable: 140, 
+  taskName: 200,      
+  assigneePlan: 105,  
+  assigneeIT: 105,    
+  start: 80, 
+  end: 80, 
+  progress: 60, // 신규 추가
+  status: 75,
 };
 
 export const TOTAL_WIDTH = Object.values(COL_WIDTHS).reduce((a, b) => a + b, 0);
@@ -20,73 +30,34 @@ const formatDate = (date: Date | string | number) => {
   return `${y}.${m}.${day}`;
 };
 
-// 🚀 속성 텍스트에 따라 자동으로 고정된 예쁜 색상을 뽑아주는 마법의 함수
 const getDynamicColor = (text: string, type: 'area' | 'phase') => {
   if (!text) return { bg: "transparent", text: "#333" };
-  const areaPalettes = [
-    { bg: "#E3F2FD", text: "#1565C0" }, // 파랑
-    { bg: "#F3E5F5", text: "#6A1B9A" }, // 보라
-    { bg: "#FFF3E0", text: "#E65100" }, // 주황
-    { bg: "#E0F2F1", text: "#00695C" }, // 청록
-    { bg: "#FBE9E7", text: "#D84315" }, // 다홍
-  ];
-  const phasePalettes = [
-    { bg: "#E8F5E9", text: "#2E7D32" }, // 초록
-    { bg: "#FFF8E1", text: "#F57F17" }, // 노랑
-    { bg: "#E0F7FA", text: "#006064" }, // 민트
-    { bg: "#FCE4EC", text: "#AD1457" }, // 핑크
-    { bg: "#EDE7F6", text: "#4527A0" }, // 남색
-  ];
+  const palettes = type === 'area' ? 
+    [{ bg: "#E3F2FD", text: "#1565C0" }, { bg: "#F3E5F5", text: "#6A1B9A" }, { bg: "#FFF3E0", text: "#E65100" }] :
+    [{ bg: "#E8F5E9", text: "#2E7D32" }, { bg: "#FFF8E1", text: "#F57F17" }, { bg: "#E0F7FA", text: "#006064" }];
   const hash = text.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const palettes = type === 'area' ? areaPalettes : phasePalettes;
   return palettes[hash % palettes.length];
 };
 
 export const CustomTaskListHeader: React.FC<any> = ({ headerHeight, rowWidth, fontFamily, fontSize }) => {
   const ctx = useContext(GanttGroupContext);
   if (!ctx) return null;
-
-  const headerClass = "flex items-center justify-center px-1 font-bold text-slate-800 border-r border-slate-300 bg-[#CFD8DC] tracking-tight text-center";
-  const btnClass = "ml-1 p-0.5 rounded text-slate-500 hover:bg-slate-400 hover:text-white transition-colors";
-
+  const headerClass = "flex items-center justify-center px-1 font-bold text-slate-800 border-r border-slate-300 bg-[#CFD8DC] text-center";
+  const btnClass = "ml-1 p-0.5 rounded text-slate-500 hover:bg-slate-500 hover:text-white transition-colors flex-shrink-0";
+  
   return (
-    <div className="flex border-y border-slate-400 text-[12px] shadow-sm relative z-10" style={{ height: headerHeight, width: rowWidth, fontFamily, fontSize }}>
-      <div className={headerClass} style={{ width: COL_WIDTHS.area }}>
-        구분 <button onClick={ctx.toggleAreaColumn} className={btnClass}>{ctx.areaCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}</button>
-      </div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.phase }}>
-        단계 <button onClick={ctx.togglePhaseColumn} className={btnClass}>{ctx.phaseCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}</button>
-      </div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.activity }}>
-        활동 <button onClick={ctx.toggleActivityColumn} className={btnClass}>{ctx.activityCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}</button>
-      </div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.deliverable }}>
-        산출물 <button onClick={ctx.toggleDeliverableColumn} className={btnClass}>{ctx.deliverableCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}</button>
-      </div>
+    <div className="flex border-y border-slate-400 text-[12px] relative z-10" style={{ height: headerHeight, width: rowWidth, fontFamily, fontSize }}>
+      <div className={headerClass} style={{ width: COL_WIDTHS.area }}>구분 <button onClick={ctx.toggleAreaColumn} className={btnClass}>{ctx.areaCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button></div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.phase }}>단계 <button onClick={ctx.togglePhaseColumn} className={btnClass}>{ctx.phaseCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button></div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.activity }}>활동 <button onClick={ctx.toggleActivityColumn} className={btnClass}>{ctx.activityCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button></div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.deliverable }}>산출물 <button onClick={ctx.toggleDeliverableColumn} className={btnClass}>{ctx.deliverableCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button></div>
       <div className={headerClass} style={{ width: COL_WIDTHS.taskName }}>작업</div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.assigneePlan }}>담당(기획)</div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.assigneeIT }}>담당(IT)</div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.assigneePlan }}>담당자(기획)</div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.assigneeIT }}>담당자(IT)</div>
       <div className={headerClass} style={{ width: COL_WIDTHS.start }}>시작일</div>
       <div className={headerClass} style={{ width: COL_WIDTHS.end }}>종료일</div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.status }}>진행상태</div>
-    </div>
-  );
-};
-
-const StatusCell = ({ status }: { status: string }) => {
-  const config: Record<string, string> = {
-    완료: "bg-[#81C784] text-[#1B5E20]",
-    진행중: "bg-[#64B5F6] text-[#0D47A1]",
-    대기: "bg-[#E0E0E0] text-[#424242]",
-    지연: "bg-[#E57373] text-[#B71C1C]",
-    이슈발생: "bg-[#EF5350] text-[#FFFFFF]",
-    보류: "bg-[#FFB74D] text-[#E65100]",
-    취소: "bg-[#90A4AE] text-[#263238]",
-  };
-  const c = config[status] || config["대기"];
-  return (
-    <div className={`w-full h-full flex items-center justify-center font-bold text-[11px] border-r border-white/30 ${c}`}>
-      {status}
+      <div className={headerClass} style={{ width: COL_WIDTHS.progress }}>진행률</div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.status }}>상태</div>
     </div>
   );
 };
@@ -94,56 +65,26 @@ const StatusCell = ({ status }: { status: string }) => {
 export const CustomTaskListTable: React.FC<any> = ({ rowHeight, rowWidth, fontFamily, fontSize, tasks }) => {
   const ctx = useContext(GanttGroupContext);
   if (!ctx) return null;
-
   return (
     <div className="bg-white">
       {tasks.map((t: any) => {
-        const isCollapsedGroup = ctx.areaCollapsed || ctx.phaseCollapsed || ctx.activityCollapsed || ctx.deliverableCollapsed;
-        const baseCellClass = "flex items-center border-r border-slate-300 last:border-r-0 truncate text-[12px] text-slate-800";
-        
-        // 🚀 속성 텍스트에 따라 동적 색상 가져오기
         const areaColor = getDynamicColor(t.area, 'area');
         const phaseColor = getDynamicColor(t.phase, 'phase');
-
+        const cellClass = "flex items-center border-r border-slate-300 last:border-r-0 truncate text-[12px] text-slate-800 h-full justify-center";
+        const statusColors: any = { 완료: "bg-[#81C784]", 테스트중: "bg-[#9FA8DA]", 진행중: "bg-[#64B5F6]", 대기: "bg-[#E0E0E0]", 지연: "bg-[#E57373]", 이슈발생: "bg-[#EF5350] text-white", 보류: "bg-[#FFB74D]", 취소: "bg-[#90A4AE]" };
         return (
           <div key={t.id} className="flex border-b border-slate-300 hover:bg-blue-50/70 transition-colors" style={{ height: rowHeight, width: rowWidth, fontFamily, fontSize }}>
-            
-            <div className={`${baseCellClass} p-0`} style={{ width: COL_WIDTHS.area }}>
-              <div className="w-full h-full flex items-center justify-center px-1 font-bold border-r border-white/50" style={{ backgroundColor: areaColor.bg, color: areaColor.text }}>
-                <span className="truncate" title={t.area}>{t.area}</span>
-              </div>
-            </div>
-
-            <div className={`${baseCellClass} p-0`} style={{ width: COL_WIDTHS.phase }}>
-              <div className="w-full h-full flex items-center justify-center px-1 font-bold border-r border-white/50" style={{ backgroundColor: !ctx.areaCollapsed ? phaseColor.bg : 'transparent', color: phaseColor.text }}>
-                <span className="truncate" title={t.phase}>{!ctx.areaCollapsed ? t.phase : ""}</span>
-              </div>
-            </div>
-
-            <div className={`${baseCellClass} px-2`} style={{ width: COL_WIDTHS.activity }}>
-              <span className="truncate font-medium text-slate-700" title={t.activity}>{!ctx.areaCollapsed && !ctx.phaseCollapsed ? t.activity : ""}</span>
-            </div>
-            <div className={`${baseCellClass} px-2`} style={{ width: COL_WIDTHS.deliverable }}>
-              <span className="truncate text-slate-600" title={t.deliverable}>{!ctx.areaCollapsed && !ctx.phaseCollapsed && !ctx.activityCollapsed ? t.deliverable : ""}</span>
-            </div>
-            <div className={`${baseCellClass} px-2 font-bold`} style={{ width: COL_WIDTHS.taskName }}>
-              <span className="truncate" title={t.taskName}>{!isCollapsedGroup ? t.taskName : "-"}</span>
-            </div>
-            <div className={`${baseCellClass} justify-center px-1`} style={{ width: COL_WIDTHS.assigneePlan }}>
-              <span className="truncate text-[11px] font-medium" title={t.assigneePlan}>{!isCollapsedGroup ? t.assigneePlan : ""}</span>
-            </div>
-            <div className={`${baseCellClass} justify-center px-1`} style={{ width: COL_WIDTHS.assigneeIT }}>
-              <span className="truncate text-[11px] font-medium" title={t.assigneeIT}>{!isCollapsedGroup ? t.assigneeIT : ""}</span>
-            </div>
-            <div className={`${baseCellClass} justify-center px-1 bg-slate-50`} style={{ width: COL_WIDTHS.start }}>
-              <span className="truncate text-[11px] text-slate-600 font-mono tracking-tighter">{!isCollapsedGroup ? formatDate(t.start) : ""}</span>
-            </div>
-            <div className={`${baseCellClass} justify-center px-1 bg-slate-50`} style={{ width: COL_WIDTHS.end }}>
-              <span className="truncate text-[11px] text-slate-600 font-mono tracking-tighter">{!isCollapsedGroup ? formatDate(t.end) : ""}</span>
-            </div>
-            <div className={`${baseCellClass} p-0`} style={{ width: COL_WIDTHS.status }}>
-              {!isCollapsedGroup ? <StatusCell status={t.status} /> : <div className="w-full h-full bg-slate-100"></div>}
-            </div>
+            <div className={cellClass} style={{ width: COL_WIDTHS.area, backgroundColor: areaColor.bg, color: areaColor.text, fontWeight: 'bold' }}>{t.area}</div>
+            <div className={cellClass} style={{ width: COL_WIDTHS.phase, backgroundColor: phaseColor.bg, color: phaseColor.text, fontWeight: 'bold' }}>{t.phase}</div>
+            <div className={`${cellClass} px-2 justify-start`} style={{ width: COL_WIDTHS.activity }}>{t.activity}</div>
+            <div className={`${cellClass} px-2 justify-start`} style={{ width: COL_WIDTHS.deliverable }}>{t.deliverable}</div>
+            <div className={`${cellClass} px-2 justify-start font-bold`} style={{ width: COL_WIDTHS.taskName }}>{t.taskName}</div>
+            <div className={cellClass} style={{ width: COL_WIDTHS.assigneePlan }}>{t.assigneePlan}</div>
+            <div className={cellClass} style={{ width: COL_WIDTHS.assigneeIT }}>{t.assigneeIT}</div>
+            <div className={`${cellClass} bg-slate-50`} style={{ width: COL_WIDTHS.start }}>{formatDate(t.originalStart || t.start)}</div>
+            <div className={`${cellClass} bg-slate-50`} style={{ width: COL_WIDTHS.end }}>{formatDate(t.originalEnd || t.end)}</div>
+            <div className={`${cellClass} font-bold text-blue-600 bg-blue-50/30`} style={{ width: COL_WIDTHS.progress }}>{t.progress}%</div>
+            <div className={`${cellClass} font-bold ${statusColors[t.status] || "bg-slate-100"}`} style={{ width: COL_WIDTHS.status }}>{t.status}</div>
           </div>
         );
       })}
