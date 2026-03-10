@@ -1,25 +1,68 @@
-/* 우측 캘린더 영역 배경 */
-.gantt { background-color: #ffffff; }
+/* 우측 캘린더 영역 전체 배경 */
+.gantt {
+  background-color: #ffffff;
+}
 
-/* 캘린더 헤더 스타일 */
-.gantt .calendar-header { fill: #CFD8DC !important; }
-.gantt .calendar-header text { fill: #1E293B !important; font-weight: bold !important; font-family: 'Pretendard', sans-serif !important; }
+/* 🚀 캘린더 헤더(월/일) 스타일 - 좌측 표 헤더(#CFD8DC)와 완벽히 동일하게 맞춤 */
+.gantt .calendar-header {
+  fill: #CFD8DC !important;
+}
+.gantt .calendar-header text {
+  fill: #1E293B !important;
+  font-weight: bold !important;
+  font-family: 'Pretendard', 'Noto Sans KR', sans-serif !important;
+  font-size: 12px !important;
+}
 
-/* 🚀 엑셀처럼 뚜렷한 가로/세로 격자 선 */
-.gantt .grid-tick { stroke: #CBD5E1 !important; stroke-width: 1px !important; }
-.gantt .grid-row { stroke: #CBD5E1 !important; stroke-width: 1px !important; }
-.gantt .grid-row-background { fill: transparent !important; }
+/* 헤더 가로선(위아래 테두리) 색상을 좌측 표 테두리와 맞춤 */
+.gantt .calendar-header path,
+.gantt .calendar-header line {
+  stroke: #94A3B8 !important; /* border-slate-400 */
+  stroke-width: 1px !important;
+}
 
-/* 🚀 간트 차트 막대 테두리 추가로 뚜렷하게 */
+/* 🚀 세로/가로 격자 선 - 좌측 칼럼 셀 테두리(#CBD5E1)와 완벽히 동일하게 맞춤 */
+.gantt .grid-tick {
+  stroke: #CBD5E1 !important; /* border-slate-300 */
+  stroke-width: 1px !important;
+}
+.gantt .grid-row {
+  stroke: #CBD5E1 !important;
+  stroke-width: 1px !important;
+}
+
+/* 짝수 줄 배경색 제거 (전체 통일감 향상) */
+.gantt .grid-row-background {
+  fill: transparent !important;
+}
+
+/* 🚀 간트 차트 막대(Task Bar) 테두리를 추가해 엑셀 스타일로 뚜렷하게 */
 .gantt-task-bar {
   stroke: rgba(0, 0, 0, 0.25) !important;
   stroke-width: 1px !important;
-  transition: transform 0.2s ease;
+  transition: filter 0.2s ease, transform 0.2s ease;
 }
-.gantt-task-bar:hover { cursor: pointer; }
+.gantt-task-bar:hover {
+  cursor: pointer;
+  filter: brightness(0.9);
+}
 
-/* 🚀 오늘 날짜 강조선 진하게 */
-.gantt .today-line { stroke: #EF4444 !important; stroke-width: 2px !important; opacity: 0.8; }
+/* 막대 안의 진행률(Progress) 색상 뚜렷하게 */
+.gantt-task-progress {
+  fill-opacity: 0.95;
+}
 
-/* 텍스트 시인성 */
-.gantt .bar-label { fill: #1E293B !important; font-weight: bold !important; font-family: 'Pretendard', sans-serif !important; text-shadow: 0 0 3px rgba(255,255,255,0.9); }
+/* 막대 오른쪽의 텍스트(작업명) 스타일 */
+.gantt .bar-label {
+  fill: #1E293B !important;
+  font-weight: 600 !important;
+  font-family: 'Pretendard', 'Noto Sans KR', sans-serif !important;
+  text-shadow: 0 0 3px rgba(255,255,255,0.9);
+}
+
+/* '오늘'을 가리키는 세로 선 명확하게 얇은 빨간선으로 변경 */
+.gantt .today-line {
+  stroke: #EF4444 !important;
+  stroke-width: 2px !important;
+  opacity: 0.8;
+}
