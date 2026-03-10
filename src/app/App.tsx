@@ -131,7 +131,6 @@ export default function App() {
   }, [filteredTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
   const ganttTasks = useMemo(() => {
-    // 🚀 진하고 선명한 색상을 기본 배경색으로 지정
     const statusColors: Record<string, string> = {
       완료: "#10B981",     // 진한 Emerald
       진행중: "#3B82F6",   // 진한 Blue
@@ -170,13 +169,7 @@ export default function App() {
         originalStart,
         originalEnd,       
         progress: prog,
-        // 배경색과 진행색을 동일한 진한 색상으로 통일
-        styles: { 
-          backgroundColor: barColor, 
-          backgroundSelectedColor: barColor, 
-          progressColor: barColor, 
-          progressSelectedColor: barColor 
-        },
+        styles: { backgroundColor: barColor, backgroundSelectedColor: barColor, progressColor: barColor, progressSelectedColor: barColor },
       };
     });
   }, [visibleTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
@@ -227,7 +220,6 @@ export default function App() {
         </div>
 
         <div className="flex flex-1 overflow-hidden">
-          
           <div className="shrink-0 bg-white border-r border-slate-300 overflow-hidden transition-all duration-300 ease-in-out" style={{ width: filterPanelOpen ? 220 : 0, minWidth: filterPanelOpen ? 220 : 0 }}>
             <div className="w-[220px] h-full overflow-y-auto">
               <div className="p-2">
@@ -287,16 +279,16 @@ export default function App() {
             </div>
           </div>
 
-          {/* 🚀 전역 스크롤 허용 🚀 */}
-          <div ref={ganttWrapperRef} className="flex-1 overflow-x-auto overflow-y-hidden bg-white shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper">
+          <div ref={ganttWrapperRef} className="flex-1 overflow-x-auto overflow-y-hidden bg-white shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper relative">
             {ganttTasks.length > 0 ? (
               <Gantt 
                 tasks={ganttTasks} 
                 viewMode={viewMode} 
                 listCellWidth={String(TOTAL_WIDTH)} 
                 columnWidth={columnWidth} 
-                rowHeight={46} 
-                headerHeight={56} 
+                /* 🚀 한 화면에 약 20개를 띄우기 위해 높이 대폭 압축 */
+                rowHeight={36} 
+                headerHeight={46} 
                 barCornerRadius={4} 
                 barFill={65} 
                 fontSize="12" 
@@ -304,7 +296,7 @@ export default function App() {
                 TaskListHeader={CustomTaskListHeader} 
                 TaskListTable={CustomTaskListTable} 
                 todayColor="rgba(59, 130, 246, 0.15)" 
-                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 56 - 20 : 500} 
+                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 46 - 20 : 500} 
               />
             ) : (<div className="flex flex-col items-center justify-center h-full text-slate-400 gap-5"><Database className="w-12 h-12 text-slate-300" /><p className="text-[15px] font-bold text-slate-500">데이터를 불러오는 중입니다.</p></div>)}
           </div>
