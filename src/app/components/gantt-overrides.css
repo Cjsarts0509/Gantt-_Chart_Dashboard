@@ -1,15 +1,17 @@
 /* ═══════════════════════════════════════════════════════════
-   🔥 초광대역 스크롤바 & 2025 트렌디 디자인 & 막대 텍스트 수정 🔥
+   🔥 완벽한 가로 스크롤 & 2025 트렌디 디자인 & 막대 텍스트 수정 🔥
    ═══════════════════════════════════════════════════════════ */
 
-/* ── 1. 래퍼 및 영역 재계산 ── */
+/* ── 1. 래퍼 및 스크롤 로직 ── */
 .gantt-wrapper { position: relative; width: 100%; height: 100%; }
-/* 가로 스크롤바 높이가 70px이므로 하단 여백을 충분히 확보 */
-.gantt-wrapper ._CZjuD { padding-bottom: 70px !important; }
+.gantt-wrapper ._CZjuD { padding-bottom: 14px !important; }
 .gantt-wrapper ._19jgW { box-sizing: content-box !important; padding-left: var(--task-list-width, 1165px) !important; }
 
 /* ══════════════════════════════════════════════════════════
-   2. 🚀 가로 스크롤바 컨테이너 (_2k9Ys) - 70px로 더 두껍게
+   2. 🚀 가로 스크롤바 컨테이너 (_2k9Ys = scrollWrapper)
+      라이브러리 원본: height: 1.2rem, scrollbar-width: thin,
+      ::-webkit-scrollbar { width:1.1rem; height:1.1rem }
+      → specificity를 .gantt-wrapper 접두어로 확실히 이김
    ══════════════════════════════════════════════════════════ */
 .gantt-wrapper ._2k9Ys {
   margin-left: 0 !important;
@@ -17,96 +19,111 @@
   position: absolute !important;
   left: 0 !important;
   bottom: 0 !important;
-  height: 24px !important; /* 기존 60px에서 70px로 확대 */
-  background: #F1F5F9 !important;
-  border-top: 1px solid #E2E8F0 !important;
+  height: 14px !important;
+  background: transparent !important;
+  border-top: none !important;
   z-index: 100 !important;
   display: block !important;
   overflow-x: scroll !important;
   overflow-y: hidden !important;
-  /* Firefox */
   scrollbar-width: auto !important;
-  scrollbar-color: #94A3B8 #F1F5F9 !important;
+  scrollbar-color: #94A3B8 transparent !important;
 }
 
-/* Webkit 가로 스크롤바 본체 */
+/* Webkit 네이티브 스크롤바 — 라이브러리의 1.1rem 덮어쓰기 */
 .gantt-wrapper ._2k9Ys::-webkit-scrollbar {
-  height: 24px !important; /* 영역과 동일하게 설정 */
-  background: #F1F5F9 !important;
+  height: 14px !important;
+  width: 14px !important;
+  background: transparent !important;
 }
 .gantt-wrapper ._2k9Ys::-webkit-scrollbar-track {
-  background: #F1F5F9 !important;
+  background: transparent !important;
 }
-/* 핸들(Thumb) - 영역 대비 아주 약간의 여백(6px)만 남기고 꽉 채움 */
 .gantt-wrapper ._2k9Ys::-webkit-scrollbar-thumb {
-  background: #94A3B8 !important;
-  border-radius: 35px !important;
-  border: 24px solid #F1F5F9 !important; /* 여백을 줄여 핸들을 훨씬 두껍게 만듦 */
+  background: rgba(100, 116, 139, 0.5) !important;
+  border-radius: 7px !important;
+  border: 2px solid transparent !important;
   background-clip: padding-box !important;
 }
 .gantt-wrapper ._2k9Ys::-webkit-scrollbar-thumb:hover {
-  background: #64748B !important;
-  border: 24px solid #F1F5F9 !important;
+  background: rgba(71, 85, 105, 0.7) !important;
+  border: 2px solid transparent !important;
+  background-clip: padding-box !important;
+}
+.gantt-wrapper ._2k9Ys::-webkit-scrollbar-corner {
+  background: transparent !important;
 }
 
 /* ══════════════════════════════════════════════════════════
-   3. 🚀 세로 스크롤바 컨테이너 (_1eT-t) - 60px로 더 두껍게
+   3. 🚀 세로 스크롤바 컨테이너 (_1eT-t = VerticalScroll)
+      라이브러리 원본: width: 1rem, scrollbar-width: thin,
+      ::-webkit-scrollbar { width:1.1rem; height:1.1rem }
    ══════════════════════════════════════════════════════════ */
 .gantt-wrapper ._1eT-t {
   position: absolute !important;
   top: 0 !important;
   right: 0 !important;
-  bottom: 70px !important; /* 가로바 높이만큼 띄움 */
-  width: 60px !important; /* 기존 50px에서 60px로 확대 */
+  bottom: 14px !important;
+  width: 14px !important;
   flex-shrink: 0 !important;
   z-index: 90 !important;
-  background: #F1F5F9 !important;
-  border-left: 1px solid #E2E8F0 !important;
+  background: transparent !important;
+  border-left: none !important;
   overflow-y: scroll !important;
   overflow-x: hidden !important;
-  /* Firefox */
   scrollbar-width: auto !important;
-  scrollbar-color: #94A3B8 #F1F5F9 !important;
+  scrollbar-color: #94A3B8 transparent !important;
 }
 
-/* Webkit 세로 스크롤바 본체 */
+/* Webkit 네이티브 스크롤바 */
 .gantt-wrapper ._1eT-t::-webkit-scrollbar {
-  width: 60px !important;
-  background: #F1F5F9 !important;
+  width: 14px !important;
+  height: 14px !important;
+  background: transparent !important;
 }
 .gantt-wrapper ._1eT-t::-webkit-scrollbar-track {
-  background: #F1F5F9 !important;
+  background: transparent !important;
 }
-/* 세로 핸들 - 꽉 차 보이게 조정 */
 .gantt-wrapper ._1eT-t::-webkit-scrollbar-thumb {
-  background: #94A3B8 !important;
-  border-radius: 30px !important;
-  border: 6px solid #F1F5F9 !important;
+  background: rgba(100, 116, 139, 0.5) !important;
+  border-radius: 7px !important;
+  border: 2px solid transparent !important;
   background-clip: padding-box !important;
 }
 .gantt-wrapper ._1eT-t::-webkit-scrollbar-thumb:hover {
-  background: #64748B !important;
-  border: 6px solid #F1F5F9 !important;
+  background: rgba(71, 85, 105, 0.7) !important;
+  border: 2px solid transparent !important;
+  background-clip: padding-box !important;
+}
+.gantt-wrapper ._1eT-t::-webkit-scrollbar-corner {
+  background: transparent !important;
 }
 
-/* ── 좌측 리스트 및 기타 디자인 (기존 유지) ── */
+/* ── 좌측 리스트(고정영역) ── */
 ._3_ygE {
   border-right: 1px solid #E2E8F0 !important;
   box-shadow: 4px 0 16px rgba(0,0,0,0.03) !important;
   z-index: 50 !important;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   2025 디자인 스타일: 가볍고 맑은 미니멀리즘 + 높은 시인성
+   ═══════════════════════════════════════════════════════════ */
+
 ._CZjuD, ._CZjuD *, ._3_ygE, ._3_ygE * { font-family: 'Pretendard', sans-serif !important; }
 
+/* 캘린더 헤더: 밝고 맑은 라이트 그레이(slate-50) */
 ._35nLX { fill: #F8FAFC !important; stroke: #E2E8F0 !important; stroke-width: 1px !important; }
 ._2q1Kt { fill: #334155 !important; font-size: 12.5px !important; font-weight: 800 !important; letter-spacing: -0.02em; }
 ._9w8d5 { fill: #64748B !important; font-size: 11px !important; font-weight: 700 !important; }
 ._1rLuZ { stroke: #E2E8F0 !important; }
 
+/* 그리드 바디 & 격자 선 (답답한 선을 날림) */
 ._2dZTy { fill: #FFFFFF !important; transition: fill 0.2s ease-in-out !important; pointer-events: all !important; }
 ._2dZTy:hover { fill: #EEF2FF !important; }
 ._3rUKi, ._RuwuK { stroke: #F1F5F9 !important; stroke-width: 1px !important; }
 
+/* 오늘(Today) 표시: 트렌디한 인디고 톤 점선 */
 ._RRr12 { fill: rgba(99, 102, 241, 0.04) !important; }
 .gantt-wrapper svg line[class*="todayLine"] {
   stroke: #6366F1 !important; 
@@ -115,17 +132,17 @@
   opacity: 0.8;
 }
 
-/* 막대 텍스트 스타일 및 자간 조정 */
+/* ── 🚀 핵심: 간트 막대 & 텍스트 효과 ── */
+
+/* 텍스트: 완전한 흰색 + 어두운 그림자 처리로 스카이블루 배경에서 가독성 폭발 */
 ._2B2zv text:not(._2q1Kt):not(._9w8d5) {
   fill: #FFFFFF !important; 
+  font-weight: 900 !important; 
+  font-size: 12px !important;
   text-shadow: 0px 1px 4px rgba(0, 0, 0, 0.8) !important; 
-  letter-spacing: 0.02em !important;
-  transition: x 0.05s ease-out !important; 
 }
 
-._2B2zv text tspan.deliverable-text { font-weight: 900 !important; font-size: 12px !important; }
-._2B2zv text tspan.task-text { font-weight: 800 !important; font-size: 10px !important; }
-
+/* 막대 디자인 둥글게 + 부드러운 그림자(Soft Layer) */
 rect[class*="barBackground"], rect[class*="barProgress"] { rx: 6px !important; ry: 6px !important; }
 rect[class*="barBackground"] { 
   stroke: rgba(0, 0, 0, 0.05) !important; 
@@ -133,7 +150,10 @@ rect[class*="barBackground"] {
   transition: all 0.2s ease !important; 
   filter: drop-shadow(0 2px 3px rgba(0,0,0,0.06)) !important;
 }
-rect[class*="barBackground"]:hover {
+
+/* 막대 호버 액션 */
+rect[class*="barBackground"]:hover, rect[class*="barProgress"]:hover { 
+  cursor: pointer; 
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.08)) brightness(0.95) saturate(1.2) !important; 
   transform: translateY(-1px);
 }
