@@ -131,7 +131,7 @@ export default function App() {
   }, [filteredTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
   const ganttTasks = useMemo(() => {
-    // 🚀 요청사항 반영: 마우스 오버 시 나오던 진하고 선명한 색상을 기본으로 변경
+    // 🚀 진하고 선명한 색상을 기본 배경색으로 지정
     const statusColors: Record<string, string> = {
       완료: "#10B981",     // 진한 Emerald
       진행중: "#3B82F6",   // 진한 Blue
@@ -170,7 +170,7 @@ export default function App() {
         originalStart,
         originalEnd,       
         progress: prog,
-        // 배경과 진행색을 통일하여 진한 색상을 고정
+        // 배경색과 진행색을 동일한 진한 색상으로 통일
         styles: { 
           backgroundColor: barColor, 
           backgroundSelectedColor: barColor, 
@@ -287,6 +287,7 @@ export default function App() {
             </div>
           </div>
 
+          {/* 🚀 전역 스크롤 허용 🚀 */}
           <div ref={ganttWrapperRef} className="flex-1 overflow-x-auto overflow-y-hidden bg-white shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper">
             {ganttTasks.length > 0 ? (
               <Gantt 
