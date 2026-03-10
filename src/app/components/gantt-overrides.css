@@ -24,7 +24,9 @@
 }
 
 ._2k9Ys::-webkit-scrollbar { height: 28px !important; }
-._2k9Ys::-webkit-scrollbar-track { background: #F1F5F9 !important; }
+._2k9Ys::-webkit-scrollbar-track { background: #F1F5F9 !important;
+  height: 28px !important;
+ }
 
 /* border: 2px를 주어 트랙(24px)보다 핸들이 상하좌우 2px씩 작게(얇게) 보이게 함 */
 ._2k9Ys::-webkit-scrollbar-thumb {
