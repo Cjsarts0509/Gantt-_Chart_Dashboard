@@ -35,8 +35,19 @@ export default function App() {
   const isStandaloneDashboard = new URLSearchParams(window.location.search).get('view') === 'dashboard';
 
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}data.json`)
-      .then(res => res.json())
+    // 🚀 데이터 독립 구조: 1순위로 'data' 브랜치에 있는 파일을 호출 (캐시 방지용 타임스탬프)
+    const remoteDataUrl = `https://raw.githubusercontent.com/cjsarts0509/gantt-_chart_dashboard/data/data.json?t=${new Date().getTime()}`;
+    const localDataUrl = `${import.meta.env.BASE_URL}data.json`;
+
+    fetch(remoteDataUrl)
+      .then(res => {
+        if (!res.ok) throw new Error('Remote data branch not found');
+        return res.json();
+      })
+      .catch(err => {
+        console.warn("외부 data 브랜치 로드 실패. 로컬 폴더의 data.json을 불러옵니다.", err);
+        return fetch(localDataUrl).then(res => res.json());
+      })
       .then(data => {
         if (!Array.isArray(data)) return;
         const parsedTasks = data.map((t: any, index: number) => ({
@@ -46,7 +57,7 @@ export default function App() {
         setTasks(parsedTasks);
         setExpandedAreas(new Set(parsedTasks.map((t: any) => t.area).filter(Boolean)));
       })
-      .catch(err => console.log("데이터 로드 실패:", err));
+      .catch(err => console.log("데이터 최종 로드 실패:", err));
   }, []);
 
   const toggleAreaColumn = useCallback(() => setAreaCollapsed(p => !p), []);
@@ -131,9 +142,9 @@ export default function App() {
   }, [filteredTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
   const ganttTasks = useMemo(() => {
-    // 🚀 상태값과의 연관성을 완전히 끊고, 모든 간트바를 산뜻하고 시원한 푸른 계열로 고정 통일
-    const barBgColor = "#60A5FA";   // 쨍하고 시원한 하늘색 (배경 막대)
-    const barProgColor = "#2563EB"; // 선명한 파란색 (진행률 막대)
+    // 🚀 간트바 색상 스카이블루(Sky Blue)로 고정 및 통일
+    const barBgColor = "#38BDF8";   // 배경 막대: 밝은 스카이블루 (Tailwind sky-400)
+    const barProgColor = "#0284C7"; // 진행률 막대: 선명한 딥 스카이블루 (Tailwind sky-600)
 
     const BASE_START_DATE = new Date("2026-03-01T00:00:00");
 
@@ -164,7 +175,6 @@ export default function App() {
         originalStart,
         originalEnd,       
         progress: prog,
-        // 상태와 무관하게 무조건 시원한 푸른색 적용
         styles: { 
           backgroundColor: barBgColor, 
           backgroundSelectedColor: barBgColor, 
@@ -187,7 +197,6 @@ export default function App() {
     <GanttGroupContext.Provider value={groupContextValue}>
       <div className="w-screen h-screen bg-[#F8FAFC] flex flex-col overflow-hidden" style={{ fontFamily: "'Pretendard', sans-serif" }}>
         
-        {/* 상단 헤더 */}
         <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-300 shrink-0 shadow-sm z-10">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-md"><BarChart2 className="w-5 h-5 text-white" /></div>

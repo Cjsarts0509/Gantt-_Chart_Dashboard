@@ -3,12 +3,21 @@ import { Task } from "gantt-task-react";
 import { GanttGroupContext } from "./GanttGroupContext";
 import { ChevronRight, ChevronDown } from "lucide-react";
 
-// 🚀 넓이 로직 절대 유지 (스크롤 오작동 방지)
+// 🚀 담당자(기획), 담당자(IT) 칼럼 넓이 110px로 확장 (총 넓이 1165px)
 const COL_WIDTHS = {
-  area: 65, phase: 85, activity: 160, deliverable: 140, 
-  taskName: 200, assigneePlan: 105, assigneeIT: 105, 
-  start: 80, end: 80, progress: 60, status: 75,
+  area: 65, 
+  phase: 85, 
+  activity: 160, 
+  deliverable: 140, 
+  taskName: 200,      
+  assigneePlan: 110,  
+  assigneeIT: 110,    
+  start: 80, 
+  end: 80, 
+  progress: 60,
+  status: 75,
 };
+
 export const TOTAL_WIDTH = Object.values(COL_WIDTHS).reduce((a, b) => a + b, 0);
 
 const formatDate = (date: Date | string | number) => {
@@ -21,42 +30,39 @@ const formatDate = (date: Date | string | number) => {
   return `${y}.${m}.${day}`;
 };
 
-// 🎨 디자인 개선: 촌스러운 원색을 빼고, 맑고 투명한 파스텔 톤으로 시인성 개선
 const getDynamicColor = (text: string, type: 'area' | 'phase') => {
-  if (!text) return { bg: "transparent", text: "#334155" };
+  if (!text) return { bg: "transparent", text: "#333" };
   const palettes = type === 'area' ? 
-    [{ bg: "#EFF6FF", text: "#3B82F6" }, { bg: "#F5F3FF", text: "#8B5CF6" }, { bg: "#FFF7ED", text: "#F97316" }] :
-    [{ bg: "#F0FDF4", text: "#10B981" }, { bg: "#FEFCE8", text: "#EAB308" }, { bg: "#ECFEFF", text: "#06B6D4" }];
+    [{ bg: "#E3F2FD", text: "#1565C0" }, { bg: "#F3E5F5", text: "#6A1B9A" }, { bg: "#FFF3E0", text: "#E65100" }] :
+    [{ bg: "#E8F5E9", text: "#2E7D32" }, { bg: "#FFF8E1", text: "#F57F17" }, { bg: "#E0F7FA", text: "#006064" }];
   const hash = text.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return palettes[hash % palettes.length];
 };
 
-// 🎨 디자인 개선: 2025 트렌드인 Soft & Vibrant Pill 태그 적용
 const STATUS_TAG_CLASSES: Record<string, string> = {
-  완료: "bg-emerald-50 text-emerald-600 border-emerald-200/50",
-  테스트중: "bg-indigo-50 text-indigo-600 border-indigo-200/50",
-  진행중: "bg-blue-50 text-blue-600 border-blue-200/50",
-  대기: "bg-slate-50 text-slate-500 border-slate-200/50",
-  지연: "bg-orange-50 text-orange-600 border-orange-200/50",
-  이슈발생: "bg-rose-50 text-rose-600 border-rose-200/50",
-  보류: "bg-amber-50 text-amber-600 border-amber-200/50",
-  취소: "bg-slate-100 text-slate-400 border-slate-200/50",
+  완료: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  테스트중: "bg-indigo-100 text-indigo-800 border-indigo-200",
+  진행중: "bg-blue-100 text-blue-800 border-blue-200",
+  대기: "bg-slate-100 text-slate-600 border-slate-200",
+  지연: "bg-orange-100 text-orange-800 border-orange-200",
+  이슈발생: "bg-rose-100 text-rose-800 border-rose-200",
+  보류: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  취소: "bg-slate-200 text-slate-500 border-slate-300",
 };
 
 export const CustomTaskListHeader: React.FC<any> = ({ headerHeight, rowWidth, fontFamily, fontSize }) => {
   const ctx = useContext(GanttGroupContext);
   if (!ctx) return null;
   
-  // 🎨 디자인 개선: 무거운 회색(CFD8DC)을 버리고 미니멀한 라이트 그레이(slate-50)로 변경
-  const headerClass = "flex items-center justify-center px-1 text-[12.5px] font-bold text-slate-500 border-r border-slate-200 bg-slate-50 text-center tracking-tight";
-  const btnClass = "ml-1 p-0.5 rounded text-slate-400 hover:bg-white hover:text-indigo-600 hover:shadow-sm transition-all flex-shrink-0";
+  const headerClass = "flex items-center justify-center px-1 font-bold text-slate-800 border-r border-slate-300 bg-[#CFD8DC] text-center";
+  const btnClass = "ml-1 p-0.5 rounded text-slate-500 hover:bg-slate-500 hover:text-white transition-colors flex-shrink-0";
   
   return (
-    <div className="flex border-b border-slate-200 relative z-10" style={{ height: headerHeight, width: rowWidth, fontFamily, fontSize }}>
-      <div className={headerClass} style={{ width: COL_WIDTHS.area }}>구분 <button onClick={ctx.toggleAreaColumn} className={btnClass}>{ctx.areaCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}</button></div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.phase }}>단계 <button onClick={ctx.togglePhaseColumn} className={btnClass}>{ctx.phaseCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}</button></div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.activity }}>활동 <button onClick={ctx.toggleActivityColumn} className={btnClass}>{ctx.activityCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}</button></div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.deliverable }}>산출물 <button onClick={ctx.toggleDeliverableColumn} className={btnClass}>{ctx.deliverableCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}</button></div>
+    <div className="flex border-y border-slate-400 text-[12px] relative z-10" style={{ height: headerHeight, width: rowWidth, fontFamily, fontSize }}>
+      <div className={headerClass} style={{ width: COL_WIDTHS.area }}>구분 <button onClick={ctx.toggleAreaColumn} className={btnClass}>{ctx.areaCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button></div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.phase }}>단계 <button onClick={ctx.togglePhaseColumn} className={btnClass}>{ctx.phaseCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button></div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.activity }}>활동 <button onClick={ctx.toggleActivityColumn} className={btnClass}>{ctx.activityCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button></div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.deliverable }}>산출물 <button onClick={ctx.toggleDeliverableColumn} className={btnClass}>{ctx.deliverableCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button></div>
       <div className={headerClass} style={{ width: COL_WIDTHS.taskName }}>작업</div>
       <div className={headerClass} style={{ width: COL_WIDTHS.assigneePlan }}>담당자(기획)</div>
       <div className={headerClass} style={{ width: COL_WIDTHS.assigneeIT }}>담당자(IT)</div>
@@ -78,25 +84,24 @@ export const CustomTaskListTable: React.FC<any> = ({ rowHeight, rowWidth, fontFa
         const areaColor = getDynamicColor(t.area, 'area');
         const phaseColor = getDynamicColor(t.phase, 'phase');
         const isSelected = t.id === selectedTaskId;
-        // 🎨 디자인 개선: 폰트 컬러를 다크 그레이(slate-700)로 부드럽게 조정, 경계선 얇게
-        const cellClass = "flex items-center border-r border-slate-100 last:border-r-0 truncate text-[12px] text-slate-700 h-full justify-center";
+        
+        const cellClass = "flex items-center border-r border-slate-300 last:border-r-0 truncate text-[12px] text-slate-800 h-full justify-center";
         
         return (
-          // 🎨 디자인 개선: 호버 시 세련된 아주 연한 그레이/인디고 배경
-          <div key={t.id} className={`flex border-b border-slate-100 transition-colors ${isSelected ? "bg-indigo-50/50" : "hover:bg-slate-50"}`} style={{ height: rowHeight, width: rowWidth, fontFamily, fontSize }}>
-            <div className={cellClass} style={{ width: COL_WIDTHS.area, backgroundColor: areaColor.bg, color: areaColor.text, fontWeight: '700' }}>{t.area}</div>
-            <div className={cellClass} style={{ width: COL_WIDTHS.phase, backgroundColor: phaseColor.bg, color: phaseColor.text, fontWeight: '700' }}>{t.phase}</div>
-            <div className={`${cellClass} px-3 justify-start`} style={{ width: COL_WIDTHS.activity }}>{t.activity}</div>
-            <div className={`${cellClass} px-3 justify-start`} style={{ width: COL_WIDTHS.deliverable }}>{t.deliverable}</div>
-            <div className={`${cellClass} px-3 justify-start font-semibold text-slate-800`} style={{ width: COL_WIDTHS.taskName }}>{t.taskName}</div>
+          <div key={t.id} className={`flex border-b border-slate-300 transition-colors ${isSelected ? "bg-indigo-50" : "hover:bg-blue-50/70"}`} style={{ height: rowHeight, width: rowWidth, fontFamily, fontSize }}>
+            <div className={cellClass} style={{ width: COL_WIDTHS.area, backgroundColor: areaColor.bg, color: areaColor.text, fontWeight: 'bold' }}>{t.area}</div>
+            <div className={cellClass} style={{ width: COL_WIDTHS.phase, backgroundColor: phaseColor.bg, color: phaseColor.text, fontWeight: 'bold' }}>{t.phase}</div>
+            <div className={`${cellClass} px-2 justify-start`} style={{ width: COL_WIDTHS.activity }}>{t.activity}</div>
+            <div className={`${cellClass} px-2 justify-start`} style={{ width: COL_WIDTHS.deliverable }}>{t.deliverable}</div>
+            <div className={`${cellClass} px-2 justify-start font-bold`} style={{ width: COL_WIDTHS.taskName }}>{t.taskName}</div>
             <div className={cellClass} style={{ width: COL_WIDTHS.assigneePlan }}>{t.assigneePlan}</div>
             <div className={cellClass} style={{ width: COL_WIDTHS.assigneeIT }}>{t.assigneeIT}</div>
-            <div className={`${cellClass} font-medium text-slate-500`} style={{ width: COL_WIDTHS.start }}>{formatDate(t.originalStart || t.start)}</div>
-            <div className={`${cellClass} font-medium text-slate-500`} style={{ width: COL_WIDTHS.end }}>{formatDate(t.originalEnd || t.end)}</div>
-            <div className={`${cellClass} font-bold text-indigo-500`} style={{ width: COL_WIDTHS.progress }}>{t.progress}%</div>
+            <div className={`${cellClass} bg-slate-50`} style={{ width: COL_WIDTHS.start }}>{formatDate(t.originalStart || t.start)}</div>
+            <div className={`${cellClass} bg-slate-50`} style={{ width: COL_WIDTHS.end }}>{formatDate(t.originalEnd || t.end)}</div>
+            <div className={`${cellClass} font-bold text-blue-600 bg-blue-50/30`} style={{ width: COL_WIDTHS.progress }}>{t.progress}%</div>
             
             <div className={cellClass} style={{ width: COL_WIDTHS.status }}>
-              <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${STATUS_TAG_CLASSES[t.status] || STATUS_TAG_CLASSES["대기"]}`}>
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${STATUS_TAG_CLASSES[t.status] || STATUS_TAG_CLASSES["대기"]}`}>
                 {t.status}
               </span>
             </div>
