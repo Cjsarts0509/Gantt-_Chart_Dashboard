@@ -5,7 +5,7 @@ import { WBSTask } from "./mockData";
 interface Props {
   tasks: WBSTask[];
   onClose?: () => void;
-  isStandalone?: boolean; // 🚀 쉐어포인트용 단독 화면 여부
+  isStandalone?: boolean; 
 }
 
 export default function DashboardPopup({ tasks, onClose, isStandalone = false }: Props) {
@@ -21,7 +21,6 @@ export default function DashboardPopup({ tasks, onClose, isStandalone = false }:
     return acc;
   }, {} as Record<string, { total: number; completed: number }>);
 
-  // 🚀 단독 화면(쉐어포인트)일 경우 꽉 찬 화면 렌더링
   if (isStandalone) {
     return (
       <div className="w-screen h-screen bg-white flex flex-col overflow-hidden font-sans">
@@ -34,10 +33,10 @@ export default function DashboardPopup({ tasks, onClose, isStandalone = false }:
     );
   }
 
-  // 기본 모달 팝업 렌더링
+  // 🚀 모달의 세로 길이를 대폭 확장 (h-[850px], max-h-[95vh])하여 스크롤 발생 방지
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-2xl w-[800px] h-[600px] flex flex-col overflow-hidden relative border border-slate-200">
+      <div className="bg-white rounded-xl shadow-2xl w-[900px] h-[850px] max-h-[95vh] flex flex-col overflow-hidden relative border border-slate-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50 shrink-0">
           <div className="flex items-center gap-2">
             <BarChart className="w-5 h-5 text-indigo-600" />
@@ -53,7 +52,6 @@ export default function DashboardPopup({ tasks, onClose, isStandalone = false }:
   );
 }
 
-// 🚀 내부 콘텐츠 (중복 방지)
 function DashboardContent({ progressRate, totalTasks, completedTasks, areaStats }: any) {
   return (
     <div className="flex-1 p-6 bg-[#F8FAFC] flex flex-col gap-6 overflow-y-auto">
