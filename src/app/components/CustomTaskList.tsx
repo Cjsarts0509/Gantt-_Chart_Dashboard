@@ -3,17 +3,18 @@ import { Task } from "gantt-task-react";
 import { GanttGroupContext } from "./GanttGroupContext";
 import { ChevronRight, ChevronDown } from "lucide-react";
 
-// 🚀 칼럼 넓이 조정 (담당자 칼럼 5% 확장)
+// 🚀 진행률(progress) 칼럼 60px 추가
 const COL_WIDTHS = {
   area: 65, 
   phase: 85, 
   activity: 160, 
   deliverable: 140, 
   taskName: 200,      
-  assigneePlan: 105,  // 기존 100 -> 105 (+5%)
-  assigneeIT: 105,    // 기존 100 -> 105 (+5%)
+  assigneePlan: 105,  
+  assigneeIT: 105,    
   start: 80, 
   end: 80, 
+  progress: 60, // 신규 추가
   status: 75,
 };
 
@@ -55,6 +56,7 @@ export const CustomTaskListHeader: React.FC<any> = ({ headerHeight, rowWidth, fo
       <div className={headerClass} style={{ width: COL_WIDTHS.assigneeIT }}>담당자(IT)</div>
       <div className={headerClass} style={{ width: COL_WIDTHS.start }}>시작일</div>
       <div className={headerClass} style={{ width: COL_WIDTHS.end }}>종료일</div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.progress }}>진행률</div>
       <div className={headerClass} style={{ width: COL_WIDTHS.status }}>상태</div>
     </div>
   );
@@ -81,6 +83,7 @@ export const CustomTaskListTable: React.FC<any> = ({ rowHeight, rowWidth, fontFa
             <div className={cellClass} style={{ width: COL_WIDTHS.assigneeIT }}>{t.assigneeIT}</div>
             <div className={`${cellClass} bg-slate-50`} style={{ width: COL_WIDTHS.start }}>{formatDate(t.originalStart || t.start)}</div>
             <div className={`${cellClass} bg-slate-50`} style={{ width: COL_WIDTHS.end }}>{formatDate(t.originalEnd || t.end)}</div>
+            <div className={`${cellClass} font-bold text-blue-600 bg-blue-50/30`} style={{ width: COL_WIDTHS.progress }}>{t.progress}%</div>
             <div className={`${cellClass} font-bold ${statusColors[t.status] || "bg-slate-100"}`} style={{ width: COL_WIDTHS.status }}>{t.status}</div>
           </div>
         );
