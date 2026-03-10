@@ -3,9 +3,18 @@ import { Task } from "gantt-task-react";
 import { GanttGroupContext } from "./GanttGroupContext";
 import { ChevronRight, ChevronDown } from "lucide-react";
 
+// 🚀 칼럼 넓이 크게 조정 & 담당자 칼럼 폭 확보
 const COL_WIDTHS = {
-  area: 65, phase: 85, activity: 110, deliverable: 140, taskName: 170,
-  assigneePlan: 75, assigneeIT: 75, start: 80, end: 80, status: 75,
+  area: 65, 
+  phase: 85, 
+  activity: 140,      // 기존 110 -> 140
+  deliverable: 140, 
+  taskName: 200,      // 기존 170 -> 200
+  assigneePlan: 90,   // 기존 75 -> 90 (텍스트 길이에 맞춤)
+  assigneeIT: 90,     // 기존 75 -> 90
+  start: 80, 
+  end: 80, 
+  status: 75,
 };
 
 export const TOTAL_WIDTH = Object.values(COL_WIDTHS).reduce((a, b) => a + b, 0);
@@ -20,45 +29,42 @@ const formatDate = (date: Date | string | number) => {
   return `${y}.${m}.${day}`;
 };
 
-// 🚀 구분(area)과 단계(phase)의 색상 팔레트를 분리해 서로 안 겹치도록 보장
 const getDynamicColor = (text: string, type: 'area' | 'phase') => {
   if (!text) return { bg: "transparent", text: "#333" };
-  
-  // 구분: 파랑, 보라, 핑크, 딥인디고 등 차가운 느낌 위주의 팔레트
-  const areaPalettes = [
-    { bg: "#E3F2FD", text: "#1565C0" }, // Blue
-    { bg: "#F3E5F5", text: "#6A1B9A" }, // Purple
-    { bg: "#FCE4EC", text: "#AD1457" }, // Pink
-    { bg: "#E8EAF6", text: "#283593" }, // Indigo
-  ];
-  
-  // 단계: 초록, 주황, 청록, 노랑, 갈색 등 따뜻/어스 느낌 위주의 팔레트
-  const phasePalettes = [
-    { bg: "#E8F5E9", text: "#2E7D32" }, // Green
-    { bg: "#FFF3E0", text: "#E65100" }, // Orange
-    { bg: "#E0F2F1", text: "#00695C" }, // Teal
-    { bg: "#FFF8E1", text: "#F57F17" }, // Yellow/Amber
-    { bg: "#EFEBE9", text: "#4E342E" }, // Brown
-  ];
-  
+  const palettes = type === 'area' ? 
+    [{ bg: "#E3F2FD", text: "#1565C0" }, { bg: "#F3E5F5", text: "#6A1B9A" }, { bg: "#FFF3E0", text: "#E65100" }] :
+    [{ bg: "#E8F5E9", text: "#2E7D32" }, { bg: "#FFF8E1", text: "#F57F17" }, { bg: "#E0F7FA", text: "#006064" }];
   const hash = text.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const palettes = type === 'area' ? areaPalettes : phasePalettes;
   return palettes[hash % palettes.length];
 };
 
 export const CustomTaskListHeader: React.FC<any> = ({ headerHeight, rowWidth, fontFamily, fontSize }) => {
+  const ctx = useContext(GanttGroupContext);
+  if (!ctx) return null;
   const headerClass = "flex items-center justify-center px-1 font-bold text-slate-800 border-r border-slate-300 bg-[#CFD8DC] text-center";
+  const btnClass = "ml-1 p-0.5 rounded text-slate-500 hover:bg-slate-500 hover:text-white transition-colors flex-shrink-0";
+  
   return (
     <div className="flex border-y border-slate-400 text-[12px] relative z-10" style={{ height: headerHeight, width: rowWidth, fontFamily, fontSize }}>
-      <div className={headerClass} style={{ width: COL_WIDTHS.area }}>구분</div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.phase }}>단계</div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.activity }}>활동</div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.deliverable }}>산출물</div>
+      {/* 🚀 잃어버렸던 필터 버튼(Chevron) 완벽 복구 */}
+      <div className={headerClass} style={{ width: COL_WIDTHS.area }}>
+        구분 <button onClick={ctx.toggleAreaColumn} className={btnClass}>{ctx.areaCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button>
+      </div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.phase }}>
+        단계 <button onClick={ctx.togglePhaseColumn} className={btnClass}>{ctx.phaseCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button>
+      </div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.activity }}>
+        활동 <button onClick={ctx.toggleActivityColumn} className={btnClass}>{ctx.activityCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button>
+      </div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.deliverable }}>
+        산출물 <button onClick={ctx.toggleDeliverableColumn} className={btnClass}>{ctx.deliverableCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button>
+      </div>
       <div className={headerClass} style={{ width: COL_WIDTHS.taskName }}>작업</div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.assigneePlan }}>기획</div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.assigneeIT }}>IT</div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.start }}>시작</div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.end }}>종료</div>
+      {/* 🚀 헤더명 요구사항 반영 */}
+      <div className={headerClass} style={{ width: COL_WIDTHS.assigneePlan }}>담당자(기획)</div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.assigneeIT }}>담당자(IT)</div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.start }}>시작일</div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.end }}>종료일</div>
       <div className={headerClass} style={{ width: COL_WIDTHS.status }}>상태</div>
     </div>
   );
