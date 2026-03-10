@@ -17,7 +17,7 @@
   position: absolute !important;
   left: 0 !important;
   bottom: 0 !important;
-  height: 70px !important; /* 기존 60px에서 70px로 확대 */
+  height: 24px !important; /* 기존 60px에서 70px로 확대 */
   background: #F1F5F9 !important;
   border-top: 1px solid #E2E8F0 !important;
   z-index: 100 !important;
@@ -31,7 +31,7 @@
 
 /* Webkit 가로 스크롤바 본체 */
 .gantt-wrapper ._2k9Ys::-webkit-scrollbar {
-  height: 70px !important; /* 영역과 동일하게 설정 */
+  height: 24px !important; /* 영역과 동일하게 설정 */
   background: #F1F5F9 !important;
 }
 .gantt-wrapper ._2k9Ys::-webkit-scrollbar-track {
@@ -41,12 +41,12 @@
 .gantt-wrapper ._2k9Ys::-webkit-scrollbar-thumb {
   background: #94A3B8 !important;
   border-radius: 35px !important;
-  border: 6px solid #F1F5F9 !important; /* 여백을 줄여 핸들을 훨씬 두껍게 만듦 */
+  border: 24px solid #F1F5F9 !important; /* 여백을 줄여 핸들을 훨씬 두껍게 만듦 */
   background-clip: padding-box !important;
 }
 .gantt-wrapper ._2k9Ys::-webkit-scrollbar-thumb:hover {
   background: #64748B !important;
-  border: 6px solid #F1F5F9 !important;
+  border: 24px solid #F1F5F9 !important;
 }
 
 /* ══════════════════════════════════════════════════════════
