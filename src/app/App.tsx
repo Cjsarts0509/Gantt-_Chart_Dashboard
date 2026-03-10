@@ -131,16 +131,15 @@ export default function App() {
   }, [filteredTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
   const ganttTasks = useMemo(() => {
-    // 🚀 더 선명하고 가독성 좋은 색상(Tailwind 400/600 계열)으로 교체
     const statusColors: Record<string, { bg: string, prog: string }> = {
-      완료: { bg: "#34D399", prog: "#059669" },     // Emerald
-      테스트중: { bg: "#818CF8", prog: "#4F46E5" }, // Indigo
-      진행중: { bg: "#60A5FA", prog: "#2563EB" },   // Blue
-      대기: { bg: "#CBD5E1", prog: "#64748B" },     // Slate
-      지연: { bg: "#FB7185", prog: "#E11D48" },     // Rose
-      이슈발생: { bg: "#F87171", prog: "#DC2626" }, // Red
-      보류: { bg: "#FBBF24", prog: "#D97706" },     // Amber
-      취소: { bg: "#94A3B8", prog: "#475569" },     // Slate
+      완료: { bg: "#34D399", prog: "#059669" },     
+      테스트중: { bg: "#818CF8", prog: "#4F46E5" }, 
+      진행중: { bg: "#60A5FA", prog: "#2563EB" },   
+      대기: { bg: "#CBD5E1", prog: "#64748B" },     
+      지연: { bg: "#FB7185", prog: "#E11D48" },     
+      이슈발생: { bg: "#F87171", prog: "#DC2626" }, 
+      보류: { bg: "#FBBF24", prog: "#D97706" },     
+      취소: { bg: "#94A3B8", prog: "#475569" },     
     };
 
     const BASE_START_DATE = new Date("2026-03-01T00:00:00");
@@ -229,7 +228,6 @@ export default function App() {
           <div className="flex items-center gap-3 ml-auto text-[11px] font-bold text-slate-500"><span>전체 <span className="text-slate-800">{tasks.length}</span></span><span className="text-slate-300">|</span><span>표시 <span className="text-blue-600">{visibleTasks.length}</span></span></div>
         </div>
 
-        {/* 🚀 min-w-0 를 추가하여 Flex 내부에서 스크롤 컨텍스트가 꼬이는 것을 방지 */}
         <div className="flex flex-1 overflow-hidden min-w-0">
           <div className="shrink-0 bg-white border-r border-slate-300 overflow-hidden transition-all duration-300 ease-in-out" style={{ width: filterPanelOpen ? 220 : 0, minWidth: filterPanelOpen ? 220 : 0 }}>
             <div className="w-[220px] h-full overflow-y-auto">
@@ -290,7 +288,8 @@ export default function App() {
             </div>
           </div>
 
-          <div ref={ganttWrapperRef} className="flex-1 overflow-hidden bg-white shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper relative min-w-0">
+          {/* 🚀 1. 가장 중요한 래퍼 영역! 여기서 전체 화면(좌+우) 가로 스크롤을 통제합니다. */}
+          <div ref={ganttWrapperRef} className="flex-1 overflow-x-auto overflow-y-hidden bg-white shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper relative">
             {ganttTasks.length > 0 ? (
               <Gantt 
                 tasks={ganttTasks} 
