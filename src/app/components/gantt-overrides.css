@@ -1,15 +1,14 @@
 /* ═══════════════════════════════════════════════════════════
-   🔥 스크롤바 슬림화 & 데이터 영역 극대화 최적화 🔥
+   🔥 스크롤바 정밀 최적화 (Thumb < Track 입체감 적용) 🔥
    ═══════════════════════════════════════════════════════════ */
 
 /* ── 1. 래퍼 및 영역 재계산 ── */
 .gantt-wrapper { position: relative; width: 100%; height: 100%; }
-/* 하단 스크롤바가 차지하는 높이를 24px로 줄여 본문 커팅 방지 */
 ._CZjuD { padding-bottom: 24px !important; } 
 ._19jgW { box-sizing: content-box !important; padding-left: var(--task-list-width, 1165px) !important; }
 
 /* ══════════════════════════════════════════════════════════
-   2. 🚀 가로 스크롤바 — 슬림 디자인 (24px)
+   2. 🚀 가로 스크롤바 — 트랙보다 약간 얇은 핸들 디자인
    ══════════════════════════════════════════════════════════ */
 ._2k9Ys {
   margin-left: 0 !important;
@@ -21,23 +20,23 @@
   background: #F1F5F9 !important;
   border-top: 1px solid #E2E8F0 !important;
   z-index: 100 !important;
-  display: block !important;
+  display: block;
 }
 
 ._2k9Ys::-webkit-scrollbar { height: 24px !important; }
 ._2k9Ys::-webkit-scrollbar-track { background: #F1F5F9 !important; }
 
-/* 핸들(Thumb) 여백을 1px로 줄여서 얇은 바 안에서도 클릭 영역 확보 */
+/* border: 2px를 주어 트랙(24px)보다 핸들이 상하좌우 2px씩 작게(얇게) 보이게 함 */
 ._2k9Ys::-webkit-scrollbar-thumb {
   background: #94A3B8 !important;
   border-radius: 12px !important;
-  border: 1px solid #F1F5F9 !important; 
+  border: 2px solid #F1F5F9 !important; 
   background-clip: padding-box !important;
 }
 ._2k9Ys::-webkit-scrollbar-thumb:hover { background: #64748B !important; }
 
 /* ══════════════════════════════════════════════════════════
-   3. 🚀 세로 스크롤바 — 슬림 디자인 (24px)
+   3. 🚀 세로 스크롤바 — 트랙보다 약간 얇은 핸들 디자인
    ══════════════════════════════════════════════════════════ */
 ._1eT-t {
   position: absolute !important;
@@ -55,7 +54,7 @@
 ._1eT-t::-webkit-scrollbar-thumb {
   background: #94A3B8 !important;
   border-radius: 12px !important;
-  border: 1px solid #F1F5F9 !important; 
+  border: 2px solid #F1F5F9 !important; 
   background-clip: padding-box !important;
 }
 
