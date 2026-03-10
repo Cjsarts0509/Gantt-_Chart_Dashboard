@@ -131,15 +131,15 @@ export default function App() {
   }, [filteredTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
   const ganttTasks = useMemo(() => {
-    // 🚀 수정된 부분: 좌측 리스트 톤과 어울리는 파스텔 톤 색상 (배경 연하게, 진행률 진하게)
-    const statusColors: Record<string, { bg: string, prog: string }> = {
-      완료: { bg: "#6EE7B7", prog: "#10B981" },     // Emerald 300 / 500
-      진행중: { bg: "#93C5FD", prog: "#3B82F6" },   // Blue 300 / 500
-      대기: { bg: "#E2E8F0", prog: "#94A3B8" },     // Slate 200 / 400
-      지연: { bg: "#FDA4AF", prog: "#F43F5E" },     // Rose 300 / 500
-      이슈발생: { bg: "#FCA5A5", prog: "#EF4444" }, // Red 300 / 500
-      보류: { bg: "#FCD34D", prog: "#F59E0B" },     // Amber 300 / 500
-      취소: { bg: "#CBD5E1", prog: "#64748B" },     // Slate 300 / 500
+    // 🚀 요청사항 반영: 마우스 오버 시 나오던 진하고 선명한 색상을 기본으로 변경
+    const statusColors: Record<string, string> = {
+      완료: "#10B981",     // 진한 Emerald
+      진행중: "#3B82F6",   // 진한 Blue
+      대기: "#94A3B8",     // 진한 Slate
+      지연: "#F43F5E",     // 진한 Rose
+      이슈발생: "#EF4444", // 진한 Red
+      보류: "#F59E0B",     // 진한 Amber
+      취소: "#64748B",     // 진한 Slate
     };
 
     const BASE_START_DATE = new Date("2026-03-01T00:00:00");
@@ -150,7 +150,8 @@ export default function App() {
       else if (phaseCollapsed) prog = Math.round((t.__phaseCompleted / (t.__phaseCount || 1)) * 100);
       else if (activityCollapsed) prog = Math.round((t.__actCompleted / (t.__activityCount || 1)) * 100);
       else if (deliverableCollapsed) prog = Math.round((t.__delCompleted / (t.__deliverableCount || 1)) * 100);
-      const colors = statusColors[t.status] || statusColors["대기"];
+      
+      const barColor = statusColors[t.status] || statusColors["대기"];
       
       let originalStart = t.start instanceof Date ? t.start : new Date(t.start || Date.now());
       let originalEnd = t.end instanceof Date ? t.end : new Date(t.end || Date.now());
@@ -169,7 +170,13 @@ export default function App() {
         originalStart,
         originalEnd,       
         progress: prog,
-        styles: { backgroundColor: colors.bg, backgroundSelectedColor: colors.prog, progressColor: colors.prog, progressSelectedColor: colors.prog },
+        // 배경과 진행색을 통일하여 진한 색상을 고정
+        styles: { 
+          backgroundColor: barColor, 
+          backgroundSelectedColor: barColor, 
+          progressColor: barColor, 
+          progressSelectedColor: barColor 
+        },
       };
     });
   }, [visibleTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
@@ -280,7 +287,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* 🚀 수정된 부분: overflow-x-auto를 래퍼 전체에 주어 가로스크롤 범위를 넓힘 */}
           <div ref={ganttWrapperRef} className="flex-1 overflow-x-auto overflow-y-hidden bg-white shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper">
             {ganttTasks.length > 0 ? (
               <Gantt 
@@ -290,7 +296,7 @@ export default function App() {
                 columnWidth={columnWidth} 
                 rowHeight={46} 
                 headerHeight={56} 
-                barCornerRadius={2} 
+                barCornerRadius={4} 
                 barFill={65} 
                 fontSize="12" 
                 locale="ko-KR" 
