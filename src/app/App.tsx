@@ -131,22 +131,21 @@ export default function App() {
   }, [filteredTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
   const ganttTasks = useMemo(() => {
-    // 🚀 진행률이 보이도록 배경색(bg)과 진행색(prog)을 분리했습니다.
+    // 🚀 더 선명하고 가독성 좋은 색상(Tailwind 400/600 계열)으로 교체
     const statusColors: Record<string, { bg: string, prog: string }> = {
-      완료: { bg: "#A7F3D0", prog: "#10B981" },     // Emerald
-      테스트중: { bg: "#C7D2FE", prog: "#6366F1" }, // Indigo
-      진행중: { bg: "#BFDBFE", prog: "#3B82F6" },   // Blue
-      대기: { bg: "#E2E8F0", prog: "#94A3B8" },     // Slate
-      지연: { bg: "#FECDD3", prog: "#F43F5E" },     // Rose
-      이슈발생: { bg: "#FECACA", prog: "#EF4444" }, // Red
-      보류: { bg: "#FDE68A", prog: "#F59E0B" },     // Amber
-      취소: { bg: "#CBD5E1", prog: "#64748B" },     // Slate
+      완료: { bg: "#34D399", prog: "#059669" },     // Emerald
+      테스트중: { bg: "#818CF8", prog: "#4F46E5" }, // Indigo
+      진행중: { bg: "#60A5FA", prog: "#2563EB" },   // Blue
+      대기: { bg: "#CBD5E1", prog: "#64748B" },     // Slate
+      지연: { bg: "#FB7185", prog: "#E11D48" },     // Rose
+      이슈발생: { bg: "#F87171", prog: "#DC2626" }, // Red
+      보류: { bg: "#FBBF24", prog: "#D97706" },     // Amber
+      취소: { bg: "#94A3B8", prog: "#475569" },     // Slate
     };
 
     const BASE_START_DATE = new Date("2026-03-01T00:00:00");
 
     return visibleTasks.map((t: any) => {
-      // 🚀 상태별 진행률 명시적 부여
       let prog = Number(t.progress) || 0;
       if (t.status === "완료") prog = 100;
       else if (t.status === "테스트중") prog = 50;
@@ -230,7 +229,8 @@ export default function App() {
           <div className="flex items-center gap-3 ml-auto text-[11px] font-bold text-slate-500"><span>전체 <span className="text-slate-800">{tasks.length}</span></span><span className="text-slate-300">|</span><span>표시 <span className="text-blue-600">{visibleTasks.length}</span></span></div>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
+        {/* 🚀 min-w-0 를 추가하여 Flex 내부에서 스크롤 컨텍스트가 꼬이는 것을 방지 */}
+        <div className="flex flex-1 overflow-hidden min-w-0">
           <div className="shrink-0 bg-white border-r border-slate-300 overflow-hidden transition-all duration-300 ease-in-out" style={{ width: filterPanelOpen ? 220 : 0, minWidth: filterPanelOpen ? 220 : 0 }}>
             <div className="w-[220px] h-full overflow-y-auto">
               <div className="p-2">
@@ -290,8 +290,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* 🚀 CSS 변수를 이용해 스크롤 트릭에 필요한 너비값(TOTAL_WIDTH) 전달 */}
-          <div ref={ganttWrapperRef} className="flex-1 overflow-hidden bg-white shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper relative" style={{ '--task-list-width': `${TOTAL_WIDTH}px` } as React.CSSProperties}>
+          <div ref={ganttWrapperRef} className="flex-1 overflow-hidden bg-white shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper relative min-w-0">
             {ganttTasks.length > 0 ? (
               <Gantt 
                 tasks={ganttTasks} 
