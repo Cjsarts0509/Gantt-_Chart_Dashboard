@@ -6,8 +6,9 @@ import { CustomTaskListHeader, CustomTaskListTable, TOTAL_WIDTH } from "./compon
 import { GanttGroupContext } from "./components/GanttGroupContext";
 import ExcelManager from "./components/ExcelManager";
 import DashboardPopup from "./components/DashboardPopup";
+import ArchitecturePopup from "./components/ArchitecturePopup";
 import "./components/gantt-overrides.css";
-import { BarChart2, ChevronDown, ChevronRight, X, PanelLeftClose, PanelLeftOpen, Database, LayoutDashboard, ExternalLink } from "lucide-react";
+import { BarChart2, ChevronDown, ChevronRight, X, PanelLeftClose, PanelLeftOpen, Database, LayoutDashboard, ExternalLink, Network } from "lucide-react";
 
 interface TreeFilterState { selectedArea: string | null; selectedPhase: string | null; selectedActivity: string | null; }
 const viewModeOptions = [ { label: "일", value: ViewMode.Day }, { label: "주", value: ViewMode.Week }, { label: "월", value: ViewMode.Month } ];
@@ -17,15 +18,19 @@ export default function App() {
   const [tasks, setTasks] = useState<WBSTask[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Week);
   const columnWidth = COLUMN_WIDTH_MAP[viewMode] || 300;
+  
   const [treeFilter, setTreeFilter] = useState<TreeFilterState>({ selectedArea: null, selectedPhase: null, selectedActivity: null });
   const [expandedAreas, setExpandedAreas] = useState<Set<string>>(new Set());
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [filterPanelOpen, setFilterPanelOpen] = useState(true);
+  
   const [areaCollapsed, setAreaCollapsed] = useState(false);
   const [phaseCollapsed, setPhaseCollapsed] = useState(false);
   const [activityCollapsed, setActivityCollapsed] = useState(false);
   const [deliverableCollapsed, setDeliverableCollapsed] = useState(false);
+  
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
+  const [isArchitectureOpen, setIsArchitectureOpen] = useState(false);
 
   const isStandaloneDashboard = new URLSearchParams(window.location.search).get('view') === 'dashboard';
 
@@ -65,6 +70,21 @@ export default function App() {
   }, [isStandaloneDashboard]);
 
   if (isStandaloneDashboard) return <DashboardPopup tasks={tasks} isStandalone={true} />;
+
+  // 🚀 필터 패널 렌더링용 변수들
+  const areas = useMemo(() => [...new Set(tasks.map((t) => t.area))].filter(Boolean), [tasks]);
+  const phasesByArea = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const area of areas) map.set(area, [...new Set(tasks.filter((t) => t.area === area).map((t) => t.phase))].filter(Boolean));
+    return map;
+  }, [tasks, areas]);
+  const activitiesByAreaPhase = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const [area, phases] of phasesByArea) {
+      for (const phase of phases) map.set(`${area}||${phase}`, [...new Set(tasks.filter((t) => t.area === area && t.phase === phase).map((t) => t.activity))].filter(Boolean));
+    }
+    return map;
+  }, [tasks, phasesByArea]);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
@@ -151,29 +171,32 @@ export default function App() {
     });
   }, [visibleTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
+  // 🚀 필터 조작 함수들
   const resetFilter = () => { setTreeFilter({ selectedArea: null, selectedPhase: null, selectedActivity: null }); };
   const isFiltered = treeFilter.selectedArea || treeFilter.selectedPhase || treeFilter.selectedActivity;
   const filterBreadcrumb = [ treeFilter.selectedArea, treeFilter.selectedPhase, treeFilter.selectedActivity ].filter(Boolean).join(" → ");
+  
+  const toggleArea = (area: string) => { setExpandedAreas((prev) => { const next = new Set(prev); if (next.has(area)) { next.delete(area); setExpandedPhases((pp) => { const np = new Set(pp); for (const key of pp) { if (key.startsWith(`${area}||`)) np.delete(key); } return np; }); } else { next.add(area); } return next; }); };
+  const togglePhase = (area: string, phase: string) => { const key = `${area}||${phase}`; setExpandedPhases((prev) => { const next = new Set(prev); if (next.has(key)) next.delete(key); else next.add(key); return next; }); };
+  const selectFilter = (area: string | null, phase: string | null, activity: string | null) => { setTreeFilter({ selectedArea: area, selectedPhase: phase, selectedActivity: activity }); };
 
   return (
     <GanttGroupContext.Provider value={groupContextValue}>
       <div className="w-screen h-screen bg-[#F8FAFC] flex flex-col overflow-hidden" style={{ fontFamily: "'Pretendard', sans-serif" }}>
+        
+        {/* 상단 헤더 */}
         <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-300 shrink-0 shadow-sm z-10">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-md"><BarChart2 className="w-5 h-5 text-white" /></div>
             <div><h1 className="text-[16px] font-bold text-slate-800 leading-tight">프로젝트 일정 관리</h1><p className="text-[12px] font-medium text-slate-400 leading-tight mt-0.5">WBS 통합 대시보드</p></div>
           </div>
           <div className="flex items-center gap-4">
-            
-            {/* 🚀 팀 사이트 버튼을 '현재 창(_self)'에서 열리도록 수정 */}
-            <a 
-              href="https://kyobobookcokr.sharepoint.com/sites/PJT2" 
-              target="_self" 
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-bold bg-[#0078D4]/10 text-[#0078D4] border border-[#0078D4]/20 hover:bg-[#0078D4]/20 transition-colors shadow-sm"
-            >
+            <button onClick={() => setIsArchitectureOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-bold bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 transition-colors shadow-sm">
+              <Network className="w-4 h-4" /> 로직 보기
+            </button>
+            <a href="https://kyobobookcokr.sharepoint.com/sites/PJT2" target="_self" className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-bold bg-[#0078D4]/10 text-[#0078D4] border border-[#0078D4]/20 hover:bg-[#0078D4]/20 transition-colors shadow-sm">
               <ExternalLink className="w-4 h-4" /> 팀 사이트
             </a>
-
             <button onClick={() => setIsDashboardOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-colors shadow-sm">
               <LayoutDashboard className="w-4 h-4" /> 요약 대시보드
             </button>
@@ -185,9 +208,79 @@ export default function App() {
             </div>
           </div>
         </header>
+
+        {/* 🚀 복구된 필터 상단 바 (Breadcrumb) */}
+        <div className="flex items-center gap-2 px-5 py-2 bg-slate-50 border-b border-slate-300 shrink-0">
+          <button onClick={() => setFilterPanelOpen(!filterPanelOpen)} className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all ${filterPanelOpen ? "bg-blue-100 text-blue-700 border border-blue-200" : "bg-white text-slate-600 border border-slate-300 hover:bg-slate-100"}`}>
+            {filterPanelOpen ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeftOpen className="w-3.5 h-3.5" />} 필터 {isFiltered && <span className="ml-0.5 w-1.5 h-1.5 rounded-full bg-blue-500" />}
+          </button>
+          {isFiltered && (<div className="flex items-center gap-1.5 text-[11px] font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200"><span>{filterBreadcrumb}</span><button onClick={resetFilter} className="text-blue-500 hover:text-blue-700"><X className="w-3 h-3" /></button></div>)}
+          <div className="flex items-center gap-3 ml-auto text-[11px] font-bold text-slate-500"><span>전체 <span className="text-slate-800">{tasks.length}</span></span><span className="text-slate-300">|</span><span>표시 <span className="text-blue-600">{visibleTasks.length}</span></span></div>
+        </div>
+
+        {/* 메인 콘텐츠 영역 */}
         <div className="flex flex-1 overflow-hidden">
           
-          {/* 🚀 gantt-wrapper 클래스 추가 (여기서부터 CSS가 강력하게 적용됨) */}
+          {/* 🚀 복구된 좌측 트리 패널 */}
+          <div className="shrink-0 bg-white border-r border-slate-300 overflow-hidden transition-all duration-300 ease-in-out" style={{ width: filterPanelOpen ? 220 : 0, minWidth: filterPanelOpen ? 220 : 0 }}>
+            <div className="w-[220px] h-full overflow-y-auto">
+              <div className="p-2">
+                <div className="text-[10px] font-bold text-slate-400 px-2 py-1 uppercase tracking-wider">프로젝트 구조</div>
+                <button onClick={resetFilter} className={`w-full text-left px-2 py-1.5 rounded text-[12px] font-bold transition flex items-center gap-1.5 ${!isFiltered ? "bg-slate-800 text-white" : "text-slate-600 hover:bg-slate-100"}`}>
+                  <BarChart2 className="w-3 h-3" /> 전체 보기
+                </button>
+                {tasks.length === 0 ? (
+                  <div className="mt-6 px-2 text-center"><Database className="w-8 h-8 text-slate-300 mx-auto mb-3" /><p className="text-[11px] text-slate-500 font-bold mb-1">데이터가 없습니다</p></div>
+                ) : (
+                  <div className="mt-1 space-y-0.5">
+                    {areas.map((area) => {
+                      const isAreaExpanded = expandedAreas.has(area);
+                      const isAreaFiltered = treeFilter.selectedArea === area;
+                      const areaTaskCount = tasks.filter((t) => t.area === area).length;
+                      const phases = phasesByArea.get(area) || [];
+                      return (
+                        <div key={area}>
+                          <div className="flex items-center gap-0.5">
+                            <button onClick={() => toggleArea(area)} className="p-0.5 rounded hover:bg-slate-200 text-slate-500">{isAreaExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}</button>
+                            <button onClick={() => { if (isAreaFiltered) selectFilter(null, null, null); else { selectFilter(area, null, null); if (!isAreaExpanded) toggleArea(area); } }} className={`flex-1 text-left px-1.5 py-1 rounded text-[12px] font-bold transition flex items-center gap-1 ${isAreaFiltered ? "bg-blue-100 text-blue-800" : "text-slate-700 hover:bg-slate-100"}`}><span className="truncate flex-1">{area}</span><span className="text-[10px] text-slate-400 shrink-0">{areaTaskCount}</span></button>
+                          </div>
+                          <div className="overflow-hidden transition-all duration-200 ease-in-out" style={{ maxHeight: isAreaExpanded ? 2000 : 0, opacity: isAreaExpanded ? 1 : 0 }}>
+                            {phases.map((phase) => {
+                              const phaseKey = `${area}||${phase}`;
+                              const isPhaseExpanded = expandedPhases.has(phaseKey);
+                              const isPhaseFiltered = treeFilter.selectedArea === area && treeFilter.selectedPhase === phase;
+                              const phaseTaskCount = tasks.filter((t) => t.area === area && t.phase === phase).length;
+                              const activities = activitiesByAreaPhase.get(phaseKey) || [];
+                              return (
+                                <div key={phase} className="pl-4">
+                                  <div className="flex items-center gap-0.5">
+                                    <button onClick={() => togglePhase(area, phase)} className="p-0.5 rounded hover:bg-slate-200 text-slate-500">{isPhaseExpanded ? <ChevronDown className="w-2.5 h-2.5" /> : <ChevronRight className="w-2.5 h-2.5" />}</button>
+                                    <button onClick={() => { if (isPhaseFiltered) selectFilter(area, null, null); else { selectFilter(area, phase, null); if (!isPhaseExpanded) togglePhase(area, phase); } }} className={`flex-1 text-left px-1.5 py-1 rounded text-[11px] font-bold transition flex items-center gap-1 ${isPhaseFiltered ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100"}`}><span className="truncate flex-1">{phase}</span><span className="text-[10px] text-slate-400 shrink-0">{phaseTaskCount}</span></button>
+                                  </div>
+                                  <div className="overflow-hidden transition-all duration-200 ease-in-out" style={{ maxHeight: isPhaseExpanded ? 1000 : 0, opacity: isPhaseExpanded ? 1 : 0 }}>
+                                    {activities.map((act) => {
+                                      const isActFiltered = treeFilter.selectedArea === area && treeFilter.selectedPhase === phase && treeFilter.selectedActivity === act;
+                                      const actTaskCount = tasks.filter((t) => t.area === area && t.phase === phase && t.activity === act).length;
+                                      return (
+                                        <div key={act} className="pl-5">
+                                          <button onClick={() => { if (isActFiltered) selectFilter(area, phase, null); else selectFilter(area, phase, act); }} className={`w-full text-left px-1.5 py-1 rounded text-[11px] font-medium transition flex items-center gap-1 ${isActFiltered ? "bg-blue-50 text-blue-700 font-bold" : "text-slate-500 hover:bg-slate-100"}`}><span className="truncate flex-1">{act}</span><span className="text-[10px] text-slate-400 shrink-0">{actTaskCount}</span></button>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           <div ref={ganttWrapperRef} className="flex-1 overflow-hidden bg-white shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper">
             {ganttTasks.length > 0 ? (
               <Gantt 
@@ -209,7 +302,10 @@ export default function App() {
             ) : (<div className="flex flex-col items-center justify-center h-full text-slate-400 gap-5"><Database className="w-12 h-12 text-slate-300" /><p className="text-[15px] font-bold text-slate-500">데이터를 불러오는 중입니다.</p></div>)}
           </div>
         </div>
+        
+        {/* 팝업 모음 */}
         {isDashboardOpen && <DashboardPopup tasks={tasks} onClose={() => setIsDashboardOpen(false)} />}
+        {isArchitectureOpen && <ArchitecturePopup onClose={() => setIsArchitectureOpen(false)} />}
       </div>
     </GanttGroupContext.Provider>
   );
