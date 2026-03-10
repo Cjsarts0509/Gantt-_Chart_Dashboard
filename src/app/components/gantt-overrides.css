@@ -1,96 +1,115 @@
 /* ═══════════════════════════════════════════════════════════
-   🔥 완벽한 가로 스크롤 & 안정적인 단단한 디자인 원복 🔥
+   🔥 완벽한 가로 스크롤 & 2025 트렌드 디자인(껍데기만) 리뉴얼 🔥
    ═══════════════════════════════════════════════════════════ */
 
-/* ── 1. 래퍼 초기화 (전역 스크롤 절대 금지! 순정 틀고정 복구) ── */
+/* ── 1. 래퍼 및 스크롤 로직 (※절대 건드리지 않음※) ── */
 .gantt-wrapper {
   position: relative;
   width: 100%;
   height: 100%;
 }
-
-/* 하단 스크롤바가 들어갈 바닥 공간 확보 */
-._CZjuD {
-  padding-bottom: 18px !important; 
-}
-
-/* ── 2. 🚀 스크롤바 100% 확장 & margin 버그 완벽 픽스 ── */
+._CZjuD { padding-bottom: 18px !important; }
 ._2k9Ys {
-  margin-left: 0 !important; /* 라이브러리 강제 우측정렬 무력화 */
-  width: 100% !important;    /* 화면 왼쪽 끝부터 100% 가로지름 */
+  margin-left: 0 !important; 
+  width: 100% !important;    
   position: absolute !important;
   left: 0 !important;
   bottom: 0 !important;
   height: 18px !important;
-  background: #F1F5F9 !important;
-  border-top: 1px solid #e2e8f0 !important;
+  background: #FFFFFF !important;
+  border-top: 1px solid #F1F5F9 !important;
   z-index: 100 !important;
   display: block !important;
 }
-
-/* ── 3. 🚀 스크롤 내부 여백(Padding) 보정 트릭 ── */
 ._19jgW {
   box-sizing: content-box !important;
-  /* App.tsx에서 계산한 TOTAL_WIDTH(1155px)만큼 내부를 뛰어넘어 싱크를 완벽히 맞춤 */
   padding-left: var(--task-list-width, 1155px) !important; 
 }
-
-/* 굵고 편한 가로 스크롤바 */
-._2k9Ys::-webkit-scrollbar { height: 18px !important; }
-._2k9Ys::-webkit-scrollbar-thumb {
-  background: #94A3B8 !important;
-  border-radius: 9px !important;
-  border: 3px solid #F1F5F9 !important;
-}
-
-/* ── 4. 세로 스크롤바 화면 우측 제자리 고정 ── */
 ._1eT-t {
   bottom: 18px !important;
   z-index: 90 !important;
+  background: #FFFFFF !important;
+  border-left: 1px solid #F1F5F9 !important;
 }
-._1eT-t::-webkit-scrollbar { width: 10px !important; }
-._1eT-t::-webkit-scrollbar-thumb { background: #B0BEC5 !important; border-radius: 5px !important; }
-
-/* ── 5. 좌측 리스트(고정영역) 순정 상태 보존 & 그림자 ── */
 ._3_ygE {
-  border-right: 1px solid #CBD5E1 !important;
-  box-shadow: 4px 0 10px rgba(0,0,0,0.05) !important;
+  border-right: 1px solid #E2E8F0 !important;
+  box-shadow: 4px 0 16px rgba(0,0,0,0.03) !important;
   z-index: 50 !important;
 }
 
 
 /* ═══════════════════════════════════════════════════════════
-   헤더 및 바디 디자인 (단단하고 명확한 톤으로 원복)
+   2025 디자인 스타일: 가볍고 맑은 미니멀리즘 + 높은 시인성
    ═══════════════════════════════════════════════════════════ */
 
 ._CZjuD, ._CZjuD *, ._3_ygE, ._3_ygE * { font-family: 'Pretendard', sans-serif !important; }
 
-/* 🚀 간트차트 헤더 색상을 좌측과 완벽히 맞춘 #CFD8DC로 원복 */
-._35nLX { fill: #CFD8DC !important; stroke: #94A3B8 !important; stroke-width: 1px !important; }
-._2q1Kt { fill: #1E293B !important; font-size: 12px !important; font-weight: 800 !important; }
-._9w8d5 { fill: #1E293B !important; font-size: 11px !important; font-weight: 800 !important; }
-._1rLuZ { stroke: #94A3B8 !important; }
+/* ── ⑥ 캘린더 헤더 ── */
+/* 칙칙한 회색을 빼고 밝고 맑은 라이트 그레이(slate-50)로 변경 */
+._35nLX { fill: #F8FAFC !important; stroke: #E2E8F0 !important; stroke-width: 1px !important; }
+/* 텍스트 시인성을 위해 다크 그레이로 대비 강화 */
+._2q1Kt { fill: #334155 !important; font-size: 12.5px !important; font-weight: 800 !important; letter-spacing: -0.02em; }
+._9w8d5 { fill: #64748B !important; font-size: 11px !important; font-weight: 700 !important; }
+._1rLuZ { stroke: #E2E8F0 !important; }
 
-._2dZTy { fill: #FFFFFF !important; transition: fill 0.15s ease-in-out !important; pointer-events: all !important; }
-/* 마우스 오버 시 좌측 영역과 동일한 연파랑 음영 원복 */
-._2dZTy:hover { fill: rgba(239, 246, 255, 0.7) !important; }
+/* ── ⑦ 그리드 바디 & ⑨ ⑩ 격자 선 ── */
+._2dZTy { fill: #FFFFFF !important; transition: fill 0.2s ease-in-out !important; pointer-events: all !important; }
+/* 호버 시 좌측 영역과 동일한 연한 인디고 톤으로 맞춤 */
+._2dZTy:hover { fill: #EEF2FF !important; }
+/* 미니멀리즘 트렌드: 답답한 선을 가장 옅은 회색으로 날려 데이터만 돋보이게 함 */
+._3rUKi, ._RuwuK { stroke: #F1F5F9 !important; stroke-width: 1px !important; }
 
-/* 격자 선 색상 명확하게 원복 */
-._3rUKi, ._RuwuK { stroke: #CBD5E1 !important; stroke-width: 1px !important; }
-._RRr12 { fill: rgba(59, 130, 246, 0.08) !important; }
+/* ── ⑪ ⑫ 오늘(Today) 표시 ── */
+/* 구식 빨간선 대신 트렌디한 인디고 톤의 투명한 Glass 느낌 오버레이 */
+._RRr12 { fill: rgba(99, 102, 241, 0.04) !important; }
+.gantt-wrapper svg line[class*="todayLine"] {
+  stroke: #6366F1 !important; 
+  stroke-width: 1.5px !important;
+  stroke-dasharray: 4, 3 !important; /* 점선으로 세련되게 */
+  opacity: 0.8;
+}
 
-/* 간트 막대 텍스트 */
+/* ── ⑧ 간트 바(막대) ── */
+/* 텍스트에 하얀 외곽선(Text-stroke) 효과를 주어 배경색 상관없이 무조건 잘 보이게 함 */
 ._2B2zv text:not(._2q1Kt):not(._9w8d5) {
   fill: #1E293B !important;
   font-weight: 900 !important; 
   font-size: 12px !important;
-  text-shadow: 0 0 5px rgba(255, 255, 255, 0.9);
+  text-shadow: 
+    -1px -1px 0 #FFF, 1px -1px 0 #FFF, -1px 1px 0 #FFF, 1px 1px 0 #FFF, 
+     0 -1px 0 #FFF, 0 1px 0 #FFF, -1px 0 0 #FFF, 1px 0 0 #FFF !important; 
 }
 
-/* 간트 막대 둥글기 및 호버 액션 */
-rect[class*="barBackground"], rect[class*="barProgress"] { rx: 4px !important; ry: 4px !important; }
-rect[class*="barBackground"] { stroke: rgba(0, 0, 0, 0.15) !important; stroke-width: 1px !important; transition: filter 0.2s ease !important; }
+/* 막대 디자인 둥글게(Bento Box 트렌드) + 부드러운 그림자(Soft Layer) */
+rect[class*="barBackground"], rect[class*="barProgress"] { rx: 6px !important; ry: 6px !important; }
+rect[class*="barBackground"] { 
+  stroke: rgba(0, 0, 0, 0.05) !important; 
+  stroke-width: 1px !important; 
+  transition: all 0.2s ease !important; 
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.06)) !important;
+}
+
+/* 호버 시 채도와 대비를 살짝 올려 누를 수 있음을 직관적으로 표현 */
 rect[class*="barBackground"]:hover, rect[class*="barProgress"]:hover { 
   cursor: pointer; 
-  filter: brightness(0.85) saturate(1.5) !important; 
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.08)) brightness(0.95) saturate(1.2) !important; 
+  transform: translateY(-1px);
 }
+
+/* ── ⑬ 스크롤바 디자인 ── */
+/* 투박한 네모에서 모바일 앱처럼 둥글고 세련된 Pill 형태로 변경 */
+._2k9Ys::-webkit-scrollbar { height: 18px !important; }
+._2k9Ys::-webkit-scrollbar-thumb {
+  background: #CBD5E1 !important;
+  border-radius: 20px !important; /* 완전한 캡슐 형태 */
+  border: 4px solid #FFFFFF !important; /* 배경과의 단차(여백) 부여 */
+}
+._2k9Ys::-webkit-scrollbar-thumb:hover { background: #94A3B8 !important; }
+
+._1eT-t::-webkit-scrollbar { width: 16px !important; }
+._1eT-t::-webkit-scrollbar-thumb { 
+  background: #CBD5E1 !important; 
+  border-radius: 20px !important; 
+  border: 4px solid #FFFFFF !important;
+}
+._1eT-t::-webkit-scrollbar-thumb:hover { background: #94A3B8 !important; }
