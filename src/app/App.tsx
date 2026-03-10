@@ -131,26 +131,32 @@ export default function App() {
   }, [filteredTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
   const ganttTasks = useMemo(() => {
-    const statusColors: Record<string, string> = {
-      완료: "#10B981",     // 진한 Emerald
-      진행중: "#3B82F6",   // 진한 Blue
-      대기: "#94A3B8",     // 진한 Slate
-      지연: "#F43F5E",     // 진한 Rose
-      이슈발생: "#EF4444", // 진한 Red
-      보류: "#F59E0B",     // 진한 Amber
-      취소: "#64748B",     // 진한 Slate
+    // 🚀 진행률이 보이도록 배경색(bg)과 진행색(prog)을 분리했습니다.
+    const statusColors: Record<string, { bg: string, prog: string }> = {
+      완료: { bg: "#A7F3D0", prog: "#10B981" },     // Emerald
+      테스트중: { bg: "#C7D2FE", prog: "#6366F1" }, // Indigo
+      진행중: { bg: "#BFDBFE", prog: "#3B82F6" },   // Blue
+      대기: { bg: "#E2E8F0", prog: "#94A3B8" },     // Slate
+      지연: { bg: "#FECDD3", prog: "#F43F5E" },     // Rose
+      이슈발생: { bg: "#FECACA", prog: "#EF4444" }, // Red
+      보류: { bg: "#FDE68A", prog: "#F59E0B" },     // Amber
+      취소: { bg: "#CBD5E1", prog: "#64748B" },     // Slate
     };
 
     const BASE_START_DATE = new Date("2026-03-01T00:00:00");
 
     return visibleTasks.map((t: any) => {
-      let prog = t.status === "완료" ? 100 : (Number(t.progress) || 0);
+      // 🚀 상태별 진행률 명시적 부여
+      let prog = Number(t.progress) || 0;
+      if (t.status === "완료") prog = 100;
+      else if (t.status === "테스트중") prog = 50;
+
       if (areaCollapsed) prog = Math.round((t.__areaCompleted / (t.__areaCount || 1)) * 100);
       else if (phaseCollapsed) prog = Math.round((t.__phaseCompleted / (t.__phaseCount || 1)) * 100);
       else if (activityCollapsed) prog = Math.round((t.__actCompleted / (t.__activityCount || 1)) * 100);
       else if (deliverableCollapsed) prog = Math.round((t.__delCompleted / (t.__deliverableCount || 1)) * 100);
       
-      const barColor = statusColors[t.status] || statusColors["대기"];
+      const colors = statusColors[t.status] || statusColors["대기"];
       
       let originalStart = t.start instanceof Date ? t.start : new Date(t.start || Date.now());
       let originalEnd = t.end instanceof Date ? t.end : new Date(t.end || Date.now());
@@ -169,7 +175,12 @@ export default function App() {
         originalStart,
         originalEnd,       
         progress: prog,
-        styles: { backgroundColor: barColor, backgroundSelectedColor: barColor, progressColor: barColor, progressSelectedColor: barColor },
+        styles: { 
+          backgroundColor: colors.bg, 
+          backgroundSelectedColor: colors.bg, 
+          progressColor: colors.prog, 
+          progressSelectedColor: colors.prog 
+        },
       };
     });
   }, [visibleTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
@@ -279,14 +290,14 @@ export default function App() {
             </div>
           </div>
 
-          <div ref={ganttWrapperRef} className="flex-1 overflow-x-auto overflow-y-hidden bg-white shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper relative">
+          {/* 🚀 CSS 변수를 이용해 스크롤 트릭에 필요한 너비값(TOTAL_WIDTH) 전달 */}
+          <div ref={ganttWrapperRef} className="flex-1 overflow-hidden bg-white shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper relative" style={{ '--task-list-width': `${TOTAL_WIDTH}px` } as React.CSSProperties}>
             {ganttTasks.length > 0 ? (
               <Gantt 
                 tasks={ganttTasks} 
                 viewMode={viewMode} 
                 listCellWidth={String(TOTAL_WIDTH)} 
                 columnWidth={columnWidth} 
-                /* 🚀 한 화면에 약 20개를 띄우기 위해 높이 대폭 압축 */
                 rowHeight={36} 
                 headerHeight={46} 
                 barCornerRadius={4} 
