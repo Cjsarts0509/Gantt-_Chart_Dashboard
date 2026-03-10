@@ -79,6 +79,8 @@ export default function App() {
     return () => ro.disconnect();
   }, [isStandaloneDashboard]);
 
+  if (isStandaloneDashboard) return <DashboardPopup tasks={tasks} isStandalone={true} />;
+
   const areas = useMemo(() => [...new Set(tasks.map((t) => t.area))].filter(Boolean), [tasks]);
   const phasesByArea = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -139,8 +141,9 @@ export default function App() {
   }, [filteredTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
   const ganttTasks = useMemo(() => {
-    const barBgColor = "#38BDF8";   
-    const barProgColor = "#0284C7"; 
+    const barBgColor = "#38BDF8";
+    const barProgColor = "#0284C7";
+
     const BASE_START_DATE = new Date("2026-03-01T00:00:00");
 
     return visibleTasks.map((t: any) => {
@@ -171,106 +174,58 @@ export default function App() {
         originalEnd,       
         progress: prog,
         styles: { 
-          backgroundColor: barBgColor, backgroundSelectedColor: barBgColor, 
-          progressColor: barProgColor, progressSelectedColor: barProgColor 
+          backgroundColor: barBgColor, 
+          backgroundSelectedColor: barBgColor, 
+          progressColor: barProgColor, 
+          progressSelectedColor: barProgColor 
         },
       };
     });
   }, [visibleTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
-
-  // 🔥 [핵심 로직] 간트 차트 스크롤 시 막대 텍스트를 뷰포트 중앙에 동적으로 맞추는 추적기
+  // 🚀 뷰포트 기준 막대 텍스트 중앙 정렬 (Sticky Bar Label)
   useEffect(() => {
-    const container = ganttWrapperRef.current;
-    if (!container) return;
+    const wrapper = ganttWrapperRef.current;
+    if (!wrapper || ganttTasks.length === 0) return;
 
-    // gantt-task-react의 내부 클래스 선택
-    const chartContainer = container.querySelector('._3eULf') as HTMLElement;
-    const scrollBar = container.querySelector('._2k9Ys') as HTMLElement;
-    
-    if (!chartContainer || !scrollBar) return;
-
-    const updateTextPositions = () => {
-      const scrollLeft = scrollBar.scrollLeft;
-      const clientWidth = chartContainer.clientWidth;
-      
-      // 간트 차트 안의 막대 텍스트 요소들 선택
-      const texts = chartContainer.querySelectorAll('g > text');
-      
-      texts.forEach(text => {
-        // 이 텍스트가 속한 그룹 안의 간트 배경 막대(rect) 찾기
-        const rect = text.parentElement?.querySelector('rect[class*="barBackground"]');
-        if (!rect) return;
-
-        const rectX = parseFloat(rect.getAttribute('x') || '0');
-        const rectWidth = parseFloat(rect.getAttribute('width') || '0');
-        if (rectWidth === 0) return;
-
-        // 현재 내 화면(뷰포트)에 실제로 보이고 있는 막대의 시작점과 끝점 계산
-        const visibleStart = Math.max(rectX, scrollLeft);
-        const visibleEnd = Math.min(rectX + rectWidth, scrollLeft + clientWidth);
-
-        // 막대가 화면에 조금이라도 보인다면 텍스트를 그 보이는 부분의 정중앙으로 이동
-        if (visibleStart < visibleEnd) {
-          const visibleCenter = (visibleStart + visibleEnd) / 2;
-          const targetX = visibleCenter.toString();
-
-          // 리액트가 원래 위치로 되돌리려는 것을 덮어씀
-          if (text.getAttribute('x') !== targetX) {
-            text.setAttribute('x', targetX);
-            text.setAttribute('data-fixed-x', targetX); 
-            text.setAttribute('text-anchor', 'middle');
-          }
-        }
-      });
-    };
-
-    // DOM 변화 감지 (리액트가 x좌표를 리셋하는 것을 감시하고 즉시 방어)
-    const observer = new MutationObserver((mutations) => {
-      let needUpdate = false;
-      for (const m of mutations) {
-        if (m.type === 'attributes' && m.attributeName === 'x') {
-          const target = m.target as HTMLElement;
-          if (target.tagName === 'text' && target.getAttribute('x') !== target.getAttribute('data-fixed-x')) {
-            needUpdate = true;
-            break;
-          }
-        }
-        if (m.type === 'childList') {
-          needUpdate = true;
-          break;
-        }
-      }
-      if (needUpdate) {
-        updateTextPositions(); 
-      }
-    });
-
-    observer.observe(chartContainer, { childList: true, subtree: true, attributes: true, attributeFilter: ['x'] });
-
-    // 스크롤 이벤트에 맞춰 부드럽게 위치 업데이트
     let rafId: number;
-    const onScroll = () => {
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(updateTextPositions);
+
+    const tick = () => {
+      const ganttContainer = wrapper.querySelector('._CZjuD') as HTMLElement;
+      const barSvg = wrapper.querySelector('._2B2zv svg') as SVGSVGElement;
+
+      if (ganttContainer && barSvg) {
+        const scrollLeft = ganttContainer.scrollLeft;
+        const visibleWidth = ganttContainer.clientWidth;
+        const viewLeft = scrollLeft;
+        const viewRight = scrollLeft + visibleWidth;
+
+        const barTexts = barSvg.querySelectorAll('text._3zRJQ, text._3KcaM');
+        barTexts.forEach(textEl => {
+          const parentG = textEl.parentElement;
+          if (!parentG) return;
+          const bgRect = parentG.querySelector('rect');
+          if (!bgRect) return;
+
+          const barX = parseFloat(bgRect.getAttribute('x') || '0');
+          const barW = parseFloat(bgRect.getAttribute('width') || '0');
+          if (barW < 1) return;
+
+          const barRight = barX + barW;
+          const visLeft = Math.max(barX, viewLeft);
+          const visRight = Math.min(barRight, viewRight);
+
+          if (visRight > visLeft) {
+            textEl.setAttribute('x', String((visLeft + visRight) / 2));
+          }
+        });
+      }
+      rafId = requestAnimationFrame(tick);
     };
 
-    scrollBar.addEventListener('scroll', onScroll, { passive: true });
-    chartContainer.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-
-    // 초기 로딩 시 적용을 위한 지연 호출
-    const timeouts = [50, 150, 300].map(t => setTimeout(updateTextPositions, t));
-
-    return () => {
-      scrollBar.removeEventListener('scroll', onScroll);
-      chartContainer.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-      observer.disconnect();
-      cancelAnimationFrame(rafId);
-      timeouts.forEach(clearTimeout);
-    };
-  }, [ganttTasks, viewMode, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [ganttTasks]);
 
   const resetFilter = () => { setTreeFilter({ selectedArea: null, selectedPhase: null, selectedActivity: null }); };
   const isFiltered = treeFilter.selectedArea || treeFilter.selectedPhase || treeFilter.selectedActivity;
@@ -280,15 +235,13 @@ export default function App() {
   const togglePhase = (area: string, phase: string) => { const key = `${area}||${phase}`; setExpandedPhases((prev) => { const next = new Set(prev); if (next.has(key)) next.delete(key); else next.add(key); return next; }); };
   const selectFilter = (area: string | null, phase: string | null, activity: string | null) => { setTreeFilter({ selectedArea: area, selectedPhase: phase, selectedActivity: activity }); };
 
-  if (isStandaloneDashboard) return <DashboardPopup tasks={tasks} isStandalone={true} />;
-
   return (
     <GanttGroupContext.Provider value={groupContextValue}>
       <div className="w-screen h-screen bg-[#F1F5F9] flex flex-col overflow-hidden" style={{ fontFamily: "'Pretendard', sans-serif" }}>
         
         <header className="flex items-center justify-between px-6 py-4 bg-white/95 backdrop-blur-md border-b border-slate-200 shrink-0 shadow-sm z-10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-indigo-200 shadow-md"><BarChart2 className="w-5 h-5 text-white" /></div>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shadow-indigo-200 shadow-md"><BarChart2 className="w-5 h-5 text-white" /></div>
             <div><h1 className="text-[17px] font-extrabold text-slate-800 leading-tight">프로젝트 일정 관리</h1><p className="text-[12px] font-semibold text-slate-400 leading-tight mt-0.5">WBS 통합 대시보드</p></div>
           </div>
           <div className="flex items-center gap-4">
@@ -319,6 +272,8 @@ export default function App() {
         </div>
 
         <div className="flex flex-1 overflow-hidden min-w-0 p-3 gap-3">
+          
+          {/* 트리 필터 패널 */}
           <div className="shrink-0 bg-white border border-slate-200 rounded-xl overflow-hidden transition-all duration-300 ease-in-out shadow-sm" style={{ width: filterPanelOpen ? 230 : 0, minWidth: filterPanelOpen ? 230 : 0 }}>
             <div className="w-[230px] h-full overflow-y-auto">
               <div className="p-3">
@@ -385,16 +340,16 @@ export default function App() {
                 viewMode={viewMode} 
                 listCellWidth={String(TOTAL_WIDTH)} 
                 columnWidth={columnWidth} 
-                rowHeight={38} 
+                rowHeight={38}
                 headerHeight={48} 
-                barCornerRadius={6} 
+                barCornerRadius={6}
                 barFill={70} 
                 fontSize="12" 
                 locale="ko-KR" 
                 TaskListHeader={CustomTaskListHeader} 
                 TaskListTable={CustomTaskListTable} 
                 todayColor="rgba(99, 102, 241, 0.04)" 
-                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 48 - 25 : 500} 
+                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 48 - 62 : 500} 
               />
             ) : (<div className="flex flex-col items-center justify-center h-full text-slate-400 gap-5"><Database className="w-12 h-12 text-slate-200" /><p className="text-[15px] font-bold text-slate-400">데이터를 불러오는 중입니다.</p></div>)}
           </div>
