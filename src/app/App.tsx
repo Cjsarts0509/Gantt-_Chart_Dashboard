@@ -182,76 +182,94 @@ export default function App() {
   }, [visibleTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
 
-  // 🚀 완전 수정된 텍스트 중앙 고정 로직 (SVG 좌표 x를 실시간으로 덮어씀) 🚀
+  // 🚀 [핵심 해결] SVG 'dx' 속성을 이용한 무적의 텍스트 뷰포트 중앙 고정 로직 🚀
   useEffect(() => {
     const container = ganttWrapperRef.current;
     if (!container) return;
 
-    // 실제 차트와 스크롤바 요소를 가져옵니다.
+    // 간트 차트가 그려지는 실제 내부 영역
     const chartContainer = container.querySelector('._3eULf') as HTMLElement;
+    // 우리가 100%로 확장한 하단 스크롤바
     const scrollBar = container.querySelector('._2k9Ys') as HTMLElement;
     
     if (!chartContainer || !scrollBar) return;
 
     const updateTextPositions = () => {
-      // 1. 현재 정확한 스크롤의 픽셀 위치와 화면 넓이 
-      const currentScrollX = scrollBar.scrollLeft;
+      // 현재 스크롤된 픽셀 값과 화면의 가로 넓이
+      const scrollLeft = scrollBar.scrollLeft;
       const clientWidth = chartContainer.clientWidth;
       
-      // 2. 간트차트의 모든 배경 막대(rect) 탐색
+      // 간트차트 안의 모든 배경 막대 찾기
       const backgroundRects = chartContainer.querySelectorAll('rect[class*="barBackground"]');
       
       backgroundRects.forEach((rect) => {
         const parent = rect.parentElement;
         if (!parent) return;
-        const textNode = parent.querySelector('text'); // SVG text 요소
+        
+        // 막대 안의 글씨(text) 요소 찾기
+        const textNode = parent.querySelector('text');
         if (!textNode) return;
 
-        // 3. 막대의 실제 전체 X 좌표와 전체 너비
+        // 막대의 원래 X 좌표와 너비
         const rectX = parseFloat(rect.getAttribute('x') || '0');
         const rectWidth = parseFloat(rect.getAttribute('width') || '0');
         
-        // 4. 화면(뷰포트) 안에 "보이는" 부분만 잘라서 계산!
-        const visibleStart = Math.max(rectX, currentScrollX);
-        const visibleEnd = Math.min(rectX + rectWidth, currentScrollX + clientWidth);
+        // 🌟 내 눈(화면)에 "보이는" 막대 영역만 자르기
+        const visibleStart = Math.max(rectX, scrollLeft);
+        const visibleEnd = Math.min(rectX + rectWidth, scrollLeft + clientWidth);
 
-        // 5. 막대가 화면에 조금이라도 걸쳐 있다면, '보이는 영역의 한가운데'로 텍스트의 X 좌표를 강제 이동
+        // 막대가 화면에 조금이라도 걸쳐 있다면
         if (visibleStart < visibleEnd) {
+          // 화면에 보이는 잘린 막대의 정중앙 계산
           const visibleCenter = (visibleStart + visibleEnd) / 2;
-          textNode.setAttribute('x', visibleCenter.toString());
-        } else {
-          // 화면에 안 보이면 막대 원래 중앙 위치로 리셋
           const originalCenter = rectX + rectWidth / 2;
-          textNode.setAttribute('x', originalCenter.toString());
+          
+          // 원래 중앙에서 화면 중앙으로 얼마나 이동해야 하는지(Offset)
+          const offset = visibleCenter - originalCenter;
+          
+          // 🚀 [해결] transform 대신 SVG의 'dx'(상대적 가로 이동) 속성을 직접 조작합니다.
+          // 이렇게 하면 React가 화면을 갱신해도 충돌나지 않고 즉시 반영됩니다!
+          textNode.setAttribute('dx', offset.toString());
+        } else {
+          // 화면에 안 보이면 원상복구
+          textNode.setAttribute('dx', '0');
         }
       });
     };
 
-    // DOM이 업데이트되어 막대가 새로 그려질 때도 추적
-    const observer = new MutationObserver(() => updateTextPositions());
-    observer.observe(chartContainer, { childList: true, subtree: true });
-
-    let animationFrameId: number;
+    // 스크롤 성능을 위한 requestAnimationFrame 처리
+    let ticking = false;
     const onScroll = () => {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = requestAnimationFrame(updateTextPositions);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          updateTextPositions();
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
-    // 스크롤 및 리사이즈 이벤트 바인딩
+    // 스크롤 및 화면 리사이즈 시 즉시 추적
     scrollBar.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     
-    // 첫 렌더링 시점에 텍스트를 정중앙으로 맞추기 위한 호출
-    const timeouts = [50, 200, 500].map(t => setTimeout(updateTextPositions, t));
+    // 차트가 새로 렌더링되거나 열/닫기 할 때도 즉시 추적하도록 DOM 감시 (MutationObserver)
+    const observer = new MutationObserver(() => {
+      updateTextPositions();
+    });
+    observer.observe(chartContainer, { childList: true, subtree: true });
+
+    // 첫 화면 진입 시 정렬을 보장하기 위한 딜레이 호출
+    const timeouts = [50, 150, 300, 500].map(t => setTimeout(updateTextPositions, t));
 
     return () => {
       scrollBar.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
       observer.disconnect();
-      cancelAnimationFrame(animationFrameId);
       timeouts.forEach(clearTimeout);
     };
   }, [ganttTasks, viewMode, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
+
 
   const resetFilter = () => { setTreeFilter({ selectedArea: null, selectedPhase: null, selectedActivity: null }); };
   const isFiltered = treeFilter.selectedArea || treeFilter.selectedPhase || treeFilter.selectedActivity;
@@ -375,8 +393,7 @@ export default function App() {
                 TaskListHeader={CustomTaskListHeader} 
                 TaskListTable={CustomTaskListTable} 
                 todayColor="rgba(99, 102, 241, 0.04)" 
-                // 🚀 대형 가로 스크롤바(32px)를 반영하여 차트의 하단 여백 보정
-                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 48 - 33 : 500} 
+                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 48 - 25 : 500} 
               />
             ) : (<div className="flex flex-col items-center justify-center h-full text-slate-400 gap-5"><Database className="w-12 h-12 text-slate-200" /><p className="text-[15px] font-bold text-slate-400">데이터를 불러오는 중입니다.</p></div>)}
           </div>

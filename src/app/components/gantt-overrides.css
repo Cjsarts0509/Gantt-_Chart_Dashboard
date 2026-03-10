@@ -1,52 +1,53 @@
 /* ═══════════════════════════════════════════════════════════
-   🔥 초거대 스크롤바 & 완벽한 가로 스크롤 & 막대 텍스트 이펙트 🔥
+   🔥 진짜 거대해진 조작감 100% 스크롤바 & 트렌드 디자인 🔥
    ═══════════════════════════════════════════════════════════ */
 
-/* ── 1. 래퍼 및 스크롤 로직 (※절대 건드리지 않음※) ── */
 .gantt-wrapper { position: relative; width: 100%; height: 100%; }
 
-/* 🚀 엄청나게 넓어진 가로 스크롤바 공간(32px) 확보 */
-._CZjuD { padding-bottom: 32px !important; }
+/* 🚀 대형 가로 스크롤 공간 확보 */
+._CZjuD { padding-bottom: 24px !important; }
 ._19jgW { box-sizing: content-box !important; padding-left: var(--task-list-width, 1165px) !important; }
 
-/* ── 2. 🚀 가로 스크롤바 초거대화 (높이 32px로 대폭 상향) ── */
+/* ── 2. 🚀 진짜 커진 통통한 가로 스크롤바 ── */
 ._2k9Ys {
   margin-left: 0 !important; 
   width: 100% !important;    
   position: absolute !important;
   left: 0 !important;
   bottom: 0 !important;
-  height: 32px !important; /* 🚀 극강의 조작감 (32px) */
+  height: 24px !important; 
   background: #FFFFFF !important;
   border-top: 1px solid #F1F5F9 !important;
   z-index: 100 !important;
   display: block !important;
 }
 
-._2k9Ys::-webkit-scrollbar { height: 32px !important; }
+._2k9Ys::-webkit-scrollbar { height: 24px !important; }
 ._2k9Ys::-webkit-scrollbar-thumb {
   background: #94A3B8 !important;
-  border-radius: 16px !important; /* 완벽한 반원 형태 */
-  border: 3px solid #F1F5F9 !important; /* 여백을 얇게 줘서 손잡이가 통통해 보이게 함 */
+  border-radius: 12px !important; 
+  /* 🚀 [해결] 테두리를 2px로 확 줄여서 손잡이(Thumb)가 크고 통통하게 꽉 차도록 만듦 */
+  border: 2px solid #FFFFFF !important; 
 }
 ._2k9Ys::-webkit-scrollbar-thumb:hover { background: #64748B !important; }
 
-/* ── 3. 🚀 세로 스크롤바 초거대화 (넓이 28px로 대폭 상향) ── */
+/* ── 3. 🚀 진짜 커진 통통한 세로 스크롤바 ── */
 ._1eT-t {
   position: absolute !important;
   top: 0 !important;
   right: 0 !important;
-  bottom: 32px !important;
-  width: 28px !important; /* 🚀 세로 스크롤도 엄청나게 키움 */
+  bottom: 24px !important;
+  width: 24px !important; /* 넓이 24px로 대폭 확장 */
   z-index: 90 !important;
   background: #FFFFFF !important;
   border-left: 1px solid #F1F5F9 !important;
 }
-._1eT-t::-webkit-scrollbar { width: 28px !important; }
+._1eT-t::-webkit-scrollbar { width: 24px !important; }
 ._1eT-t::-webkit-scrollbar-thumb { 
   background: #94A3B8 !important; 
-  border-radius: 14px !important; 
-  border: 3px solid #f8fafc !important; /* 얇은 여백으로 빵빵하게 */
+  border-radius: 12px !important; 
+  /* 🚀 [해결] 테두리를 줄여 세로 손잡이도 통통하게 */
+  border: 2px solid #FFFFFF !important; 
 }
 ._1eT-t::-webkit-scrollbar-thumb:hover { background: #64748B !important; }
 
@@ -57,8 +58,9 @@
   z-index: 50 !important;
 }
 
+
 /* ═══════════════════════════════════════════════════════════
-   2025 디자인 스타일: 가볍고 맑은 미니멀리즘 + 높은 시인성
+   2025 디자인 스타일: 맑고 투명한 시인성
    ═══════════════════════════════════════════════════════════ */
 
 ._CZjuD, ._CZjuD *, ._3_ygE, ._3_ygE * { font-family: 'Pretendard', sans-serif !important; }
@@ -85,7 +87,7 @@
 
 /* ── 🚀 간트 막대 & 텍스트 효과 ── */
 
-/* 텍스트: 완전한 흰색 + 어두운 섀도우로 가독성 극대화 */
+/* 텍스트: 완전 흰색 + 진한 그림자로 가독성 완벽 해결 */
 ._2B2zv text:not(._2q1Kt):not(._9w8d5) {
   fill: #FFFFFF !important; 
   font-weight: 900 !important; 
@@ -93,7 +95,7 @@
   text-shadow: 0px 1px 4px rgba(0, 0, 0, 0.8) !important; 
 }
 
-/* 막대 둥글게 + 그림자 */
+/* 막대 둥글게 + 부드러운 그림자 */
 rect[class*="barBackground"], rect[class*="barProgress"] { rx: 6px !important; ry: 6px !important; }
 rect[class*="barBackground"] { 
   stroke: rgba(0, 0, 0, 0.05) !important; 
