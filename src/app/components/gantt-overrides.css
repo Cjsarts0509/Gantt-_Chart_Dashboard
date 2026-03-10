@@ -2,18 +2,28 @@
    간트 영역 스타일 - 해시 클래스 적용 및 디자인 완벽 동기화
    ═══════════════════════════════════════════════════════════ */
 
-/* ── 1. Root & Wrapper Overflows (🚀틀고정 필수 해결책🚀) ── */
-/* 라이브러리 내부의 숨겨진 overflow를 뚫어주어야 틀고정이 작동합니다 */
+/* ── 1. Root & Wrapper Overflows (🚀틀고정 완벽 복원🚀) ── */
+/* 전체를 통째로 스크롤하게 만들었던 이전의 잘못된 강제 확장을 모두 폐기하고,
+   라이브러리의 네이티브 고정 레이아웃을 100% 존중합니다. */
 .gantt-wrapper {
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
+  width: 100%;
+  height: 100%;
+  overflow: hidden !important; /* 🚀 절대 전역 스크롤 불가 (틀고정 풀림 원인 제거) */
   position: relative;
 }
 
-._CZjuD, ._3eULf {
-  overflow: visible !important; 
-  width: max-content !important;
-  min-width: 100% !important;
+._CZjuD {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important; /* 🚀 네이티브 틀고정 부활 */
+  position: relative !important;
+  padding-bottom: 18px !important; /* 커스텀 가로 스크롤바가 들어갈 공간 확보 */
+}
+
+._3eULf {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
 }
 
 /* 폰트 세팅 */
@@ -51,52 +61,60 @@ rect[class*="barBackground"] {
   transition: filter 0.2s ease !important;
 }
 
-/* 🚀 막대에 마우스를 올렸을 때 채도가 높아지고 진해지는 효과 */
 rect[class*="barBackground"]:hover,
 rect[class*="barProgress"]:hover {
   cursor: pointer;
   filter: brightness(0.8) saturate(1.5) !important;
 }
 
+
 /* ═══════════════════════════════════════════════════════════
-   🚀 가장 진보된 가로/세로 스크롤 & 틀 고정 동기화 🚀
+   🚀 가로 스크롤 범위 분리 트릭 (유저님 아이디어 적용) 🚀
    ═══════════════════════════════════════════════════════════ */
 
-/* 1. 🚀 좌측 리스트(`._3_ygE`) 완벽 틀 고정 */
+/* 좌측 리스트: 억지로 sticky를 쓰지 않고 네이티브 고정 상태 유지 */
 ._3_ygE {
-  position: sticky !important;
-  left: 0 !important;
-  z-index: 50 !important;
   background-color: #ffffff !important;
-  box-shadow: 3px 0 10px rgba(0, 0, 0, 0.08) !important;
   border-right: 1px solid #CBD5E1 !important; 
+  z-index: 10 !important;
 }
 
-/* 2. 🚀 세로 스크롤바(`._1eT-t`) 화면 우측 끝에 완벽 고정 */
-._1eT-t {
-  position: sticky !important;
-  right: 0 !important;
-  z-index: 60 !important;
-  background: #f8fafc !important;
-  border-left: 1px solid #e2e8f0 !important;
+/* 하단 가로 스크롤바를 화면 100% 넓이로 쫙 늘림 (가짜 스크롤바) */
+._2k9Ys {
+  position: absolute !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important; /* 좌측 칼럼 아래까지 확장하여 잡기 편하게 만듦 */
+  height: 18px !important;
+  display: block !important;
+  background: #F1F5F9 !important;
+  border-top: 1px solid #e2e8f0 !important;
+  z-index: 100 !important;
 }
 
-/* 3. 라이브러리 기본 스크롤 숨김 */
-._2k9Ys { display: none !important; }
+/* 🚀 핵심: "범위만큼 뛰어넘고 스크롤 가게 하던가" 🚀 */
+/* App.tsx에서 전달받은 좌측 칼럼 너비(var(--task-list-width))만큼 
+   스크롤 내부 여백을 강제로 주어, 스크롤 이동 거리와 차트 이동 거리를 완벽히 1:1로 맞춤 */
+._19jgW {
+  box-sizing: content-box !important;
+  padding-left: var(--task-list-width, 1155px) !important; 
+}
 
-/* 4. 🚀 하단 가로 스크롤바 조작성 극대화 (물리적 크기 18px로 대폭 확장) */
-.gantt-wrapper::-webkit-scrollbar {
+._2k9Ys::-webkit-scrollbar {
   height: 18px !important; 
 }
-.gantt-wrapper::-webkit-scrollbar-thumb {
+._2k9Ys::-webkit-scrollbar-thumb {
   background: #94A3B8 !important;
-  border-radius: 9px !important; /* 둥글고 두꺼운 손잡이 */
-  border: 3px solid #ffffff !important; /* 배경과의 경계선으로 입체감 부여 */
-}
-.gantt-wrapper::-webkit-scrollbar-track {
-  background: #F1F5F9 !important;
+  border-radius: 9px !important; 
+  border: 3px solid #F1F5F9 !important; 
 }
 
-/* 세로 스크롤바 디자인 정돈 */
+/* 세로 스크롤바 제자리(화면 우측 끝) 완벽 고정 */
+._1eT-t {
+  bottom: 18px !important; /* 가로 스크롤바와 안 겹치게 위로 올림 */
+  background: #f8fafc !important;
+  border-left: 1px solid #e2e8f0 !important;
+  z-index: 60 !important;
+}
 ._1eT-t::-webkit-scrollbar { width: 10px !important; }
 ._1eT-t::-webkit-scrollbar-thumb { background: #B0BEC5 !important; border-radius: 5px !important; }
