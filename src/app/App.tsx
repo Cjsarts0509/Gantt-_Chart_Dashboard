@@ -143,7 +143,6 @@ export default function App() {
   const ganttTasks = useMemo(() => {
     const barBgColor = "#38BDF8";
     const barProgColor = "#0284C7";
-
     const BASE_START_DATE = new Date("2026-03-01T00:00:00");
 
     return visibleTasks.map((t: any) => {
@@ -165,7 +164,7 @@ export default function App() {
       if (finalStart < BASE_START_DATE) finalStart = BASE_START_DATE;
       if (finalEnd < BASE_START_DATE) finalEnd = BASE_START_DATE;
 
-      // 🚀 산출물[작업] 형식으로 텍스트 결합
+      // 산출물[작업] 형식 결합
       const combinedName = (t.deliverable && t.taskName) 
         ? `${t.deliverable}[${t.taskName}]` 
         : (t.deliverable || t.taskName);
@@ -188,7 +187,7 @@ export default function App() {
     });
   }, [visibleTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
-  // 🚀 뷰포트 중앙 정렬 및 [작업] 텍스트 스타일링 (tspan 주입)
+  // 🚀 뷰포트 중앙 정렬 및 [작업] 텍스트 스타일링
   useEffect(() => {
     const wrapper = ganttWrapperRef.current;
     if (!wrapper || ganttTasks.length === 0) return;
@@ -212,7 +211,6 @@ export default function App() {
           const bgRect = parentG.querySelector('rect');
           if (!bgRect) return;
 
-          // 1. 뷰포트 중앙 정렬 로직
           const barX = parseFloat(bgRect.getAttribute('x') || '0');
           const barW = parseFloat(bgRect.getAttribute('width') || '0');
           if (barW < 1) return;
@@ -225,17 +223,13 @@ export default function App() {
             textEl.setAttribute('x', String((visLeft + visRight) / 2));
           }
 
-          // 2. 산출물[작업] 텍스트 스타일 분리 (<tspan> 렌더링)
-          // React가 DOM을 업데이트해서 순수 텍스트로 돌아갔을 경우에만 실행
+          // tspan 주입을 통한 스타일 분리
           if (textEl.children.length === 0) {
             const text = textEl.textContent || '';
             const bracketIndex = text.indexOf('[');
-            
             if (bracketIndex !== -1) {
               const deliverableText = text.substring(0, bracketIndex);
               const taskText = text.substring(bracketIndex);
-              
-              // CSS 클래스 적용 (deliverable-text, task-text)
               textEl.innerHTML = `<tspan class="deliverable-text">${deliverableText}</tspan><tspan class="task-text">${taskText}</tspan>`;
             }
           }
@@ -370,7 +364,7 @@ export default function App() {
                 TaskListHeader={CustomTaskListHeader} 
                 TaskListTable={CustomTaskListTable} 
                 todayColor="rgba(99, 102, 241, 0.04)" 
-                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 48 - 32 : 500} /* 스크롤바 축소(30px)에 맞춰 여백 재계산 */
+                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 48 - 28 : 500} /* 스크롤바 높이 최적화 */
               />
             ) : (<div className="flex flex-col items-center justify-center h-full text-slate-400 gap-5"><Database className="w-12 h-12 text-slate-200" /><p className="text-[15px] font-bold text-slate-400">데이터를 불러오는 중입니다.</p></div>)}
           </div>

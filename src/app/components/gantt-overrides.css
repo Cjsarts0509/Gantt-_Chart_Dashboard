@@ -1,14 +1,14 @@
 /* ═══════════════════════════════════════════════════════════
-   🔥 완벽한 가로 스크롤 & 2025 트렌디 디자인 & 막대 텍스트 수정 🔥
+   🔥 초정밀 스크롤바 최적화 & 막대 텍스트 가독성 강화 🔥
    ═══════════════════════════════════════════════════════════ */
 
-/* ── 1. 래퍼 및 스크롤 로직 ── */
+/* ── 1. 래퍼 및 영역 재계산 ── */
 .gantt-wrapper { position: relative; width: 100%; height: 100%; }
-._CZjuD { padding-bottom: 30px !important; } /* 여백 대폭 축소 (60px -> 30px) */
+._CZjuD { padding-bottom: 26px !important; } /* 하단 여백 최소화 */
 ._19jgW { box-sizing: content-box !important; padding-left: var(--task-list-width, 1165px) !important; }
 
 /* ══════════════════════════════════════════════════════════
-   2. 🚀 가로 스크롤바 — 30px 높이 최적화
+   2. 🚀 가로 스크롤바 — 핸들 두께 2배 확장 & 여백 최소화
    ══════════════════════════════════════════════════════════ */
 ._2k9Ys {
   margin-left: 0 !important;
@@ -16,119 +16,61 @@
   position: absolute !important;
   left: 0 !important;
   bottom: 0 !important;
-  height: 30px !important; /* 60px -> 30px */
+  height: 26px !important; 
   background: #F1F5F9 !important;
   border-top: 1px solid #E2E8F0 !important;
   z-index: 100 !important;
   display: block !important;
-  overflow-x: scroll !important;
-  overflow-y: hidden !important;
 }
 
-/* 가로 스크롤 — 네이티브 스크롤바 크기 강제 */
-._2k9Ys::-webkit-scrollbar {
-  height: 30px !important;
-  background: #F1F5F9 !important;
-}
-._2k9Ys::-webkit-scrollbar-track {
-  background: #F1F5F9 !important;
-  border-radius: 0 !important;
-}
+._2k9Ys::-webkit-scrollbar { height: 26px !important; }
+._2k9Ys::-webkit-scrollbar-track { background: #F1F5F9 !important; }
+
+/* 핸들(Thumb) 두께를 키우기 위해 테두리(border) 여백을 줄임 */
 ._2k9Ys::-webkit-scrollbar-thumb {
   background: #94A3B8 !important;
-  border-radius: 15px !important; /* 둥글기 최적화 */
-  border: 6px solid #F1F5F9 !important; /* 테두리 얇게 (14px -> 6px) */
+  border-radius: 13px !important;
+  border: 3px solid #F1F5F9 !important; /* 여백을 3px로 줄여 핸들을 꽉 차게 만듦 */
   background-clip: padding-box !important;
 }
-._2k9Ys::-webkit-scrollbar-thumb:hover {
-  background: #64748B !important;
-  border: 6px solid #F1F5F9 !important;
-  background-clip: padding-box !important;
-}
-/* Firefox */
-._2k9Ys {
-  scrollbar-width: auto !important;
-  scrollbar-color: #94A3B8 #F1F5F9 !important;
-}
+._2k9Ys::-webkit-scrollbar-thumb:hover { background: #64748B !important; }
 
 /* ══════════════════════════════════════════════════════════
-   3. 🚀 세로 스크롤바 — 30px 너비 최적화
+   3. 🚀 세로 스크롤바 — 핸들 두께 2배 확장
    ══════════════════════════════════════════════════════════ */
 ._1eT-t {
   position: absolute !important;
   top: 0 !important;
   right: 0 !important;
-  bottom: 30px !important; /* 하단 공간 최적화 (60px -> 30px) */
-  width: 30px !important; /* 50px -> 30px */
+  bottom: 26px !important;
+  width: 26px !important;
   z-index: 90 !important;
   background: #F1F5F9 !important;
   border-left: 1px solid #E2E8F0 !important;
-  overflow-y: scroll !important;
-  overflow-x: hidden !important;
 }
 
-/* 세로 스크롤 — 네이티브 스크롤바 크기 강제 */
-._1eT-t::-webkit-scrollbar {
-  width: 30px !important;
-  background: #F1F5F9 !important;
-}
-._1eT-t::-webkit-scrollbar-track {
-  background: #F1F5F9 !important;
-  border-radius: 0 !important;
-}
+._1eT-t::-webkit-scrollbar { width: 26px !important; }
+._1eT-t::-webkit-scrollbar-track { background: #F1F5F9 !important; }
 ._1eT-t::-webkit-scrollbar-thumb {
   background: #94A3B8 !important;
-  border-radius: 15px !important;
-  border: 6px solid #F1F5F9 !important;
+  border-radius: 13px !important;
+  border: 3px solid #F1F5F9 !important; 
   background-clip: padding-box !important;
-}
-._1eT-t::-webkit-scrollbar-thumb:hover {
-  background: #64748B !important;
-  border: 6px solid #F1F5F9 !important;
-  background-clip: padding-box !important;
-}
-/* Firefox */
-._1eT-t {
-  scrollbar-width: auto !important;
-  scrollbar-color: #94A3B8 #F1F5F9 !important;
 }
 
-/* ── 좌측 리스트(고정영역) ── */
-._3_ygE {
-  border-right: 1px solid #E2E8F0 !important;
-  box-shadow: 4px 0 16px rgba(0,0,0,0.03) !important;
-  z-index: 50 !important;
-}
+/* ── 좌측 리스트 고정 ── */
+._3_ygE { border-right: 1px solid #E2E8F0 !important; z-index: 50 !important; }
 
 /* ═══════════════════════════════════════════════════════════
-   2025 디자인 스타일: 가볍고 맑은 미니멀리즘 + 높은 시인성
+   2025 디자인 스타일: 텍스트 가독성 최적화
    ═══════════════════════════════════════════════════════════ */
 
 ._CZjuD, ._CZjuD *, ._3_ygE, ._3_ygE * { font-family: 'Pretendard', sans-serif !important; }
 
-/* 캘린더 헤더: 밝고 맑은 라이트 그레이(slate-50) */
-._35nLX { fill: #F8FAFC !important; stroke: #E2E8F0 !important; stroke-width: 1px !important; }
-._2q1Kt { fill: #334155 !important; font-size: 12.5px !important; font-weight: 800 !important; letter-spacing: -0.02em; }
-._9w8d5 { fill: #64748B !important; font-size: 11px !important; font-weight: 700 !important; }
-._1rLuZ { stroke: #E2E8F0 !important; }
+/* 오늘 표시 점선 */
+.gantt-wrapper svg line[class*="todayLine"] { stroke: #6366F1 !important; stroke-width: 1.5px !important; stroke-dasharray: 4, 3 !important; }
 
-/* 그리드 바디 & 격자 선 (답답한 선을 날림) */
-._2dZTy { fill: #FFFFFF !important; transition: fill 0.2s ease-in-out !important; pointer-events: all !important; }
-._2dZTy:hover { fill: #EEF2FF !important; } /* 호버시 연한 인디고톤 */
-._3rUKi, ._RuwuK { stroke: #F1F5F9 !important; stroke-width: 1px !important; }
-
-/* 오늘(Today) 표시: 트렌디한 인디고 톤 점선 */
-._RRr12 { fill: rgba(99, 102, 241, 0.04) !important; }
-.gantt-wrapper svg line[class*="todayLine"] {
-  stroke: #6366F1 !important; 
-  stroke-width: 1.5px !important;
-  stroke-dasharray: 4, 3 !important;
-  opacity: 0.8;
-}
-
-/* ── 🚀 핵심: 간트 막대 & 텍스트 효과 ── */
-
-/* 텍스트 부모 공통 속성: 완전한 흰색 + 어두운 그림자 처리 */
+/* ── 🚀 간트 막대 텍스트 스타일 ── */
 ._2B2zv text:not(._2q1Kt):not(._9w8d5) {
   fill: #FFFFFF !important; 
   text-shadow: 0px 1px 4px rgba(0, 0, 0, 0.8) !important; 
@@ -136,30 +78,13 @@
   transition: x 0.05s ease-out !important; 
 }
 
-/* 산출물 텍스트 스타일 (12px, Bold) */
-._2B2zv text:not(._2q1Kt):not(._9w8d5) tspan.deliverable-text {
-  font-weight: 900 !important; 
-  font-size: 12px !important;
+/* 산출물 텍스트 (기본) */
+._2B2zv text tspan.deliverable-text { font-weight: 900 !important; font-size: 12px !important; }
+
+/* [작업] 텍스트 (볼드 적용, 크기 2pt 작게) */
+._2B2zv text tspan.task-text {
+  font-weight: 800 !important; /* 다시 볼드 처리 적용 */
+  font-size: 10px !important; /* 산출물(12px)보다 2pt 작게 유지 */
 }
 
-/* [작업] 텍스트 스타일 (10px, Normal) - 2pt 작고 볼드 해제 */
-._2B2zv text:not(._2q1Kt):not(._9w8d5) tspan.task-text {
-  font-weight: 400 !important; 
-  font-size: 10px !important; 
-}
-
-/* 막대 디자인 둥글게 + 부드러운 그림자(Soft Layer) */
-rect[class*="barBackground"], rect[class*="barProgress"] { rx: 6px !important; ry: 6px !important; }
-rect[class*="barBackground"] { 
-  stroke: rgba(0, 0, 0, 0.05) !important; 
-  stroke-width: 1px !important; 
-  transition: all 0.2s ease !important; 
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.06)) !important;
-}
-
-/* 막대 호버 액션 */
-rect[class*="barBackground"]:hover, rect[class*="barProgress"]:hover { 
-  cursor: pointer; 
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.08)) brightness(0.95) saturate(1.2) !important; 
-  transform: translateY(-1px);
-}
+rect[class*="barBackground"] { rx: 6px !important; ry: 6px !important; stroke: rgba(0, 0, 0, 0.05) !important; }
