@@ -7,7 +7,6 @@ import { GanttGroupContext } from "./components/GanttGroupContext";
 import ExcelManager from "./components/ExcelManager";
 import DashboardPopup from "./components/DashboardPopup";
 import "./components/gantt-overrides.css";
-// 🚀 ExternalLink 아이콘 추가
 import { BarChart2, ChevronDown, ChevronRight, X, PanelLeftClose, PanelLeftOpen, Database, LayoutDashboard, ExternalLink } from "lucide-react";
 
 interface TreeFilterState { selectedArea: string | null; selectedPhase: string | null; selectedActivity: string | null; }
@@ -16,7 +15,6 @@ const COLUMN_WIDTH_MAP: Record<string, number> = { [ViewMode.Day]: 60, [ViewMode
 
 export default function App() {
   const [tasks, setTasks] = useState<WBSTask[]>([]);
-  // 🚀 기본 뷰를 ViewMode.Month 에서 ViewMode.Week 로 변경
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Week);
   const columnWidth = COLUMN_WIDTH_MAP[viewMode] || 300;
   const [treeFilter, setTreeFilter] = useState<TreeFilterState>({ selectedArea: null, selectedPhase: null, selectedActivity: null });
@@ -167,11 +165,10 @@ export default function App() {
           </div>
           <div className="flex items-center gap-4">
             
-            {/* 🚀 쉐어포인트 팀 사이트 이동 버튼 추가 */}
+            {/* 🚀 팀 사이트 버튼을 '현재 창(_self)'에서 열리도록 수정 */}
             <a 
               href="https://kyobobookcokr.sharepoint.com/sites/PJT2" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+              target="_self" 
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-bold bg-[#0078D4]/10 text-[#0078D4] border border-[#0078D4]/20 hover:bg-[#0078D4]/20 transition-colors shadow-sm"
             >
               <ExternalLink className="w-4 h-4" /> 팀 사이트
@@ -189,7 +186,9 @@ export default function App() {
           </div>
         </header>
         <div className="flex flex-1 overflow-hidden">
-          <div ref={ganttWrapperRef} className="flex-1 overflow-hidden bg-white shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)]">
+          
+          {/* 🚀 gantt-wrapper 클래스 추가 (여기서부터 CSS가 강력하게 적용됨) */}
+          <div ref={ganttWrapperRef} className="flex-1 overflow-hidden bg-white shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper">
             {ganttTasks.length > 0 ? (
               <Gantt 
                 tasks={ganttTasks} 
