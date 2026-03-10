@@ -1,64 +1,73 @@
 /* ═══════════════════════════════════════════════════════════
-   사용자님 통찰 기반: App.tsx 주도형 완벽 틀고정 & 전체 스크롤바
+   간트 영역 스타일 - 순정 틀고정 부활 & 스크롤바 물리적 확장 
    ═══════════════════════════════════════════════════════════ */
 
-/* 1. App.tsx에서 만든 전역 가로 스크롤바 물리적 확장 및 디자인 */
-.custom-scrollbar::-webkit-scrollbar { 
-  height: 18px !important; 
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #94A3B8 !important;
-  border-radius: 9px !important;
-  border: 3px solid #ffffff !important;
-}
-.custom-scrollbar::-webkit-scrollbar-track { 
-  background: #F1F5F9 !important; 
+/* ── 1. 래퍼 초기화 (전역 스크롤 꼼수 삭제! 순정 틀고정 복구) ── */
+.gantt-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
 
-/* 2. 라이브러리의 방해 요소(숨겨진 overflow) 완벽 무력화 */
-/* 스크롤은 부모(custom-scrollbar)가 하므로, 라이브러리 내부는 모두 풀어줍니다. */
-.gantt-wrapper ._CZjuD, 
-.gantt-wrapper ._3eULf {
-  overflow: visible !important; 
-  width: max-content !important;
-  min-width: 100% !important;
+/* 라이브러리 루트에 스크롤바가 들어갈 바닥 공간(18px)만 뚫어줍니다. */
+._CZjuD {
+  position: relative !important;
+  padding-bottom: 18px !important; 
 }
 
-/* 3. 라이브러리의 반쪽짜리(우측에만 있는) 자체 스크롤 완전 삭제 */
-.gantt-wrapper ._2k9Ys { 
-  display: none !important; 
+
+/* ── 2. 🚀 가로 스크롤바를 화면 100% 전체로 쫙 늘리기 (유저님 아이디어) ── */
+/* 우측에만 짧게 있던 스크롤바를 왼쪽 끝(고정영역 아래)까지 강제로 끌어옵니다. */
+._2k9Ys {
+  display: block !important;
+  position: absolute !important;
+  left: 0 !important;    
+  bottom: 0 !important;  
+  width: 100% !important; /* 화면 왼쪽 끝까지 확장 */
+  height: 18px !important;
+  background: #F1F5F9 !important;
+  border-top: 1px solid #e2e8f0 !important;
+  z-index: 100 !important;
 }
 
-/* 4. 🚀 좌측 영역(구분~상태) 완벽 틀고정 (Sticky) 🚀 */
-/* 스크롤을 우측으로 넘겨도, 왼쪽 화면 0px 지점에 절대적으로 고정됩니다. */
-.gantt-wrapper ._3_ygE {
-  position: sticky !important;
-  left: 0 !important;
-  z-index: 50 !important;
-  background-color: #ffffff !important;
-  border-right: 1px solid #CBD5E1 !important;
-  box-shadow: 4px 0 10px rgba(0,0,0,0.06) !important;
+/* ── 3. 🚀 마법의 수식: 늘어난 폭만큼 스크롤 내부를 뛰어넘게 보정 ── */
+/* 스크롤바를 억지로 늘렸으니, App.tsx에서 받아온 좌측 칼럼 너비만큼 
+   안쪽 여백(Padding)을 채워넣어 차트 이동 거리를 1:1로 맞춥니다. */
+._19jgW {
+  box-sizing: content-box !important;
+  padding-left: var(--task-list-width, 1155px) !important; 
 }
 
-/* 5. 🚀 세로 스크롤바 화면 우측 끝 제자리 고정 🚀 */
-/* 가로 스크롤을 아무리 움직여도 세로 스크롤바는 현재 화면의 오른쪽 끝에 매달려 있습니다. */
-.gantt-wrapper ._1eT-t {
-  position: sticky !important;
+/* ── 4. 세로 스크롤바 제자리(화면 우측 끝) 보존 ── */
+._1eT-t {
+  position: absolute !important;
+  top: 0 !important;
   right: 0 !important;
-  z-index: 60 !important;
+  bottom: 18px !important; /* 가로 스크롤바랑 안 겹치게 위로 올림 */
   background: #f8fafc !important;
   border-left: 1px solid #e2e8f0 !important;
+  z-index: 90 !important;
 }
-.gantt-wrapper ._1eT-t::-webkit-scrollbar { width: 10px !important; }
-.gantt-wrapper ._1eT-t::-webkit-scrollbar-thumb { background: #B0BEC5 !important; border-radius: 5px !important; }
+
+/* ── 5. 스크롤바 조작감 극대화 디자인 ── */
+._2k9Ys::-webkit-scrollbar { height: 18px !important; }
+._2k9Ys::-webkit-scrollbar-thumb {
+  background: #94A3B8 !important;
+  border-radius: 9px !important;
+  border: 3px solid #F1F5F9 !important;
+}
+._1eT-t::-webkit-scrollbar { width: 10px !important; }
+._1eT-t::-webkit-scrollbar-thumb { background: #B0BEC5 !important; border-radius: 5px !important; }
 
 
 /* ═══════════════════════════════════════════════════════════
    디자인 및 호버(Hover) 효과 유지
    ═══════════════════════════════════════════════════════════ */
 
+/* 폰트 세팅 */
 ._CZjuD, ._CZjuD *, ._3_ygE, ._3_ygE * { font-family: 'Pretendard', sans-serif !important; }
 
+/* 헤더 및 바디 색상 */
 ._35nLX { fill: #CFD8DC !important; stroke: #94A3B8 !important; stroke-width: 1px !important; }
 ._2q1Kt { fill: #1E293B !important; font-size: 12px !important; font-weight: 800 !important; }
 ._9w8d5 { fill: #1E293B !important; font-size: 11px !important; font-weight: 800 !important; }
@@ -70,7 +79,7 @@
 ._3rUKi, ._RuwuK { stroke: #CBD5E1 !important; stroke-width: 1px !important; }
 ._RRr12 { fill: rgba(59, 130, 246, 0.08) !important; }
 
-/* 간트 막대 텍스트 및 호버 이펙트 */
+/* 간트 막대 텍스트 */
 ._2B2zv text:not(._2q1Kt):not(._9w8d5) {
   fill: #1E293B !important;
   font-weight: 900 !important; 
@@ -78,6 +87,7 @@
   text-shadow: 0 0 5px rgba(255, 255, 255, 0.9);
 }
 
+/* 간트 막대 호버 액션 */
 rect[class*="barBackground"], rect[class*="barProgress"] { rx: 4px !important; ry: 4px !important; }
 rect[class*="barBackground"] { stroke: rgba(0, 0, 0, 0.15) !important; stroke-width: 1px !important; transition: filter 0.2s ease !important; }
 rect[class*="barBackground"]:hover, rect[class*="barProgress"]:hover { 
