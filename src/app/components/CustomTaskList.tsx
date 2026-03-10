@@ -3,15 +3,15 @@ import { Task } from "gantt-task-react";
 import { GanttGroupContext } from "./GanttGroupContext";
 import { ChevronRight, ChevronDown } from "lucide-react";
 
-// 🚀 칼럼 넓이 조정 (활동 15% 증가, 담당자 10% 증가)
+// 🚀 칼럼 넓이 조정 (담당자 칼럼 5% 확장)
 const COL_WIDTHS = {
   area: 65, 
   phase: 85, 
-  activity: 160,      // 기존 140 -> 160 (+15%)
+  activity: 160, 
   deliverable: 140, 
   taskName: 200,      
-  assigneePlan: 100,  // 기존 90 -> 100 (+10%)
-  assigneeIT: 100,    // 기존 90 -> 100 (+10%)
+  assigneePlan: 105,  // 기존 100 -> 105 (+5%)
+  assigneeIT: 105,    // 기존 100 -> 105 (+5%)
   start: 80, 
   end: 80, 
   status: 75,
@@ -46,18 +46,10 @@ export const CustomTaskListHeader: React.FC<any> = ({ headerHeight, rowWidth, fo
   
   return (
     <div className="flex border-y border-slate-400 text-[12px] relative z-10" style={{ height: headerHeight, width: rowWidth, fontFamily, fontSize }}>
-      <div className={headerClass} style={{ width: COL_WIDTHS.area }}>
-        구분 <button onClick={ctx.toggleAreaColumn} className={btnClass}>{ctx.areaCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button>
-      </div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.phase }}>
-        단계 <button onClick={ctx.togglePhaseColumn} className={btnClass}>{ctx.phaseCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button>
-      </div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.activity }}>
-        활동 <button onClick={ctx.toggleActivityColumn} className={btnClass}>{ctx.activityCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button>
-      </div>
-      <div className={headerClass} style={{ width: COL_WIDTHS.deliverable }}>
-        산출물 <button onClick={ctx.toggleDeliverableColumn} className={btnClass}>{ctx.deliverableCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button>
-      </div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.area }}>구분 <button onClick={ctx.toggleAreaColumn} className={btnClass}>{ctx.areaCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button></div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.phase }}>단계 <button onClick={ctx.togglePhaseColumn} className={btnClass}>{ctx.phaseCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button></div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.activity }}>활동 <button onClick={ctx.toggleActivityColumn} className={btnClass}>{ctx.activityCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button></div>
+      <div className={headerClass} style={{ width: COL_WIDTHS.deliverable }}>산출물 <button onClick={ctx.toggleDeliverableColumn} className={btnClass}>{ctx.deliverableCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}</button></div>
       <div className={headerClass} style={{ width: COL_WIDTHS.taskName }}>작업</div>
       <div className={headerClass} style={{ width: COL_WIDTHS.assigneePlan }}>담당자(기획)</div>
       <div className={headerClass} style={{ width: COL_WIDTHS.assigneeIT }}>담당자(IT)</div>
@@ -77,7 +69,7 @@ export const CustomTaskListTable: React.FC<any> = ({ rowHeight, rowWidth, fontFa
         const areaColor = getDynamicColor(t.area, 'area');
         const phaseColor = getDynamicColor(t.phase, 'phase');
         const cellClass = "flex items-center border-r border-slate-300 last:border-r-0 truncate text-[12px] text-slate-800 h-full justify-center";
-        const statusColors: any = { 완료: "bg-[#81C784]", 진행중: "bg-[#64B5F6]", 대기: "bg-[#E0E0E0]", 지연: "bg-[#E57373]", 이슈발생: "bg-[#EF5350] text-white", 보류: "bg-[#FFB74D]", 취소: "bg-[#90A4AE]" };
+        const statusColors: any = { 완료: "bg-[#81C784]", 테스트중: "bg-[#9FA8DA]", 진행중: "bg-[#64B5F6]", 대기: "bg-[#E0E0E0]", 지연: "bg-[#E57373]", 이슈발생: "bg-[#EF5350] text-white", 보류: "bg-[#FFB74D]", 취소: "bg-[#90A4AE]" };
         return (
           <div key={t.id} className="flex border-b border-slate-300 hover:bg-blue-50/70 transition-colors" style={{ height: rowHeight, width: rowWidth, fontFamily, fontSize }}>
             <div className={cellClass} style={{ width: COL_WIDTHS.area, backgroundColor: areaColor.bg, color: areaColor.text, fontWeight: 'bold' }}>{t.area}</div>
