@@ -1,14 +1,14 @@
 /* ═══════════════════════════════════════════════════════════
-   🔥 초정밀 스크롤바 최적화 & 막대 텍스트 가독성 강화 🔥
+   🔥 초광대역 스크롤바(Thumb 강조) & 텍스트 자간 미세 조정 🔥
    ═══════════════════════════════════════════════════════════ */
 
 /* ── 1. 래퍼 및 영역 재계산 ── */
 .gantt-wrapper { position: relative; width: 100%; height: 100%; }
-._CZjuD { padding-bottom: 26px !important; } /* 하단 여백 최소화 */
+._CZjuD { padding-bottom: 34px !important; } /* 스크롤바 영역 확보 */
 ._19jgW { box-sizing: content-box !important; padding-left: var(--task-list-width, 1165px) !important; }
 
 /* ══════════════════════════════════════════════════════════
-   2. 🚀 가로 스크롤바 — 핸들 두께 2배 확장 & 여백 최소화
+   2. 🚀 가로 스크롤바 — 조작 영역 극대화 (34px)
    ══════════════════════════════════════════════════════════ */
 ._2k9Ys {
   margin-left: 0 !important;
@@ -16,45 +16,45 @@
   position: absolute !important;
   left: 0 !important;
   bottom: 0 !important;
-  height: 26px !important; 
+  height: 34px !important; /* 전체 높이 확대 */
   background: #F1F5F9 !important;
   border-top: 1px solid #E2E8F0 !important;
   z-index: 100 !important;
   display: block !important;
 }
 
-._2k9Ys::-webkit-scrollbar { height: 26px !important; }
+._2k9Ys::-webkit-scrollbar { height: 34px !important; }
 ._2k9Ys::-webkit-scrollbar-track { background: #F1F5F9 !important; }
 
-/* 핸들(Thumb) 두께를 키우기 위해 테두리(border) 여백을 줄임 */
+/* 핸들(Thumb)을 트랙에 거의 꽉 차게 만들어 가시성과 조작성 확보 */
 ._2k9Ys::-webkit-scrollbar-thumb {
   background: #94A3B8 !important;
-  border-radius: 13px !important;
-  border: 3px solid #F1F5F9 !important; /* 여백을 3px로 줄여 핸들을 꽉 차게 만듦 */
+  border-radius: 17px !important;
+  border: 2px solid #F1F5F9 !important; /* 여백 최소화로 핸들 두께 극대화 */
   background-clip: padding-box !important;
 }
 ._2k9Ys::-webkit-scrollbar-thumb:hover { background: #64748B !important; }
 
 /* ══════════════════════════════════════════════════════════
-   3. 🚀 세로 스크롤바 — 핸들 두께 2배 확장
+   3. 🚀 세로 스크롤바 — 조작 영역 극대화 (34px)
    ══════════════════════════════════════════════════════════ */
 ._1eT-t {
   position: absolute !important;
   top: 0 !important;
   right: 0 !important;
-  bottom: 26px !important;
-  width: 26px !important;
+  bottom: 34px !important;
+  width: 34px !important;
   z-index: 90 !important;
   background: #F1F5F9 !important;
   border-left: 1px solid #E2E8F0 !important;
 }
 
-._1eT-t::-webkit-scrollbar { width: 26px !important; }
+._1eT-t::-webkit-scrollbar { width: 34px !important; }
 ._1eT-t::-webkit-scrollbar-track { background: #F1F5F9 !important; }
 ._1eT-t::-webkit-scrollbar-thumb {
   background: #94A3B8 !important;
-  border-radius: 13px !important;
-  border: 3px solid #F1F5F9 !important; 
+  border-radius: 17px !important;
+  border: 2px solid #F1F5F9 !important; 
   background-clip: padding-box !important;
 }
 
@@ -62,29 +62,29 @@
 ._3_ygE { border-right: 1px solid #E2E8F0 !important; z-index: 50 !important; }
 
 /* ═══════════════════════════════════════════════════════════
-   2025 디자인 스타일: 텍스트 가독성 최적화
+   2025 디자인 스타일: 텍스트 가독성 및 자간 최적화
    ═══════════════════════════════════════════════════════════ */
 
 ._CZjuD, ._CZjuD *, ._3_ygE, ._3_ygE * { font-family: 'Pretendard', sans-serif !important; }
 
-/* 오늘 표시 점선 */
-.gantt-wrapper svg line[class*="todayLine"] { stroke: #6366F1 !important; stroke-width: 1.5px !important; stroke-dasharray: 4, 3 !important; }
-
-/* ── 🚀 간트 막대 텍스트 스타일 ── */
+/* ── 🚀 간트 막대 텍스트 스타일 (자간 조정 포함) ── */
 ._2B2zv text:not(._2q1Kt):not(._9w8d5) {
   fill: #FFFFFF !important; 
   text-shadow: 0px 1px 4px rgba(0, 0, 0, 0.8) !important; 
   pointer-events: none !important; 
   transition: x 0.05s ease-out !important; 
+  
+  /* 자간을 아주 조금만 넓힘 (0.02em) */
+  letter-spacing: 0.02em !important; 
 }
 
-/* 산출물 텍스트 (기본) */
+/* 산출물 텍스트 (Bold 900) */
 ._2B2zv text tspan.deliverable-text { font-weight: 900 !important; font-size: 12px !important; }
 
-/* [작업] 텍스트 (볼드 적용, 크기 2pt 작게) */
+/* [작업] 텍스트 (Bold 800, 크기 10px) */
 ._2B2zv text tspan.task-text {
-  font-weight: 800 !important; /* 다시 볼드 처리 적용 */
-  font-size: 10px !important; /* 산출물(12px)보다 2pt 작게 유지 */
+  font-weight: 800 !important; 
+  font-size: 10px !important; 
 }
 
 rect[class*="barBackground"] { rx: 6px !important; ry: 6px !important; stroke: rgba(0, 0, 0, 0.05) !important; }

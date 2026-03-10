@@ -164,7 +164,6 @@ export default function App() {
       if (finalStart < BASE_START_DATE) finalStart = BASE_START_DATE;
       if (finalEnd < BASE_START_DATE) finalEnd = BASE_START_DATE;
 
-      // 산출물[작업] 형식 결합
       const combinedName = (t.deliverable && t.taskName) 
         ? `${t.deliverable}[${t.taskName}]` 
         : (t.deliverable || t.taskName);
@@ -187,7 +186,6 @@ export default function App() {
     });
   }, [visibleTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
-  // 🚀 뷰포트 중앙 정렬 및 [작업] 텍스트 스타일링
   useEffect(() => {
     const wrapper = ganttWrapperRef.current;
     if (!wrapper || ganttTasks.length === 0) return;
@@ -223,7 +221,6 @@ export default function App() {
             textEl.setAttribute('x', String((visLeft + visRight) / 2));
           }
 
-          // tspan 주입을 통한 스타일 분리
           if (textEl.children.length === 0) {
             const text = textEl.textContent || '';
             const bracketIndex = text.indexOf('[');
@@ -288,7 +285,6 @@ export default function App() {
 
         <div className="flex flex-1 overflow-hidden min-w-0 p-3 gap-3">
           
-          {/* 트리 필터 패널 */}
           <div className="shrink-0 bg-white border border-slate-200 rounded-xl overflow-hidden transition-all duration-300 ease-in-out shadow-sm" style={{ width: filterPanelOpen ? 230 : 0, minWidth: filterPanelOpen ? 230 : 0 }}>
             <div className="w-[230px] h-full overflow-y-auto">
               <div className="p-3">
@@ -364,7 +360,7 @@ export default function App() {
                 TaskListHeader={CustomTaskListHeader} 
                 TaskListTable={CustomTaskListTable} 
                 todayColor="rgba(99, 102, 241, 0.04)" 
-                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 48 - 28 : 500} /* 스크롤바 높이 최적화 */
+                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 48 - 36 : 500} 
               />
             ) : (<div className="flex flex-col items-center justify-center h-full text-slate-400 gap-5"><Database className="w-12 h-12 text-slate-200" /><p className="text-[15px] font-bold text-slate-400">데이터를 불러오는 중입니다.</p></div>)}
           </div>
