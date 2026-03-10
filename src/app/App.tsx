@@ -71,7 +71,6 @@ export default function App() {
 
   if (isStandaloneDashboard) return <DashboardPopup tasks={tasks} isStandalone={true} />;
 
-  // 🚀 필터 패널 렌더링용 변수들
   const areas = useMemo(() => [...new Set(tasks.map((t) => t.area))].filter(Boolean), [tasks]);
   const phasesByArea = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -132,11 +131,15 @@ export default function App() {
   }, [filteredTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
   const ganttTasks = useMemo(() => {
+    // 🚀 수정된 부분: 좌측 리스트 톤과 어울리는 파스텔 톤 색상 (배경 연하게, 진행률 진하게)
     const statusColors: Record<string, { bg: string, prog: string }> = {
-      완료: { bg: "#81C784", prog: "#4CAF50" }, 진행중: { bg: "#64B5F6", prog: "#2196F3" },
-      대기: { bg: "#E0E0E0", prog: "#9E9E9E" }, 지연: { bg: "#E57373", prog: "#F44336" },
-      이슈발생: { bg: "#EF5350", prog: "#D32F2F" }, 보류: { bg: "#FFB74D", prog: "#FF9800" },
-      취소: { bg: "#90A4AE", prog: "#607D8B" },
+      완료: { bg: "#6EE7B7", prog: "#10B981" },     // Emerald 300 / 500
+      진행중: { bg: "#93C5FD", prog: "#3B82F6" },   // Blue 300 / 500
+      대기: { bg: "#E2E8F0", prog: "#94A3B8" },     // Slate 200 / 400
+      지연: { bg: "#FDA4AF", prog: "#F43F5E" },     // Rose 300 / 500
+      이슈발생: { bg: "#FCA5A5", prog: "#EF4444" }, // Red 300 / 500
+      보류: { bg: "#FCD34D", prog: "#F59E0B" },     // Amber 300 / 500
+      취소: { bg: "#CBD5E1", prog: "#64748B" },     // Slate 300 / 500
     };
 
     const BASE_START_DATE = new Date("2026-03-01T00:00:00");
@@ -171,7 +174,6 @@ export default function App() {
     });
   }, [visibleTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
-  // 🚀 필터 조작 함수들
   const resetFilter = () => { setTreeFilter({ selectedArea: null, selectedPhase: null, selectedActivity: null }); };
   const isFiltered = treeFilter.selectedArea || treeFilter.selectedPhase || treeFilter.selectedActivity;
   const filterBreadcrumb = [ treeFilter.selectedArea, treeFilter.selectedPhase, treeFilter.selectedActivity ].filter(Boolean).join(" → ");
@@ -209,7 +211,6 @@ export default function App() {
           </div>
         </header>
 
-        {/* 🚀 복구된 필터 상단 바 (Breadcrumb) */}
         <div className="flex items-center gap-2 px-5 py-2 bg-slate-50 border-b border-slate-300 shrink-0">
           <button onClick={() => setFilterPanelOpen(!filterPanelOpen)} className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all ${filterPanelOpen ? "bg-blue-100 text-blue-700 border border-blue-200" : "bg-white text-slate-600 border border-slate-300 hover:bg-slate-100"}`}>
             {filterPanelOpen ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeftOpen className="w-3.5 h-3.5" />} 필터 {isFiltered && <span className="ml-0.5 w-1.5 h-1.5 rounded-full bg-blue-500" />}
@@ -218,10 +219,8 @@ export default function App() {
           <div className="flex items-center gap-3 ml-auto text-[11px] font-bold text-slate-500"><span>전체 <span className="text-slate-800">{tasks.length}</span></span><span className="text-slate-300">|</span><span>표시 <span className="text-blue-600">{visibleTasks.length}</span></span></div>
         </div>
 
-        {/* 메인 콘텐츠 영역 */}
         <div className="flex flex-1 overflow-hidden">
           
-          {/* 🚀 복구된 좌측 트리 패널 */}
           <div className="shrink-0 bg-white border-r border-slate-300 overflow-hidden transition-all duration-300 ease-in-out" style={{ width: filterPanelOpen ? 220 : 0, minWidth: filterPanelOpen ? 220 : 0 }}>
             <div className="w-[220px] h-full overflow-y-auto">
               <div className="p-2">
@@ -281,7 +280,8 @@ export default function App() {
             </div>
           </div>
 
-          <div ref={ganttWrapperRef} className="flex-1 overflow-hidden bg-white shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper">
+          {/* 🚀 수정된 부분: overflow-x-auto를 래퍼 전체에 주어 가로스크롤 범위를 넓힘 */}
+          <div ref={ganttWrapperRef} className="flex-1 overflow-x-auto overflow-y-hidden bg-white shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper">
             {ganttTasks.length > 0 ? (
               <Gantt 
                 tasks={ganttTasks} 
@@ -296,14 +296,13 @@ export default function App() {
                 locale="ko-KR" 
                 TaskListHeader={CustomTaskListHeader} 
                 TaskListTable={CustomTaskListTable} 
-                todayColor="rgba(239, 68, 68, 0.05)" 
+                todayColor="rgba(59, 130, 246, 0.15)" 
                 ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 56 - 20 : 500} 
               />
             ) : (<div className="flex flex-col items-center justify-center h-full text-slate-400 gap-5"><Database className="w-12 h-12 text-slate-300" /><p className="text-[15px] font-bold text-slate-500">데이터를 불러오는 중입니다.</p></div>)}
           </div>
         </div>
         
-        {/* 팝업 모음 */}
         {isDashboardOpen && <DashboardPopup tasks={tasks} onClose={() => setIsDashboardOpen(false)} />}
         {isArchitectureOpen && <ArchitecturePopup onClose={() => setIsArchitectureOpen(false)} />}
       </div>
