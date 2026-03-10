@@ -5,13 +5,13 @@
   background-color: #ffffff;
 }
 
-/* ── 헤더 배경색 (좌측 bg-[#CFD8DC]와 완벽 동기화) ── */
+/* ── 캘린더 헤더 배경 (좌측 헤더 bg-[#CFD8DC]와 동일) ── */
 .gantt-wrapper svg rect[class*="calendarHeader"],
 .gantt-wrapper svg rect[class*="calendarTick"] {
   fill: #CFD8DC !important;
 }
 
-/* ── 헤더 텍스트 (좌측 text-slate-800과 완벽 동기화) ── */
+/* ── 캘린더 헤더 텍스트 (좌측 헤더 텍스트 text-slate-800 = #1E293B) ── */
 .gantt-wrapper svg text[class*="calendarHeaderName"],
 .gantt-wrapper svg text[class*="calendarTickName"] {
   fill: #1E293B !important; 
@@ -20,7 +20,7 @@
   font-size: 12px !important;
 }
 
-/* ── 헤더 테두리 선 (좌측 border-slate-400과 완벽 동기화) ── */
+/* ── 캘린더 헤더 테두리 선 (좌측 테두리 border-slate-400 = #94A3B8) ── */
 .gantt-wrapper svg line[class*="calendarBottomLine"],
 .gantt-wrapper svg line[class*="calendarTopLine"],
 .gantt-wrapper svg rect[class*="calendarHeader"] {
@@ -28,7 +28,7 @@
   stroke-width: 1px !important;
 }
 
-/* ── 그리드 바디 배경색 (좌측 셀 배경과 동일하게 순백색) ── */
+/* ── 그리드 바디 배경색 (좌측 셀 흰색 배경 = #FFFFFF) ── */
 .gantt-wrapper svg rect[class*="gridRow"] {
   fill: #FFFFFF !important; 
   transition: fill 0.15s ease-in-out !important;
@@ -40,20 +40,20 @@
   fill: rgba(239, 246, 255, 0.7) !important; 
 }
 
-/* ── 그리드 가로선/세로선 (좌측 테두리 border-slate-300과 완벽 동기화) ── */
+/* ── 그리드 가로선/세로선 (좌측 테두리 border-slate-300 = #CBD5E1) ── */
 .gantt-wrapper svg line[class*="gridTick"],
 .gantt-wrapper svg line[class*="gridRowLine"] {
   stroke: #CBD5E1 !important; 
   stroke-width: 1px !important;
 }
 
-/* ── 막대 내부 산출물 텍스트 아주 굵게 표시 ── */
+/* ── 🚀 막대 내부 산출물 텍스트 가장 굵게 강조 ── */
 .gantt-wrapper svg text[class*="barLabel"] {
   fill: #1E293B !important; 
-  font-weight: 900 !important; /* 기존보다 훨씬 굵은 900 적용 */
+  font-weight: 900 !important; /* 글씨 아주 굵게 */
   font-family: 'Pretendard', sans-serif !important;
-  font-size: 12.5px !important;
-  text-shadow: 0 0 5px rgba(255,255,255,0.9); /* 글씨가 잘 보이도록 흰색 테두리 효과 */
+  font-size: 13px !important;
+  text-shadow: 0 0 5px rgba(255,255,255,0.9); /* 글씨 가독성 향상 */
 }
 
 /* ── 간트 막대 스타일 ── */
@@ -71,7 +71,7 @@
 
 .gantt-wrapper svg rect[class*="barBackground"]:hover {
   cursor: pointer;
-  filter: brightness(0.85); /* 마우스 올렸을 때 살짝 더 어두워지는 효과 유지 */
+  filter: brightness(0.85); /* 마우스 올렸을 때 살짝 어두워지는 효과 부여 */
 }
 
 .gantt-wrapper svg line[class*="todayLine"] {
@@ -81,7 +81,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   2. 가로 스크롤 전체 확장 & 좌측 칼럼(구분~상태) 틀 고정(Sticky)
+   2. 가로 스크롤 전체 확장 & 좌측 칼럼(구분~상태) '틀 고정(Sticky)'
    ═══════════════════════════════════════════════════════════ */
 
 /* 라이브러리 기본 스크롤 숨김 */
@@ -96,16 +96,16 @@
   min-width: 100% !important;
 }
 
-/* 🚀 좌측 칼럼 영역을 화면 왼쪽에 틀 고정 🚀 */
+/* 🚀 좌측 칼럼 영역(CustomTaskList)을 화면 왼쪽에 틀 고정 🚀 */
 .gantt-wrapper > div > div:first-child {
   position: sticky !important;
   left: 0 !important;
   z-index: 50 !important;
   background-color: #ffffff !important;
-  box-shadow: 3px 0 10px rgba(0, 0, 0, 0.08) !important; /* 스크롤 시 간트 차트 위로 올라와 있음을 명확히 표시 */
+  box-shadow: 3px 0 10px rgba(0, 0, 0, 0.08) !important; /* 스크롤 시 분리감을 위한 우측 그림자 */
 }
 
-/* 우측 간트 차트 SVG 영역이 잘리지 않도록 허용 */
+/* 우측 간트 차트 SVG 영역이 찌그러지지 않도록 허용 */
 .gantt-wrapper > div > div:last-child {
   flex: 1 !important;
   overflow: visible !important; 
