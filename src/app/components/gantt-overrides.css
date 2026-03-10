@@ -1,48 +1,51 @@
 /* ═══════════════════════════════════════════════════════════
-   🔥 완벽한 가로 스크롤 & 2025 트렌디 디자인 & 막대 텍스트 수정 🔥
+   🔥 완벽한 가로 스크롤 & 대형 스크롤바 & 텍스트 뷰포트 추적 🔥
    ═══════════════════════════════════════════════════════════ */
 
 /* ── 1. 래퍼 및 스크롤 로직 (※절대 건드리지 않음※) ── */
 .gantt-wrapper { position: relative; width: 100%; height: 100%; }
-._CZjuD { padding-bottom: 24px !important; } /* 넓어진 스크롤바 공간 24px 확보 */
+
+/* 🚀 대폭 늘어난 가로 스크롤바 공간(28px) 확보 */
+._CZjuD { padding-bottom: 28px !important; }
 ._19jgW { box-sizing: content-box !important; padding-left: var(--task-list-width, 1165px) !important; }
 
-/* ── 2. 🚀 스크롤바 조작성 극대화 (크고 두껍게 복구) ── */
+/* ── 2. 🚀 스크롤바 조작성 극대화 (엄청나게 큼직하고 시원하게) ── */
 ._2k9Ys {
   margin-left: 0 !important; 
   width: 100% !important;    
   position: absolute !important;
   left: 0 !important;
   bottom: 0 !important;
-  height: 24px !important; /* 24px로 대형화 */
+  height: 28px !important; /* 🚀 18px -> 28px 대폭 상향 */
   background: #FFFFFF !important;
   border-top: 1px solid #F1F5F9 !important;
   z-index: 100 !important;
   display: block !important;
 }
 
-._2k9Ys::-webkit-scrollbar { height: 24px !important; }
+._2k9Ys::-webkit-scrollbar { height: 28px !important; }
 ._2k9Ys::-webkit-scrollbar-thumb {
   background: #CBD5E1 !important;
-  border-radius: 12px !important; /* 캡슐 형태 */
-  border: 5px solid #FFFFFF !important; /* 세련된 여백 */
+  border-radius: 14px !important; /* 캡슐 형태 완벽 유지 */
+  border: 5px solid #FFFFFF !important; /* 뚱뚱하면서도 여백이 있어 세련됨 */
 }
 ._2k9Ys::-webkit-scrollbar-thumb:hover { background: #94A3B8 !important; }
 
+/* 🚀 세로 스크롤바도 엄청나게 키움 */
 ._1eT-t {
   position: absolute !important;
   top: 0 !important;
   right: 0 !important;
-  bottom: 24px !important;
-  width: 20px !important; /* 세로도 20px로 대형화 */
+  bottom: 28px !important;
+  width: 24px !important; /* 🚀 16px -> 24px 대폭 상향 */
   z-index: 90 !important;
   background: #FFFFFF !important;
   border-left: 1px solid #F1F5F9 !important;
 }
-._1eT-t::-webkit-scrollbar { width: 20px !important; }
+._1eT-t::-webkit-scrollbar { width: 24px !important; }
 ._1eT-t::-webkit-scrollbar-thumb { 
   background: #CBD5E1 !important; 
-  border-radius: 10px !important; 
+  border-radius: 12px !important; 
   border: 5px solid #FFFFFF !important;
 }
 ._1eT-t::-webkit-scrollbar-thumb:hover { background: #94A3B8 !important; }
@@ -60,18 +63,18 @@
 
 ._CZjuD, ._CZjuD *, ._3_ygE, ._3_ygE * { font-family: 'Pretendard', sans-serif !important; }
 
-/* 캘린더 헤더: 밝고 맑은 라이트 그레이(slate-50) */
+/* 캘린더 헤더: 밝고 맑은 라이트 그레이 */
 ._35nLX { fill: #F8FAFC !important; stroke: #E2E8F0 !important; stroke-width: 1px !important; }
 ._2q1Kt { fill: #334155 !important; font-size: 12.5px !important; font-weight: 800 !important; letter-spacing: -0.02em; }
 ._9w8d5 { fill: #64748B !important; font-size: 11px !important; font-weight: 700 !important; }
 ._1rLuZ { stroke: #E2E8F0 !important; }
 
-/* 그리드 바디 & 격자 선 (답답한 선을 날림) */
+/* 그리드 바디 & 격자 선 */
 ._2dZTy { fill: #FFFFFF !important; transition: fill 0.2s ease-in-out !important; pointer-events: all !important; }
-._2dZTy:hover { fill: #EEF2FF !important; } /* 호버시 연한 인디고톤 */
+._2dZTy:hover { fill: #EEF2FF !important; }
 ._3rUKi, ._RuwuK { stroke: #F1F5F9 !important; stroke-width: 1px !important; }
 
-/* 오늘(Today) 표시: 트렌디한 인디고 톤 점선 */
+/* 오늘(Today) 표시 */
 ._RRr12 { fill: rgba(99, 102, 241, 0.04) !important; }
 .gantt-wrapper svg line[class*="todayLine"] {
   stroke: #6366F1 !important; 
@@ -80,9 +83,9 @@
   opacity: 0.8;
 }
 
-/* ── 🚀 핵심: 간트 막대 & 텍스트 효과 ── */
+/* ── 🚀 간트 막대 & 텍스트 효과 ── */
 
-/* 텍스트: 완전한 흰색 + 어두운 그림자 처리로 스카이블루 배경에서 가독성 폭발 */
+/* 텍스트: 완전한 흰색 + 어두운 섀도우로 가독성 극대화 */
 ._2B2zv text:not(._2q1Kt):not(._9w8d5) {
   fill: #FFFFFF !important; 
   font-weight: 900 !important; 
@@ -90,7 +93,7 @@
   text-shadow: 0px 1px 4px rgba(0, 0, 0, 0.8) !important; 
 }
 
-/* 막대 디자인 둥글게 + 부드러운 그림자(Soft Layer) */
+/* 막대 둥글게 + 그림자 */
 rect[class*="barBackground"], rect[class*="barProgress"] { rx: 6px !important; ry: 6px !important; }
 rect[class*="barBackground"] { 
   stroke: rgba(0, 0, 0, 0.05) !important; 
@@ -99,7 +102,6 @@ rect[class*="barBackground"] {
   filter: drop-shadow(0 2px 3px rgba(0,0,0,0.06)) !important;
 }
 
-/* 막대 호버 액션 */
 rect[class*="barBackground"]:hover, rect[class*="barProgress"]:hover { 
   cursor: pointer; 
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.08)) brightness(0.95) saturate(1.2) !important; 

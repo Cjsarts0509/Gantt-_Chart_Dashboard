@@ -139,6 +139,7 @@ export default function App() {
   }, [filteredTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
   const ganttTasks = useMemo(() => {
+    // 막대 색상은 상태와 무관하게 쨍한 푸른색(Sky Blue) 유지
     const barBgColor = "#38BDF8";   
     const barProgColor = "#0284C7"; 
 
@@ -181,23 +182,25 @@ export default function App() {
     });
   }, [visibleTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
-  // 🚀 신규 추가: 화면 스크롤 시 간트바 텍스트를 뷰포트 내 십자중앙으로 끌어오는 마법의 로직!
+
+  // 🚀 핵심 누락 수정: 스크롤 시 간트바 텍스트를 "현재 보이는 화면(뷰포트)의 정중앙"으로 끌어오는 마법의 로직 🚀
   useEffect(() => {
     const container = ganttWrapperRef.current;
     if (!container) return;
 
-    // 간트 차트가 들어있는 스크롤 영역
+    // 실제 간트차트가 그려지는(스크롤되는) 내부 영역
     const chartContainer = container.querySelector('._3eULf') as HTMLElement;
-    // 우리가 100%로 늘려놓은 하단 가로 스크롤바
+    // 우리가 100%로 확장한 하단 스크롤바
     const scrollBar = container.querySelector('._2k9Ys') as HTMLElement;
     
     if (!chartContainer || !scrollBar) return;
 
     const updateTextPositions = () => {
+      // 현재 차트의 스크롤 위치 및 화면에 보이는 너비
       const scrollLeft = chartContainer.scrollLeft;
       const clientWidth = chartContainer.clientWidth;
       
-      // 간트차트 안의 모든 배경 막대 찾기
+      // 간트 막대의 모든 텍스트 요소 찾기
       const backgroundRects = chartContainer.querySelectorAll('rect[class*="barBackground"]');
       
       backgroundRects.forEach((rect) => {
@@ -206,27 +209,29 @@ export default function App() {
         const textNode = parent.querySelector('text') as SVGTextElement;
         if (!textNode) return;
 
-        // 막대의 실제 X 시작 좌표와 너비
+        // 해당 막대의 고유 시작점(X)과 전체 길이(Width)
         const rectX = parseFloat(rect.getAttribute('x') || '0');
         const rectWidth = parseFloat(rect.getAttribute('width') || '0');
         const rectEnd = rectX + rectWidth;
 
-        // 🌟 핵심 연산: 현재 화면 안에 "보이는" 막대의 시작점과 끝점 계산
+        // 🌟 현재 "내 눈(뷰포트)에 보이는" 막대의 시작점과 끝점 계산
         const visibleStart = Math.max(rectX, scrollLeft);
         const visibleEnd = Math.min(rectEnd, scrollLeft + clientWidth);
 
-        // 막대가 화면에 조금이라도 보이고 있다면?
+        // 막대가 화면에 조금이라도 걸쳐있다면?
         if (visibleStart < visibleEnd) {
-          // 화면에 보이는 부분의 정중앙 계산
+          // 화면에 보이는 잘린 막대의 정중앙 계산
           const visibleCenter = (visibleStart + visibleEnd) / 2;
           const originalCenter = rectX + rectWidth / 2;
           
-          // 본래 위치(막대 중앙)에서 화면 안 중앙으로 얼마나 옮겨야 하는지(오프셋) 계산
+          // 원래 중앙 위치에서 화면 중앙으로 얼마나 이동해야 하는지 오프셋 도출
           const offsetX = visibleCenter - originalCenter;
           
-          // SVG 텍스트를 실시간으로 뷰포트에 맞게 이동
+          // 글씨를 실시간으로 뷰포트 중앙으로 밀어줌 (딜레이 없이 부드럽게)
           textNode.style.transform = `translateX(${offsetX}px)`;
+          textNode.style.transition = 'none'; 
         } else {
+          // 화면 밖이면 원상복구
           textNode.style.transform = `translateX(0px)`;
         }
       });
@@ -238,11 +243,11 @@ export default function App() {
       animationFrameId = requestAnimationFrame(updateTextPositions);
     };
 
-    // 스크롤 시 텍스트 위치 보정 함수 실행
+    // 가로 스크롤을 움직일 때마다 글씨 위치 재계산
     scrollBar.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     
-    // 첫 화면 렌더링 시에도 즉시 계산 반영
+    // 첫 렌더링 직후에도 중앙 정렬 1회 실행
     const timeouts = [100, 300, 500].map(t => setTimeout(updateTextPositions, t));
 
     return () => {
@@ -376,7 +381,8 @@ export default function App() {
                 TaskListHeader={CustomTaskListHeader} 
                 TaskListTable={CustomTaskListTable} 
                 todayColor="rgba(99, 102, 241, 0.04)" 
-                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 48 - 25 : 500} 
+                // 더 커진 스크롤바 높이(28px)를 반영하여 차트 세로 높이 보정
+                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 48 - 29 : 500} 
               />
             ) : (<div className="flex flex-col items-center justify-center h-full text-slate-400 gap-5"><Database className="w-12 h-12 text-slate-200" /><p className="text-[15px] font-bold text-slate-400">데이터를 불러오는 중입니다.</p></div>)}
           </div>
