@@ -131,16 +131,16 @@ export default function App() {
   }, [filteredTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
   const ganttTasks = useMemo(() => {
-    // 🚀 🔥 완전 무채색 탈피! 채도 높고 쨍한 컬러로 재정의 🔥
+    // 🎨 디자인 개선: 막대 색상을 최신 트렌드의 밝고 선명한 Vibrant 투톤 컬러로 리뉴얼
     const statusColors: Record<string, { bg: string, prog: string }> = {
-      완료: { bg: "#34D399", prog: "#059669" },     // 맑고 쨍한 에메랄드 그린
-      테스트중: { bg: "#A78BFA", prog: "#7C3AED" }, // 화사한 보라색 (인디고)
-      진행중: { bg: "#60A5FA", prog: "#2563EB" },   // 선명하고 시원한 파란색
-      대기: { bg: "#38BDF8", prog: "#0284C7" },     // 🚀 기존 칙칙한 회색을 버리고 '스카이 블루' 적용
-      지연: { bg: "#FB923C", prog: "#EA580C" },     // 강렬한 오렌지
-      이슈발생: { bg: "#F87171", prog: "#DC2626" }, // 쨍하고 경고감 있는 레드
-      보류: { bg: "#FBBF24", prog: "#D97706" },     // 쨍한 노란색(골드)
-      취소: { bg: "#94A3B8", prog: "#475569" },     // 취소만 유일하게 어두운 슬레이트(회색) 유지
+      완료: { bg: "#D1FAE5", prog: "#10B981" },     // 맑은 에메랄드
+      테스트중: { bg: "#E0E7FF", prog: "#6366F1" }, // 화사한 인디고
+      진행중: { bg: "#DBEAFE", prog: "#3B82F6" },   // 청량한 블루
+      대기: { bg: "#F1F5F9", prog: "#94A3B8" },     // 미니멀 슬레이트
+      지연: { bg: "#FFEDD5", prog: "#F97316" },     // 눈에 띄는 오렌지
+      이슈발생: { bg: "#FFE4E6", prog: "#F43F5E" }, // 강렬한 로즈
+      보류: { bg: "#FEF3C7", prog: "#F59E0B" },     // 따뜻한 앰버
+      취소: { bg: "#E2E8F0", prog: "#64748B" },     // 다크 슬레이트
     };
 
     const BASE_START_DATE = new Date("2026-03-01T00:00:00");
@@ -194,53 +194,55 @@ export default function App() {
 
   return (
     <GanttGroupContext.Provider value={groupContextValue}>
-      <div className="w-screen h-screen bg-[#F8FAFC] flex flex-col overflow-hidden" style={{ fontFamily: "'Pretendard', sans-serif" }}>
+      <div className="w-screen h-screen bg-[#F1F5F9] flex flex-col overflow-hidden" style={{ fontFamily: "'Pretendard', sans-serif" }}>
         
-        {/* 상단 헤더 */}
-        <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-300 shrink-0 shadow-sm z-10">
+        {/* 🎨 디자인 개선: ① 헤더 - 화이트 배경에 더 은은한 그림자(shadow-sm)로 공중에 뜬 듯한 깔끔함 */}
+        <header className="flex items-center justify-between px-6 py-4 bg-white/95 backdrop-blur-md border-b border-slate-200 shrink-0 shadow-sm z-10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-md"><BarChart2 className="w-5 h-5 text-white" /></div>
-            <div><h1 className="text-[16px] font-bold text-slate-800 leading-tight">프로젝트 일정 관리</h1><p className="text-[12px] font-medium text-slate-400 leading-tight mt-0.5">WBS 통합 대시보드</p></div>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shadow-indigo-200 shadow-md"><BarChart2 className="w-5 h-5 text-white" /></div>
+            <div><h1 className="text-[17px] font-extrabold text-slate-800 leading-tight">프로젝트 일정 관리</h1><p className="text-[12px] font-semibold text-slate-400 leading-tight mt-0.5">WBS 통합 대시보드</p></div>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={() => setIsArchitectureOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-bold bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 transition-colors shadow-sm">
+            <button onClick={() => setIsArchitectureOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm">
               <Network className="w-4 h-4" /> 로직 보기
             </button>
-            <a href="https://kyobobookcokr.sharepoint.com/sites/PJT2" target="_self" className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-bold bg-[#0078D4]/10 text-[#0078D4] border border-[#0078D4]/20 hover:bg-[#0078D4]/20 transition-colors shadow-sm">
+            <a href="https://kyobobookcokr.sharepoint.com/sites/PJT2" target="_self" className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 hover:border-blue-200 transition-all shadow-sm">
               <ExternalLink className="w-4 h-4" /> 팀 사이트
             </a>
-            <button onClick={() => setIsDashboardOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-colors shadow-sm">
+            <button onClick={() => setIsDashboardOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-indigo-600 text-white border border-indigo-500 hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200">
               <LayoutDashboard className="w-4 h-4" /> 요약 대시보드
             </button>
-            <div className="w-px h-6 bg-slate-300" />
+            <div className="w-px h-6 bg-slate-200" />
             <ExcelManager tasks={tasks} visibleTasks={ganttTasks} onUpload={(newTasks) => setTasks(newTasks)} />
-            <div className="w-px h-6 bg-slate-300" />
-            <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 border border-slate-200/60">
-              {viewModeOptions.map((opt) => (<button key={opt.value} className={`px-4 py-1.5 rounded-md text-[12px] font-bold transition-all ${viewMode === opt.value ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`} onClick={() => setViewMode(opt.value)}>{opt.label}</button>))}
+            <div className="w-px h-6 bg-slate-200" />
+            <div className="flex items-center gap-1 bg-slate-100/80 rounded-lg p-1 border border-slate-200/50">
+              {viewModeOptions.map((opt) => (<button key={opt.value} className={`px-4 py-1.5 rounded-md text-[12px] font-bold transition-all ${viewMode === opt.value ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`} onClick={() => setViewMode(opt.value)}>{opt.label}</button>))}
             </div>
           </div>
         </header>
 
-        <div className="flex items-center gap-2 px-5 py-2 bg-slate-50 border-b border-slate-300 shrink-0">
-          <button onClick={() => setFilterPanelOpen(!filterPanelOpen)} className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all ${filterPanelOpen ? "bg-blue-100 text-blue-700 border border-blue-200" : "bg-white text-slate-600 border border-slate-300 hover:bg-slate-100"}`}>
-            {filterPanelOpen ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeftOpen className="w-3.5 h-3.5" />} 필터 {isFiltered && <span className="ml-0.5 w-1.5 h-1.5 rounded-full bg-blue-500" />}
+        {/* 🎨 디자인 개선: ② 필터 바 - 투박함을 줄이고 컴팩트하고 둥근(Pill) 스타일 적용 */}
+        <div className="flex items-center gap-2 px-5 py-2.5 bg-white border-b border-slate-200 shrink-0">
+          <button onClick={() => setFilterPanelOpen(!filterPanelOpen)} className={`flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-bold transition-all shadow-sm ${filterPanelOpen ? "bg-indigo-50 text-indigo-600 border border-indigo-100" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}>
+            {filterPanelOpen ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeftOpen className="w-3.5 h-3.5" />} 필터 {isFiltered && <span className="ml-0.5 w-1.5 h-1.5 rounded-full bg-indigo-500" />}
           </button>
-          {isFiltered && (<div className="flex items-center gap-1.5 text-[11px] font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200"><span>{filterBreadcrumb}</span><button onClick={resetFilter} className="text-blue-500 hover:text-blue-700"><X className="w-3 h-3" /></button></div>)}
-          <div className="flex items-center gap-3 ml-auto text-[11px] font-bold text-slate-500"><span>전체 <span className="text-slate-800">{tasks.length}</span></span><span className="text-slate-300">|</span><span>표시 <span className="text-blue-600">{visibleTasks.length}</span></span></div>
+          {isFiltered && (<div className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-700 bg-indigo-50/70 px-3 py-1 rounded-full border border-indigo-100"><span>{filterBreadcrumb}</span><button onClick={resetFilter} className="text-indigo-400 hover:text-indigo-600"><X className="w-3.5 h-3.5" /></button></div>)}
+          <div className="flex items-center gap-3 ml-auto text-[11px] font-bold text-slate-400 bg-slate-50 px-3 py-1 rounded-full border border-slate-100"><span>전체 <span className="text-slate-700">{tasks.length}</span></span><span className="text-slate-300">|</span><span>표시 <span className="text-indigo-600">{visibleTasks.length}</span></span></div>
         </div>
 
-        <div className="flex flex-1 overflow-hidden min-w-0">
-          <div className="shrink-0 bg-white border-r border-slate-300 overflow-hidden transition-all duration-300 ease-in-out" style={{ width: filterPanelOpen ? 220 : 0, minWidth: filterPanelOpen ? 220 : 0 }}>
-            <div className="w-[220px] h-full overflow-y-auto">
-              <div className="p-2">
-                <div className="text-[10px] font-bold text-slate-400 px-2 py-1 uppercase tracking-wider">프로젝트 구조</div>
-                <button onClick={resetFilter} className={`w-full text-left px-2 py-1.5 rounded text-[12px] font-bold transition flex items-center gap-1.5 ${!isFiltered ? "bg-slate-800 text-white" : "text-slate-600 hover:bg-slate-100"}`}>
-                  <BarChart2 className="w-3 h-3" /> 전체 보기
+        <div className="flex flex-1 overflow-hidden min-w-0 p-3 gap-3">
+          {/* 🎨 디자인 개선: ③ 트리 필터 패널 - 카드(Bento) 형태로 분리하여 여백 주기 */}
+          <div className="shrink-0 bg-white border border-slate-200 rounded-xl overflow-hidden transition-all duration-300 ease-in-out shadow-sm" style={{ width: filterPanelOpen ? 230 : 0, minWidth: filterPanelOpen ? 230 : 0 }}>
+            <div className="w-[230px] h-full overflow-y-auto">
+              <div className="p-3">
+                <div className="text-[10px] font-extrabold text-slate-400 px-2 py-1.5 uppercase tracking-widest mb-1">프로젝트 구조</div>
+                <button onClick={resetFilter} className={`w-full text-left px-3 py-2 rounded-lg text-[12px] font-bold transition-all flex items-center gap-2 ${!isFiltered ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"}`}>
+                  <BarChart2 className="w-3.5 h-3.5" /> 전체 보기
                 </button>
                 {tasks.length === 0 ? (
-                  <div className="mt-6 px-2 text-center"><Database className="w-8 h-8 text-slate-300 mx-auto mb-3" /><p className="text-[11px] text-slate-500 font-bold mb-1">데이터가 없습니다</p></div>
+                  <div className="mt-8 px-2 text-center"><Database className="w-8 h-8 text-slate-200 mx-auto mb-3" /><p className="text-[11px] text-slate-400 font-bold mb-1">데이터가 없습니다</p></div>
                 ) : (
-                  <div className="mt-1 space-y-0.5">
+                  <div className="mt-2 space-y-1">
                     {areas.map((area) => {
                       const isAreaExpanded = expandedAreas.has(area);
                       const isAreaFiltered = treeFilter.selectedArea === area;
@@ -248,9 +250,9 @@ export default function App() {
                       const phases = phasesByArea.get(area) || [];
                       return (
                         <div key={area}>
-                          <div className="flex items-center gap-0.5">
-                            <button onClick={() => toggleArea(area)} className="p-0.5 rounded hover:bg-slate-200 text-slate-500">{isAreaExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}</button>
-                            <button onClick={() => { if (isAreaFiltered) selectFilter(null, null, null); else { selectFilter(area, null, null); if (!isAreaExpanded) toggleArea(area); } }} className={`flex-1 text-left px-1.5 py-1 rounded text-[12px] font-bold transition flex items-center gap-1 ${isAreaFiltered ? "bg-blue-100 text-blue-800" : "text-slate-700 hover:bg-slate-100"}`}><span className="truncate flex-1">{area}</span><span className="text-[10px] text-slate-400 shrink-0">{areaTaskCount}</span></button>
+                          <div className="flex items-center gap-1 group">
+                            <button onClick={() => toggleArea(area)} className="p-1 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">{isAreaExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}</button>
+                            <button onClick={() => { if (isAreaFiltered) selectFilter(null, null, null); else { selectFilter(area, null, null); if (!isAreaExpanded) toggleArea(area); } }} className={`flex-1 text-left px-2 py-1.5 rounded-lg text-[12px] font-bold transition-all flex items-center gap-1.5 ${isAreaFiltered ? "bg-indigo-50 text-indigo-700" : "text-slate-700 hover:bg-slate-50"}`}><span className="truncate flex-1">{area}</span><span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${isAreaFiltered ? "bg-indigo-100/50 text-indigo-500" : "bg-slate-100 text-slate-400 group-hover:bg-white"}`}>{areaTaskCount}</span></button>
                           </div>
                           <div className="overflow-hidden transition-all duration-200 ease-in-out" style={{ maxHeight: isAreaExpanded ? 2000 : 0, opacity: isAreaExpanded ? 1 : 0 }}>
                             {phases.map((phase) => {
@@ -260,18 +262,18 @@ export default function App() {
                               const phaseTaskCount = tasks.filter((t) => t.area === area && t.phase === phase).length;
                               const activities = activitiesByAreaPhase.get(phaseKey) || [];
                               return (
-                                <div key={phase} className="pl-4">
-                                  <div className="flex items-center gap-0.5">
-                                    <button onClick={() => togglePhase(area, phase)} className="p-0.5 rounded hover:bg-slate-200 text-slate-500">{isPhaseExpanded ? <ChevronDown className="w-2.5 h-2.5" /> : <ChevronRight className="w-2.5 h-2.5" />}</button>
-                                    <button onClick={() => { if (isPhaseFiltered) selectFilter(area, null, null); else { selectFilter(area, phase, null); if (!isPhaseExpanded) togglePhase(area, phase); } }} className={`flex-1 text-left px-1.5 py-1 rounded text-[11px] font-bold transition flex items-center gap-1 ${isPhaseFiltered ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100"}`}><span className="truncate flex-1">{phase}</span><span className="text-[10px] text-slate-400 shrink-0">{phaseTaskCount}</span></button>
+                                <div key={phase} className="pl-5 mt-0.5">
+                                  <div className="flex items-center gap-1 group">
+                                    <button onClick={() => togglePhase(area, phase)} className="p-1 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">{isPhaseExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}</button>
+                                    <button onClick={() => { if (isPhaseFiltered) selectFilter(area, null, null); else { selectFilter(area, phase, null); if (!isPhaseExpanded) togglePhase(area, phase); } }} className={`flex-1 text-left px-2 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 ${isPhaseFiltered ? "bg-indigo-50/70 text-indigo-600" : "text-slate-600 hover:bg-slate-50"}`}><span className="truncate flex-1">{phase}</span><span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${isPhaseFiltered ? "bg-indigo-100/50 text-indigo-500" : "bg-slate-100 text-slate-400 group-hover:bg-white"}`}>{phaseTaskCount}</span></button>
                                   </div>
                                   <div className="overflow-hidden transition-all duration-200 ease-in-out" style={{ maxHeight: isPhaseExpanded ? 1000 : 0, opacity: isPhaseExpanded ? 1 : 0 }}>
                                     {activities.map((act) => {
                                       const isActFiltered = treeFilter.selectedArea === area && treeFilter.selectedPhase === phase && treeFilter.selectedActivity === act;
                                       const actTaskCount = tasks.filter((t) => t.area === area && t.phase === phase && t.activity === act).length;
                                       return (
-                                        <div key={act} className="pl-5">
-                                          <button onClick={() => { if (isActFiltered) selectFilter(area, phase, null); else selectFilter(area, phase, act); }} className={`w-full text-left px-1.5 py-1 rounded text-[11px] font-medium transition flex items-center gap-1 ${isActFiltered ? "bg-blue-50 text-blue-700 font-bold" : "text-slate-500 hover:bg-slate-100"}`}><span className="truncate flex-1">{act}</span><span className="text-[10px] text-slate-400 shrink-0">{actTaskCount}</span></button>
+                                        <div key={act} className="pl-6 mt-0.5">
+                                          <button onClick={() => { if (isActFiltered) selectFilter(area, phase, null); else selectFilter(area, phase, act); }} className={`w-full text-left px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1.5 group ${isActFiltered ? "bg-blue-50/70 text-blue-600 font-bold" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"}`}><span className="truncate flex-1">{act}</span><span className={`text-[10px] px-1.5 py-0.5 rounded-md ${isActFiltered ? "bg-blue-100/50 text-blue-500" : "text-slate-300 group-hover:bg-white"}`}>{actTaskCount}</span></button>
                                         </div>
                                       );
                                     })}
@@ -289,25 +291,26 @@ export default function App() {
             </div>
           </div>
 
-          <div ref={ganttWrapperRef} className="flex-1 relative bg-white overflow-hidden shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper" style={{ '--task-list-width': `${TOTAL_WIDTH}px` } as React.CSSProperties}>
+          {/* 🚀 라이브러리 순정 구조 및 가로 스크롤 매커니즘 절대 보존 */}
+          <div ref={ganttWrapperRef} className="flex-1 relative bg-white overflow-hidden shadow-sm border border-slate-200 rounded-xl gantt-wrapper" style={{ '--task-list-width': `${TOTAL_WIDTH}px` } as React.CSSProperties}>
             {ganttTasks.length > 0 ? (
               <Gantt 
                 tasks={ganttTasks} 
                 viewMode={viewMode} 
                 listCellWidth={String(TOTAL_WIDTH)} 
                 columnWidth={columnWidth} 
-                rowHeight={36} 
-                headerHeight={46} 
-                barCornerRadius={4} 
-                barFill={65} 
+                rowHeight={38} /* 행 높이 2px 증가로 여백 확보 */
+                headerHeight={48} 
+                barCornerRadius={6} /* 트렌드: 라운딩 증가 */
+                barFill={70} 
                 fontSize="12" 
                 locale="ko-KR" 
                 TaskListHeader={CustomTaskListHeader} 
                 TaskListTable={CustomTaskListTable} 
-                todayColor="rgba(59, 130, 246, 0.15)" 
-                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 46 - 25 : 500} 
+                todayColor="rgba(99, 102, 241, 0.04)" 
+                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 48 - 25 : 500} 
               />
-            ) : (<div className="flex flex-col items-center justify-center h-full text-slate-400 gap-5"><Database className="w-12 h-12 text-slate-300" /><p className="text-[15px] font-bold text-slate-500">데이터를 불러오는 중입니다.</p></div>)}
+            ) : (<div className="flex flex-col items-center justify-center h-full text-slate-400 gap-5"><Database className="w-12 h-12 text-slate-200" /><p className="text-[15px] font-bold text-slate-400">데이터를 불러오는 중입니다.</p></div>)}
           </div>
         </div>
         
