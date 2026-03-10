@@ -1,15 +1,28 @@
+/* ═══════════════════════════════════════════════════════════
+   간트 영역 스타일 – CustomTaskList 칼럼영역과 완벽 동기화
+   
+   칼럼영역 기준 색상 체계:
+   - 헤더 배경: #CFD8DC (Material Blue Grey 100)
+   - 헤더 텍스트: slate-800 (#1E293B)
+   - 테두리(강): slate-400 (#94A3B8)  → 헤더 외곽
+   - 테두리(약): slate-300 (#CBD5E1)  → 셀 구분선
+   - 행 배경: #FFFFFF / hover: blue-50/70
+   - 상태 색상: #81C784, #64B5F6, #E0E0E0, #E57373 등
+   - 폰트: Pretendard, 12px, bold
+   ═══════════════════════════════════════════════════════════ */
+
 /* 전체 래퍼 영역 배경 */
 .gantt-wrapper {
   background-color: #ffffff;
 }
 
-/* 🚀 캘린더 헤더 배경 (좌측 표 헤더 #CFD8DC와 완벽 동기화) */
+/* ── 캘린더 헤더 배경 (칼럼 헤더 #CFD8DC와 동기화) ── */
 .gantt-wrapper svg rect[class*="calendarHeader"],
 .gantt-wrapper svg rect[class*="calendarTick"] {
   fill: #CFD8DC !important;
 }
 
-/* 캘린더 헤더 텍스트 */
+/* ── 캘린더 헤더 텍스트 (slate-800 + Pretendard) ── */
 .gantt-wrapper svg text[class*="calendarHeaderName"],
 .gantt-wrapper svg text[class*="calendarTickName"] {
   fill: #1E293B !important;
@@ -18,53 +31,67 @@
   font-size: 12px !important;
 }
 
-/* 캘린더 헤더 가로선/세로선 (좌측 표 테두리와 맞춤) */
+/* ── 캘린더 헤더 테두리 (slate-400 = 칼럼 헤더 border-slate-400) ── */
 .gantt-wrapper svg line[class*="calendarBottomLine"],
 .gantt-wrapper svg line[class*="calendarTopLine"],
 .gantt-wrapper svg rect[class*="calendarHeader"] {
-  stroke: #94A3B8 !important; /* border-slate-400 */
+  stroke: #94A3B8 !important;
   stroke-width: 1px !important;
 }
 
-/* 🚀 간트 차트 격자선 (좌측 칼럼 셀 테두리와 완벽 동기화) */
+/* ── 격자 세로선/가로선 (slate-300 = 칼럼 셀 border-slate-300) ── */
 .gantt-wrapper svg line[class*="gridTick"],
 .gantt-wrapper svg line[class*="gridRowLine"] {
-  stroke: #CBD5E1 !important; /* border-slate-300 */
+  stroke: #CBD5E1 !important;
   stroke-width: 1px !important;
 }
 
-/* 짝수 줄 배경색 제거 */
+/* ── 짝수 줄 배경 (칼럼영역은 순수 white이므로 투명 처리) ── */
 .gantt-wrapper svg rect[class*="gridRowBackground"] {
   fill: transparent !important;
 }
 
-/* 🚀 간트 차트 막대(Task Bar) 테두리를 추가해 엑셀 느낌 강화 */
+/* ── 간트 막대(Bar) 테두리 – 칼럼 셀 테두리(slate-300)와 톤 맞춤 ── */
 .gantt-wrapper svg rect[class*="barBackground"] {
-  stroke: rgba(0, 0, 0, 0.25) !important;
-  stroke-width: 1px !important;
-  transition: filter 0.2s ease, transform 0.2s ease;
+  stroke: #B0BEC5 !important;         /* Blue Grey 200 – CFD8DC 계열 */
+  stroke-width: 0.8px !important;
+  rx: 2px;
+  ry: 2px;
+  transition: filter 0.2s ease;
 }
 .gantt-wrapper svg rect[class*="barBackground"]:hover {
   cursor: pointer;
-  filter: brightness(0.9);
+  filter: brightness(0.92);
 }
 
-/* 막대 안의 진행률(Progress) 투명도 */
+/* ── 진행률 바 ── */
 .gantt-wrapper svg rect[class*="barProgress"] {
-  fill-opacity: 0.95;
+  fill-opacity: 0.9;
+  rx: 2px;
+  ry: 2px;
 }
 
-/* 막대 우측 텍스트 스타일 */
+/* ── 막대 텍스트 (slate-800 + Pretendard, 칼럼 텍스트와 동일 톤) ── */
 .gantt-wrapper svg text[class*="barLabel"] {
   fill: #1E293B !important;
   font-weight: 600 !important;
   font-family: 'Pretendard', 'Noto Sans KR', sans-serif !important;
-  text-shadow: 0 0 3px rgba(255,255,255,0.9);
+  font-size: 11px !important;
+  text-shadow: 
+    0 0 3px rgba(255,255,255,0.95),
+    0 0 6px rgba(255,255,255,0.6);
 }
 
-/* 오늘 날짜 선을 명확한 빨간색으로 변경 */
+/* ── 오늘 날짜 선 (slate 톤에서 살짝 강조) ── */
 .gantt-wrapper svg line[class*="todayLine"] {
   stroke: #EF4444 !important;
   stroke-width: 2px !important;
-  opacity: 0.8;
+  opacity: 0.7;
+}
+
+/* ── 스크롤 영역 정리 ── */
+.gantt-wrapper .gantt-horizontal-scroll,
+.gantt-wrapper .gantt-vertical-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #B0BEC5 transparent;
 }
