@@ -288,8 +288,8 @@ export default function App() {
             </div>
           </div>
 
-          {/* 🚀 라이브러리 순정 구조 복원: 불필요한 스크롤 래퍼를 완전히 제거했습니다. */}
-          <div ref={ganttWrapperRef} className="flex-1 relative bg-white flex flex-col overflow-hidden min-w-0 shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper" style={{ '--task-list-width': `${TOTAL_WIDTH}px` } as React.CSSProperties}>
+          {/* 🚀 라이브러리 순정 구조 유지: 억지 스크롤 속성(overflow-x-auto)을 전부 뺐습니다. */}
+          <div ref={ganttWrapperRef} className="flex-1 overflow-hidden bg-white shadow-[inset_1px_1px_0_rgba(0,0,0,0.1)] gantt-wrapper relative" style={{ '--task-list-width': `${TOTAL_WIDTH}px` } as React.CSSProperties}>
             {ganttTasks.length > 0 ? (
               <Gantt 
                 tasks={ganttTasks} 
