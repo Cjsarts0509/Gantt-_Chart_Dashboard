@@ -1,24 +1,20 @@
 /* ═══════════════════════════════════════════════════════════
-   🔥 실패 없는 스크롤바 추적 & 트렌드 디자인 (해시 의존 완전 탈피!) 🔥
+   🔥 실패 없는 스크롤바 & 완벽한 텍스트 뷰포트 고정 디자인 🔥
    ═══════════════════════════════════════════════════════════ */
 
-/* 1. 래퍼 초기화 */
 .gantt-wrapper { position: relative; width: 100%; height: 100%; }
+.gantt-wrapper > div { padding-bottom: 20px !important; }
 
-/* 🚀 하단 가로 스크롤바가 들어갈 공간 확보 */
-.gantt-wrapper > div { padding-bottom: 24px !important; }
-
-/* ── 2. 🚀 JS가 찾아낸 진짜 하단 스크롤바를 100% 확장 & 초거대화 ── */
-/* 해시(Hash) 클래스 무시! App.tsx가 달아준 custom-safe-scrollbar만 추적합니다. */
+/* ── 1. 🚀 JS가 찾아낸 진짜 하단 스크롤바 (해시 의존 완전 탈피) ── */
 .custom-safe-scrollbar {
   margin-left: 0 !important; 
   width: 100% !important;    
   position: absolute !important;
   left: 0 !important;
   bottom: 0 !important;
-  height: 24px !important; /* 엄청 커진 조작감 */
-  background: #FFFFFF !important;
-  border-top: 1px solid #F1F5F9 !important;
+  height: 20px !important; /* 충분히 거대한 높이 확보 */
+  background: #F8FAFC !important;
+  border-top: 1px solid #E2E8F0 !important;
   z-index: 100 !important;
   display: block !important;
 }
@@ -28,47 +24,61 @@
   padding-left: var(--task-list-width, 1165px) !important; 
 }
 
-/* 통통하고 귀여운 가로 스크롤바 손잡이 */
-.custom-safe-scrollbar::-webkit-scrollbar { height: 24px !important; }
+/* 🔥 핵심: 테두리(border)를 아예 빼버려서 손잡이(Thumb)가 20px 두께로 꽉 차게 뚱뚱해짐! */
+.custom-safe-scrollbar::-webkit-scrollbar { height: 20px !important; }
+.custom-safe-scrollbar::-webkit-scrollbar-track { background: #F8FAFC !important; }
 .custom-safe-scrollbar::-webkit-scrollbar-thumb {
   background: #94A3B8 !important;
-  border-radius: 12px !important; 
-  border: 4px solid #FFFFFF !important; 
+  border-radius: 10px !important; 
 }
 .custom-safe-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748B !important; }
 
-/* ── 3. 🚀 전역 세로 스크롤바도 거대화 ── */
-.gantt-wrapper ::-webkit-scrollbar:vertical { width: 24px !important; }
-.gantt-wrapper ::-webkit-scrollbar-thumb:vertical { 
-  background: #94A3B8 !important; 
-  border-radius: 12px !important; 
-  border: 4px solid #FFFFFF !important;
+/* ── 2. 🚀 진짜 세로 스크롤바 (가로와 동일하게 거대화) ── */
+.custom-safe-vertical-scrollbar {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 20px !important;
+  width: 20px !important; 
+  z-index: 90 !important;
+  background: #F8FAFC !important;
+  border-left: 1px solid #E2E8F0 !important;
 }
+
+.custom-safe-vertical-scrollbar::-webkit-scrollbar { width: 20px !important; }
+.custom-safe-vertical-scrollbar::-webkit-scrollbar-track { background: #F8FAFC !important; }
+.custom-safe-vertical-scrollbar::-webkit-scrollbar-thumb { 
+  background: #94A3B8 !important; 
+  border-radius: 10px !important; 
+}
+.custom-safe-vertical-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748B !important; }
 
 
 /* ═══════════════════════════════════════════════════════════
-   2025 디자인 스타일: 맑고 투명한 시인성
+   2025 디자인 스타일: 맑고 투명한 시인성 (이전 승인본 유지)
    ═══════════════════════════════════════════════════════════ */
 
-/* 폰트 및 캘린더 헤더/그리드 바디 (해시 유지: 디자인적 요소라 해시가 먹힙니다) */
 ._CZjuD, ._CZjuD *, ._3_ygE, ._3_ygE * { font-family: 'Pretendard', sans-serif !important; }
 
-/* 좌측 리스트 고정 */
+/* 좌측 리스트 고정 그림자 */
 ._3_ygE {
   border-right: 1px solid #E2E8F0 !important;
   box-shadow: 4px 0 16px rgba(0,0,0,0.03) !important;
   z-index: 50 !important;
 }
 
+/* 캘린더 헤더 & 텍스트 */
 ._35nLX { fill: #F8FAFC !important; stroke: #E2E8F0 !important; stroke-width: 1px !important; }
 ._2q1Kt { fill: #334155 !important; font-size: 12.5px !important; font-weight: 800 !important; letter-spacing: -0.02em; }
 ._9w8d5 { fill: #64748B !important; font-size: 11px !important; font-weight: 700 !important; }
 ._1rLuZ { stroke: #E2E8F0 !important; }
 
+/* 그리드 바디 & 격자 선 */
 ._2dZTy { fill: #FFFFFF !important; transition: fill 0.2s ease-in-out !important; pointer-events: all !important; }
 ._2dZTy:hover { fill: #EEF2FF !important; }
 ._3rUKi, ._RuwuK { stroke: #F1F5F9 !important; stroke-width: 1px !important; }
 
+/* 오늘 표시 */
 ._RRr12 { fill: rgba(99, 102, 241, 0.04) !important; }
 .gantt-wrapper svg line[class*="todayLine"] {
   stroke: #6366F1 !important; 
@@ -77,13 +87,13 @@
   opacity: 0.8;
 }
 
-/* ── 🚀 간트 막대 & 흰색 텍스트+그림자 ── */
+/* ── 🚀 간트 막대 & 완벽한 텍스트 가독성 ── */
 ._2B2zv text:not(._2q1Kt):not(._9w8d5) {
   fill: #FFFFFF !important; 
   font-weight: 900 !important; 
   font-size: 12px !important;
   text-shadow: 0px 1px 4px rgba(0, 0, 0, 0.8) !important; 
-  transition: none !important; /* JS 강제 이동시 딜레이 없앰 */
+  transition: none !important; /* 텍스트 좌표 강제 이동 시 깜빡임 방지 */
 }
 
 rect[class*="barBackground"], rect[class*="barProgress"] { rx: 6px !important; ry: 6px !important; }
