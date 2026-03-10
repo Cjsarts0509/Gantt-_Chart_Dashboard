@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   🔥 스크롤바 정밀 최적화 (Thumb < Track 입체감 적용) 🔥
+   🔥 스크롤바 실효 두께 극대화 & 데이터 영역 최적화 🔥
    ═══════════════════════════════════════════════════════════ */
 
 /* ── 1. 래퍼 및 영역 재계산 ── */
@@ -8,7 +8,7 @@
 ._19jgW { box-sizing: content-box !important; padding-left: var(--task-list-width, 1165px) !important; }
 
 /* ══════════════════════════════════════════════════════════
-   2. 🚀 가로 스크롤바 — 트랙보다 약간 얇은 핸들 디자인
+   2. 🚀 가로 스크롤바 — 영역(24px)에 맞춘 실제 바 두께(22px) 설정
    ══════════════════════════════════════════════════════════ */
 ._2k9Ys {
   margin-left: 0 !important;
@@ -16,29 +16,30 @@
   position: absolute !important;
   left: 0 !important;
   bottom: 0 !important;
-  height: 28px !important; 
+  height: 24px !important; 
   background: #F1F5F9 !important;
   border-top: 1px solid #E2E8F0 !important;
   z-index: 100 !important;
   display: block;
 }
 
-._2k9Ys::-webkit-scrollbar { height: 28px !important; }
-._2k9Ys::-webkit-scrollbar-track { background: #F1F5F9 !important;
-  height: 28px !important;
- }
+/* 실제 스크롤바 두께를 영역보다 2px 작게(22px) 강제 설정 */
+._2k9Ys::-webkit-scrollbar { 
+  height: 22px !important; 
+}
+._2k9Ys::-webkit-scrollbar-track { background: #F1F5F9 !important; }
 
-/* border: 2px를 주어 트랙(24px)보다 핸들이 상하좌우 2px씩 작게(얇게) 보이게 함 */
+/* 핸들이 22px 두께를 꽉 채우도록 border를 1px로 최소화 */
 ._2k9Ys::-webkit-scrollbar-thumb {
   background: #94A3B8 !important;
-  border-radius: 12px !important;
+  border-radius: 11px !important;
   border: 1px solid #F1F5F9 !important; 
   background-clip: padding-box !important;
 }
 ._2k9Ys::-webkit-scrollbar-thumb:hover { background: #64748B !important; }
 
 /* ══════════════════════════════════════════════════════════
-   3. 🚀 세로 스크롤바 — 트랙보다 약간 얇은 핸들 디자인
+   3. 🚀 세로 스크롤바 — 영역(24px)에 맞춘 실제 바 두께(22px) 설정
    ══════════════════════════════════════════════════════════ */
 ._1eT-t {
   position: absolute !important;
@@ -51,11 +52,14 @@
   border-left: 1px solid #E2E8F0 !important;
 }
 
-._1eT-t::-webkit-scrollbar { width: 48px !important; }
+/* 실제 세로 스크롤바 너비를 22px로 설정 */
+._1eT-t::-webkit-scrollbar { 
+  width: 22px !important; 
+}
 ._1eT-t::-webkit-scrollbar-track { background: #F1F5F9 !important; }
 ._1eT-t::-webkit-scrollbar-thumb {
   background: #94A3B8 !important;
-  border-radius: 12px !important;
+  border-radius: 11px !important;
   border: 1px solid #F1F5F9 !important; 
   background-clip: padding-box !important;
 }
@@ -64,7 +68,7 @@
 ._3_ygE { border-right: 1px solid #E2E8F0 !important; z-index: 50 !important; }
 
 /* ═══════════════════════════════════════════════════════════
-   2025 디자인 스타일: 가독성 및 자간
+   2025 디자인 스타일: 가독성 및 자간 (기존 유지)
    ═══════════════════════════════════════════════════════════ */
 ._CZjuD, ._CZjuD *, ._3_ygE, ._3_ygE * { font-family: 'Pretendard', sans-serif !important; }
 
