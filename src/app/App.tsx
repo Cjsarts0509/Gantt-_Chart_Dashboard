@@ -141,7 +141,6 @@ export default function App() {
   const ganttTasks = useMemo(() => {
     const barBgColor = "#38BDF8";   
     const barProgColor = "#0284C7"; 
-
     const BASE_START_DATE = new Date("2026-03-01T00:00:00");
 
     return visibleTasks.map((t: any) => {
@@ -172,104 +171,95 @@ export default function App() {
         originalEnd,       
         progress: prog,
         styles: { 
-          backgroundColor: barBgColor, 
-          backgroundSelectedColor: barBgColor, 
-          progressColor: barProgColor, 
-          progressSelectedColor: barProgColor 
+          backgroundColor: barBgColor, backgroundSelectedColor: barBgColor, 
+          progressColor: barProgColor, progressSelectedColor: barProgColor 
         },
       };
     });
   }, [visibleTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
 
 
-  // 🚀 [핵심 해결] SVG 'dx' 속성을 이용한 무적의 텍스트 뷰포트 중앙 고정 로직 🚀
+  // 🔥 [핵심 1] 해시(Hash)에 의존하지 않고 DOM 요소를 직접 사냥해서 커스텀 클래스를 부여하는 로직
+  // 🔥 [핵심 2] 화면 스크롤 시 SVG 텍스트 'x' 좌표를 내 눈앞(뷰포트) 정중앙으로 강제 재계산하는 로직
   useEffect(() => {
     const container = ganttWrapperRef.current;
     if (!container) return;
 
-    // 간트 차트가 그려지는 실제 내부 영역
-    const chartContainer = container.querySelector('._3eULf') as HTMLElement;
-    // 우리가 100%로 확장한 하단 스크롤바
-    const scrollBar = container.querySelector('._2k9Ys') as HTMLElement;
-    
-    if (!chartContainer || !scrollBar) return;
+    let chartScrollContainer: HTMLElement | null = null;
+    let bottomScrollbar: HTMLElement | null = null;
 
+    // 1단계: 해시 클래스 무시하고, 특징만으로 스크롤바와 차트 영역 색출
+    const allDivs = container.querySelectorAll('div');
+    allDivs.forEach(div => {
+      const style = window.getComputedStyle(div);
+      if (style.overflowX === 'auto' || style.overflowX === 'scroll') {
+        if (div.querySelector('svg')) {
+          chartScrollContainer = div; // SVG를 품고 있으면 차트 영역!
+          div.classList.add('custom-safe-chart');
+        } else if (div.children.length === 1 && !div.querySelector('svg')) {
+          bottomScrollbar = div; // 텅 비어있고 스크롤만 되면 하단 스크롤바!
+          div.classList.add('custom-safe-scrollbar');
+        }
+      }
+    });
+
+    if (!chartScrollContainer) return;
+
+    // 2단계: 뷰포트 중앙에 텍스트 붙들어 매기 (마법의 수학 연산)
     const updateTextPositions = () => {
-      // 현재 스크롤된 픽셀 값과 화면의 가로 넓이
-      const scrollLeft = scrollBar.scrollLeft;
+      if (!chartScrollContainer) return;
+      const scrollLeft = chartScrollContainer.scrollLeft;
       const clientWidth = chartContainer.clientWidth;
       
-      // 간트차트 안의 모든 배경 막대 찾기
-      const backgroundRects = chartContainer.querySelectorAll('rect[class*="barBackground"]');
+      const backgroundRects = chartScrollContainer.querySelectorAll('rect[class*="barBackground"]');
       
       backgroundRects.forEach((rect) => {
         const parent = rect.parentElement;
         if (!parent) return;
-        
-        // 막대 안의 글씨(text) 요소 찾기
         const textNode = parent.querySelector('text');
         if (!textNode) return;
 
-        // 막대의 원래 X 좌표와 너비
         const rectX = parseFloat(rect.getAttribute('x') || '0');
         const rectWidth = parseFloat(rect.getAttribute('width') || '0');
         
-        // 🌟 내 눈(화면)에 "보이는" 막대 영역만 자르기
+        // 내 화면에 보이는 막대 부분만 커팅
         const visibleStart = Math.max(rectX, scrollLeft);
         const visibleEnd = Math.min(rectX + rectWidth, scrollLeft + clientWidth);
 
-        // 막대가 화면에 조금이라도 걸쳐 있다면
         if (visibleStart < visibleEnd) {
-          // 화면에 보이는 잘린 막대의 정중앙 계산
+          // 보이는 화면의 정중앙에 글씨 X좌표 박아버리기
           const visibleCenter = (visibleStart + visibleEnd) / 2;
-          const originalCenter = rectX + rectWidth / 2;
-          
-          // 원래 중앙에서 화면 중앙으로 얼마나 이동해야 하는지(Offset)
-          const offset = visibleCenter - originalCenter;
-          
-          // 🚀 [해결] transform 대신 SVG의 'dx'(상대적 가로 이동) 속성을 직접 조작합니다.
-          // 이렇게 하면 React가 화면을 갱신해도 충돌나지 않고 즉시 반영됩니다!
-          textNode.setAttribute('dx', offset.toString());
-        } else {
-          // 화면에 안 보이면 원상복구
-          textNode.setAttribute('dx', '0');
+          textNode.setAttribute('x', visibleCenter.toString());
         }
       });
     };
 
-    // 스크롤 성능을 위한 requestAnimationFrame 처리
-    let ticking = false;
+    let rafId: number;
     const onScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          updateTextPositions();
-          ticking = false;
-        });
-        ticking = true;
-      }
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(updateTextPositions);
     };
 
-    // 스크롤 및 화면 리사이즈 시 즉시 추적
-    scrollBar.addEventListener('scroll', onScroll, { passive: true });
+    // 스크롤 동기화 및 텍스트 렌더링 즉시 실행
+    if (chartScrollContainer) chartScrollContainer.addEventListener('scroll', onScroll, { passive: true });
+    if (bottomScrollbar) bottomScrollbar.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     
-    // 차트가 새로 렌더링되거나 열/닫기 할 때도 즉시 추적하도록 DOM 감시 (MutationObserver)
-    const observer = new MutationObserver(() => {
-      updateTextPositions();
-    });
-    observer.observe(chartContainer, { childList: true, subtree: true });
+    // 차트가 새로 렌더링될 때도 텍스트가 뷰포트 중앙으로 오도록 감시
+    const observer = new MutationObserver(updateTextPositions);
+    observer.observe(chartScrollContainer, { childList: true, subtree: true });
 
-    // 첫 화면 진입 시 정렬을 보장하기 위한 딜레이 호출
-    const timeouts = [50, 150, 300, 500].map(t => setTimeout(updateTextPositions, t));
+    const timeouts = [50, 200, 500].map(t => setTimeout(updateTextPositions, t));
 
     return () => {
-      scrollBar.removeEventListener('scroll', onScroll);
+      if (chartScrollContainer) chartScrollContainer.removeEventListener('scroll', onScroll);
+      if (bottomScrollbar) bottomScrollbar.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
       observer.disconnect();
+      cancelAnimationFrame(rafId);
       timeouts.forEach(clearTimeout);
     };
   }, [ganttTasks, viewMode, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
-
 
   const resetFilter = () => { setTreeFilter({ selectedArea: null, selectedPhase: null, selectedActivity: null }); };
   const isFiltered = treeFilter.selectedArea || treeFilter.selectedPhase || treeFilter.selectedActivity;
