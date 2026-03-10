@@ -1,54 +1,54 @@
 /* ═══════════════════════════════════════════════════════════
-   🔥 완벽한 가로 스크롤 & 대형 스크롤바 & 텍스트 뷰포트 추적 🔥
+   🔥 초거대 스크롤바 & 완벽한 가로 스크롤 & 막대 텍스트 이펙트 🔥
    ═══════════════════════════════════════════════════════════ */
 
 /* ── 1. 래퍼 및 스크롤 로직 (※절대 건드리지 않음※) ── */
 .gantt-wrapper { position: relative; width: 100%; height: 100%; }
 
-/* 🚀 대폭 늘어난 가로 스크롤바 공간(28px) 확보 */
-._CZjuD { padding-bottom: 28px !important; }
+/* 🚀 엄청나게 넓어진 가로 스크롤바 공간(32px) 확보 */
+._CZjuD { padding-bottom: 32px !important; }
 ._19jgW { box-sizing: content-box !important; padding-left: var(--task-list-width, 1165px) !important; }
 
-/* ── 2. 🚀 스크롤바 조작성 극대화 (엄청나게 큼직하고 시원하게) ── */
+/* ── 2. 🚀 가로 스크롤바 초거대화 (높이 32px로 대폭 상향) ── */
 ._2k9Ys {
   margin-left: 0 !important; 
   width: 100% !important;    
   position: absolute !important;
   left: 0 !important;
   bottom: 0 !important;
-  height: 28px !important; /* 🚀 18px -> 28px 대폭 상향 */
+  height: 32px !important; /* 🚀 극강의 조작감 (32px) */
   background: #FFFFFF !important;
   border-top: 1px solid #F1F5F9 !important;
   z-index: 100 !important;
   display: block !important;
 }
 
-._2k9Ys::-webkit-scrollbar { height: 28px !important; }
+._2k9Ys::-webkit-scrollbar { height: 32px !important; }
 ._2k9Ys::-webkit-scrollbar-thumb {
-  background: #CBD5E1 !important;
-  border-radius: 14px !important; /* 캡슐 형태 완벽 유지 */
-  border: 5px solid #FFFFFF !important; /* 뚱뚱하면서도 여백이 있어 세련됨 */
+  background: #94A3B8 !important;
+  border-radius: 16px !important; /* 완벽한 반원 형태 */
+  border: 3px solid #F1F5F9 !important; /* 여백을 얇게 줘서 손잡이가 통통해 보이게 함 */
 }
-._2k9Ys::-webkit-scrollbar-thumb:hover { background: #94A3B8 !important; }
+._2k9Ys::-webkit-scrollbar-thumb:hover { background: #64748B !important; }
 
-/* 🚀 세로 스크롤바도 엄청나게 키움 */
+/* ── 3. 🚀 세로 스크롤바 초거대화 (넓이 28px로 대폭 상향) ── */
 ._1eT-t {
   position: absolute !important;
   top: 0 !important;
   right: 0 !important;
-  bottom: 28px !important;
-  width: 24px !important; /* 🚀 16px -> 24px 대폭 상향 */
+  bottom: 32px !important;
+  width: 28px !important; /* 🚀 세로 스크롤도 엄청나게 키움 */
   z-index: 90 !important;
   background: #FFFFFF !important;
   border-left: 1px solid #F1F5F9 !important;
 }
-._1eT-t::-webkit-scrollbar { width: 24px !important; }
+._1eT-t::-webkit-scrollbar { width: 28px !important; }
 ._1eT-t::-webkit-scrollbar-thumb { 
-  background: #CBD5E1 !important; 
-  border-radius: 12px !important; 
-  border: 5px solid #FFFFFF !important;
+  background: #94A3B8 !important; 
+  border-radius: 14px !important; 
+  border: 3px solid #f8fafc !important; /* 얇은 여백으로 빵빵하게 */
 }
-._1eT-t::-webkit-scrollbar-thumb:hover { background: #94A3B8 !important; }
+._1eT-t::-webkit-scrollbar-thumb:hover { background: #64748B !important; }
 
 /* ── 좌측 리스트(고정영역) ── */
 ._3_ygE {
@@ -63,7 +63,7 @@
 
 ._CZjuD, ._CZjuD *, ._3_ygE, ._3_ygE * { font-family: 'Pretendard', sans-serif !important; }
 
-/* 캘린더 헤더: 밝고 맑은 라이트 그레이 */
+/* 캘린더 헤더 */
 ._35nLX { fill: #F8FAFC !important; stroke: #E2E8F0 !important; stroke-width: 1px !important; }
 ._2q1Kt { fill: #334155 !important; font-size: 12.5px !important; font-weight: 800 !important; letter-spacing: -0.02em; }
 ._9w8d5 { fill: #64748B !important; font-size: 11px !important; font-weight: 700 !important; }
