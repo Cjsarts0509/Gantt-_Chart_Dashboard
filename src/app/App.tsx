@@ -35,7 +35,7 @@ export default function App() {
   const isStandaloneDashboard = new URLSearchParams(window.location.search).get('view') === 'dashboard';
 
   useEffect(() => {
-    const remoteDataUrl = `https://raw.githubusercontent.com/cjsarts0509/gantt-_chart_dashboard/data/data.json?t=${new Date().getTime()}`;
+    const remoteDataUrl = `https://raw.githubusercontent.com/cjsarts0509/gantt-_chart_dashboard/data/public/data.json?t=${new Date().getTime()}`;
     const localDataUrl = `${import.meta.env.BASE_URL}data.json`;
 
     fetch(remoteDataUrl)
