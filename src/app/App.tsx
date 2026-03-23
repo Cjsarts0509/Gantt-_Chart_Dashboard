@@ -49,10 +49,19 @@ export default function App() {
       })
       .then(data => {
         if (!Array.isArray(data)) return;
-        const parsedTasks = data.map((t: any, index: number) => ({
-          ...t, id: t.id || `task-${index}`, type: "task",
-          start: new Date(t.start), end: new Date(t.end)
-        }));
+        const parsedTasks = data.map((t: any, index: number) => {
+          // 날짜 파싱 오류 방지 (Invalid Date 대비)
+          const parsedStart = new Date(t.start);
+          const parsedEnd = new Date(t.end);
+          
+          return {
+            ...t, 
+            id: t.id ? String(t.id) : `task-${index}`, 
+            type: "task",
+            start: isNaN(parsedStart.getTime()) ? new Date() : parsedStart,
+            end: isNaN(parsedEnd.getTime()) ? new Date() : parsedEnd
+          };
+        });
         setTasks(parsedTasks);
         setExpandedAreas(new Set(parsedTasks.map((t: any) => t.area).filter(Boolean)));
       })
@@ -176,6 +185,7 @@ export default function App() {
         originalStart,
         originalEnd,       
         progress: prog,
+        dependencies: [], // ★ 필터링 시 의존성 렌더링 에러로 인한 화면 크래시 방지용
         styles: { 
           backgroundColor: barBgColor, 
           backgroundSelectedColor: barBgColor, 
