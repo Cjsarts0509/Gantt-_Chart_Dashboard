@@ -6,7 +6,7 @@ import { ChevronRight, ChevronDown } from "lucide-react";
 // 🚀 담당자(기획), 담당자(IT) 칼럼 넓이 2배(220px)로 확장
 const COL_WIDTHS = {
   area: 65, phase: 85, activity: 160, deliverable: 140, 
-  taskName: 200, assigneePlan: 220, assigneeIT: 220, 
+  taskName: 200, assigneePlan: 110, assigneeIT: 110, 
   start: 80, end: 80, progress: 60, status: 75,
 };
 export const TOTAL_WIDTH = Object.values(COL_WIDTHS).reduce((a, b) => a + b, 0);
