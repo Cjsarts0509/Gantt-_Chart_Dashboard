@@ -3,10 +3,10 @@ import { Task } from "gantt-task-react";
 import { GanttGroupContext } from "./GanttGroupContext";
 import { ChevronRight, ChevronDown } from "lucide-react";
 
-// 🚀 담당자(기획), 담당자(IT) 칼럼 넓이 110px로 확장 (총 넓이 1165px)
+// 🚀 담당자(기획), 담당자(IT) 칼럼 넓이 2배(220px)로 확장
 const COL_WIDTHS = {
   area: 65, phase: 85, activity: 160, deliverable: 140, 
-  taskName: 200, assigneePlan: 110, assigneeIT: 110, 
+  taskName: 200, assigneePlan: 220, assigneeIT: 220, 
   start: 80, end: 80, progress: 60, status: 75,
 };
 export const TOTAL_WIDTH = Object.values(COL_WIDTHS).reduce((a, b) => a + b, 0);
@@ -90,8 +90,11 @@ export const CustomTaskListTable: React.FC<any> = ({ rowHeight, rowWidth, fontFa
             <div className={`${cellClass} px-3 justify-start`} style={{ width: COL_WIDTHS.activity }}>{t.activity}</div>
             <div className={`${cellClass} px-3 justify-start`} style={{ width: COL_WIDTHS.deliverable }}>{t.deliverable}</div>
             <div className={`${cellClass} px-3 justify-start font-semibold text-slate-800`} style={{ width: COL_WIDTHS.taskName }}>{t.taskName}</div>
-            <div className={cellClass} style={{ width: COL_WIDTHS.assigneePlan }}>{t.assigneePlan}</div>
-            <div className={cellClass} style={{ width: COL_WIDTHS.assigneeIT }}>{t.assigneeIT}</div>
+            
+            {/* ★ 늘어난 담당자 칼럼 (왼쪽 정렬) */}
+            <div className={`${cellClass} px-3 justify-start text-[11.5px] text-slate-600`} style={{ width: COL_WIDTHS.assigneePlan }}>{t.assigneePlan}</div>
+            <div className={`${cellClass} px-3 justify-start text-[11.5px] text-slate-600`} style={{ width: COL_WIDTHS.assigneeIT }}>{t.assigneeIT}</div>
+            
             <div className={`${cellClass} font-medium text-slate-500`} style={{ width: COL_WIDTHS.start }}>{formatDate(t.originalStart || t.start)}</div>
             <div className={`${cellClass} font-medium text-slate-500`} style={{ width: COL_WIDTHS.end }}>{formatDate(t.originalEnd || t.end)}</div>
             <div className={`${cellClass} font-bold text-indigo-500`} style={{ width: COL_WIDTHS.progress }}>{t.progress}%</div>
