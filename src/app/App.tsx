@@ -50,16 +50,28 @@ export default function App() {
       .then(data => {
         if (!Array.isArray(data)) return;
         const parsedTasks = data.map((t: any, index: number) => {
-          // 날짜 파싱 오류 방지 (Invalid Date 대비)
           const parsedStart = new Date(t.start);
           const parsedEnd = new Date(t.end);
           
+          // ★ 괄호 및 괄호 안의 글자(부서명)를 모두 제거하는 클리닝 함수
+          const cleanName = (val: any) => {
+            if (!val) return "";
+            return String(val)
+              .split(',')
+              .map(name => name.replace(/\([^)]*\)/g, '').trim()) // (상품지원팀) 제거
+              .filter(Boolean)
+              .join(', ');
+          };
+
           return {
             ...t, 
             id: t.id ? String(t.id) : `task-${index}`, 
             type: "task",
             start: isNaN(parsedStart.getTime()) ? new Date() : parsedStart,
-            end: isNaN(parsedEnd.getTime()) ? new Date() : parsedEnd
+            end: isNaN(parsedEnd.getTime()) ? new Date() : parsedEnd,
+            // 부서명을 제거한 이름만 덮어씌움
+            assigneePlan: cleanName(t.assigneePlan || t["_xb2f4__xb2f9__xc790__x005b__xae"] || t["담당자(기획)"]),
+            assigneeIT: cleanName(t.assigneeIT || t["_xb2f4__xb2f9__xc790__x005b_IT_x"] || t["담당자(IT)"])
           };
         });
         setTasks(parsedTasks);
@@ -185,7 +197,7 @@ export default function App() {
         originalStart,
         originalEnd,       
         progress: prog,
-        dependencies: [], // ★ 필터링 시 의존성 렌더링 에러로 인한 화면 크래시 방지용
+        dependencies: [], 
         styles: { 
           backgroundColor: barBgColor, 
           backgroundSelectedColor: barBgColor, 
