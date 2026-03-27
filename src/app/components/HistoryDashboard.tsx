@@ -11,11 +11,14 @@ export default function HistoryDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 🚨 여기에 아까 만든 n8n 전체이력 웹훅 URL을 넣습니다.
-    const fetchUrl = "http://168.107.5.67:5678/webhook/history-all"; 
+    // 🌟 n8n 웹훅 주소 대신, 깃허브에 Push된 안전한 원본 파일(raw) 주소로 변경!
+    const fetchUrl = `https://raw.githubusercontent.com/cjsarts0509/gantt-_chart_dashboard/data/public/history.json?t=${new Date().getTime()}`;
 
     fetch(fetchUrl)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Network response was not ok");
+        return res.json();
+      })
       .then((data) => {
         setHistoryList(Array.isArray(data) ? data : []);
         setLoading(false);
@@ -28,7 +31,7 @@ export default function HistoryDashboard() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center w-screen h-screen bg-[#F1F5F9] text-slate-500 gap-4">
+      <div className="flex flex-col items-center justify-center w-screen h-screen bg-[#F1F5F9] text-slate-500 gap-4" style={{ fontFamily: "'Pretendard', sans-serif" }}>
         <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
         <p className="text-[15px] font-bold">변경 이력을 불러오는 중입니다...</p>
       </div>
@@ -38,6 +41,7 @@ export default function HistoryDashboard() {
   return (
     <div className="w-screen h-screen bg-[#F1F5F9] overflow-auto p-8" style={{ fontFamily: "'Pretendard', sans-serif" }}>
       <div className="max-w-[1400px] mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        
         <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-200 bg-white">
           <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
             <History className="w-5 h-5 text-indigo-600" />
@@ -58,20 +62,29 @@ export default function HistoryDashboard() {
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="px-6 py-4 text-[13px] font-bold text-slate-600">변경일시</th>
-                  <th className="px-6 py-4 text-[13px] font-bold text-slate-600">요구사항ID</th>
-                  <th className="px-6 py-4 text-[13px] font-bold text-slate-600">화면명 (요구사항명)</th>
+                  <th className="px-6 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">변경일시</th>
+                  <th className="px-6 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">요구사항ID</th>
+                  <th className="px-6 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">화면명 (요구사항명)</th>
                   <th className="px-6 py-4 text-[13px] font-bold text-slate-600">상세 변경내역</th>
-                  <th className="px-6 py-4 text-[13px] font-bold text-slate-600">담당자</th>
+                  <th className="px-6 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">담당자</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {historyList.map((row, idx) => {
-                  const date = row["변경일시"] ? new Date(row["변경일시"]).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" }) : "-";
+                  const date = row["변경일시"] 
+                    ? new Date(row["변경일시"]).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" }) 
+                    : "-";
+                  
                   let fullData = row["전체데이터"];
                   if (typeof fullData === "string") {
-                    try { fullData = JSON.parse(fullData); } catch (e) { fullData = {}; }
-                  } else if (!fullData) fullData = {};
+                    try { 
+                      fullData = JSON.parse(fullData); 
+                    } catch (e) { 
+                      fullData = {}; 
+                    }
+                  } else if (!fullData) {
+                    fullData = {};
+                  }
 
                   const id = fullData["요구사항ID"] || "-";
                   const name = fullData["화면명"] || fullData["요구사항명"] || "-";
@@ -80,11 +93,23 @@ export default function HistoryDashboard() {
 
                   return (
                     <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-4 text-[13px] font-medium text-slate-500 whitespace-nowrap">{date}</td>
-                      <td className="px-6 py-4"><span className="px-2.5 py-1 text-[12px] font-bold bg-slate-100 text-slate-600 rounded-md border border-slate-200">{id}</span></td>
-                      <td className="px-6 py-4 text-[13px] font-bold text-slate-700">{name}</td>
-                      <td className="px-6 py-4 text-[13px] font-medium text-orange-600 leading-relaxed word-break-keep-all">{changes}</td>
-                      <td className="px-6 py-4 text-[13px] font-medium text-slate-600 whitespace-nowrap">{manager}</td>
+                      <td className="px-6 py-4 text-[13px] font-medium text-slate-500 whitespace-nowrap">
+                        {date}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="px-2.5 py-1 text-[12px] font-bold bg-slate-100 text-slate-600 rounded-md border border-slate-200 whitespace-nowrap">
+                          {id}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-[13px] font-bold text-slate-700">
+                        {name}
+                      </td>
+                      <td className="px-6 py-4 text-[13px] font-medium text-orange-600 leading-relaxed break-keep">
+                        {changes}
+                      </td>
+                      <td className="px-6 py-4 text-[13px] font-medium text-slate-600 whitespace-nowrap">
+                        {manager}
+                      </td>
                     </tr>
                   );
                 })}
@@ -92,6 +117,7 @@ export default function HistoryDashboard() {
             </table>
           )}
         </div>
+        
       </div>
     </div>
   );
