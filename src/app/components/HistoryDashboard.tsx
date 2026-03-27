@@ -11,12 +11,25 @@ export default function HistoryDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 🌟 브랜치명을 data에서 main으로 완벽하게 수정한 최종 URL입니다!
-    const fetchUrl = `https://raw.githubusercontent.com/cjsarts0509/Gantt-_Chart_Dashboard/main/history.json?t=${new Date().getTime()}`;
+    // 🌟 수파베이스 Project URL
+    const SUPABASE_URL = "https://cbogmikpdlmwgluahcnz.supabase.co"; 
+    
+    // 🌟 보안을 위해 프론트엔드에는 반드시 'Publishable Key'만 넣어야 합니다! (Secret Key 절대 금지)
+    const SUPABASE_ANON_KEY = "Sb_publishable_-0wSRn0jMdGfcgZPen8Zjw_p2LUkRbh";
 
-    fetch(fetchUrl)
+    // N8N_WBS_HISTORY 테이블에서 최신 100건을 가져오는 완벽한 REST API 주소
+    const fetchUrl = `${SUPABASE_URL}/rest/v1/N8N_WBS_HISTORY?select=변경일시,전체데이터&order=변경일시.desc&limit=100`;
+
+    fetch(fetchUrl, {
+      method: "GET",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json",
+      },
+    })
       .then((res) => {
-        if (!res.ok) throw new Error("Network response was not ok");
+        if (!res.ok) throw new Error("수파베이스 연결 실패");
         return res.json();
       })
       .then((data) => {
@@ -33,7 +46,7 @@ export default function HistoryDashboard() {
     return (
       <div className="flex flex-col items-center justify-center w-screen h-screen bg-[#F1F5F9] text-slate-500 gap-4" style={{ fontFamily: "'Pretendard', sans-serif" }}>
         <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
-        <p className="text-[15px] font-bold">변경 이력을 불러오는 중입니다...</p>
+        <p className="text-[15px] font-bold">변경 이력을 실시간으로 불러오는 중입니다...</p>
       </div>
     );
   }
@@ -48,7 +61,7 @@ export default function HistoryDashboard() {
           </div>
           <div>
             <h1 className="text-[18px] font-extrabold text-slate-800">WBS 전체 변경 이력 대시보드</h1>
-            <p className="text-[12px] font-semibold text-slate-400 mt-0.5">최근 100건의 업데이트 내역</p>
+            <p className="text-[12px] font-semibold text-slate-400 mt-0.5">수파베이스 실시간 연동 완료 🚀</p>
           </div>
         </div>
 
