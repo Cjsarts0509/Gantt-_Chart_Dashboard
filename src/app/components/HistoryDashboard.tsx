@@ -11,8 +11,9 @@ export default function HistoryDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 🌟 n8n 웹훅 주소 대신, 깃허브에 Push된 안전한 원본 파일(raw) 주소로 변경!
-    const fetchUrl = `https://raw.githubusercontent.com/cjsarts0509/gantt-_chart_dashboard/data/public/history.json?t=${new Date().getTime()}`;
+    // 🌟 저장소 이름 대소문자(Gantt-_Chart_Dashboard) 완벽 반영!
+    // 🌟 파일 경로도 public 폴더를 빼고 최상위(history.json)로 직결!
+    const fetchUrl = `https://raw.githubusercontent.com/cjsarts0509/Gantt-_Chart_Dashboard/data/history.json?t=${new Date().getTime()}`;
 
     fetch(fetchUrl)
       .then((res) => {
