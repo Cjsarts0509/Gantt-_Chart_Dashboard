@@ -11,12 +11,14 @@ export default function HistoryDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 🌟 수파베이스 Project URL 및 진짜 API Key 장착 완료!
+    // 🌟 수파베이스 Project URL
     const SUPABASE_URL = "https://cbogmikpdlmwgluahcnz.supabase.co"; 
-    const SUPABASE_ANON_KEY = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNib2dtaWtwZGxtd2dsdWFoY256Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMDIxMjksImV4cCI6MjA4Nzc3ODEyOX0.nagpgjcC7fbk5Bsi812giOSkiKGHG-Y-UZwWndwFbmY";
+    
+    // 🌟 모바일 키보드 자동대문자(E) 방지 -> 소문자(e)로 시작하는 정상적인 JWT 키로 수정 완료!
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNib2dtaWtwZGxtd2dsdWFoY256Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMDIxMjksImV4cCI6MjA4Nzc3ODEyOX0.nagpgjcC7fbk5Bsi812giOSkiKGHG-Y-UZwWndwFbmY";
 
-    // 🌟 한글 인코딩 에러를 막기 위해 select=* (전체 컬럼 가져오기)로 변경!
-    const fetchUrl = `${SUPABASE_URL}/rest/v1/N8N_WBS_HISTORY?select=*&order=변경일시.desc&limit=100`;
+    // 🌟 한글 컬럼명('변경일시') 통신 에러 방지를 위해 encodeURIComponent 적용!
+    const fetchUrl = `${SUPABASE_URL}/rest/v1/N8N_WBS_HISTORY?select=*&order=${encodeURIComponent('변경일시')}.desc&limit=100`;
 
     fetch(fetchUrl, {
       method: "GET",
@@ -27,7 +29,7 @@ export default function HistoryDashboard() {
       },
     })
       .then((res) => {
-        if (!res.ok) throw new Error("수파베이스 연결 실패");
+        if (!res.ok) throw new Error(`수파베이스 연결 실패: ${res.status}`);
         return res.json();
       })
       .then((data) => {
