@@ -11,14 +11,12 @@ export default function HistoryDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 🌟 수파베이스 Project URL
+    // 🌟 수파베이스 Project URL 및 진짜 API Key 장착 완료!
     const SUPABASE_URL = "https://cbogmikpdlmwgluahcnz.supabase.co"; 
-    
-    // 🌟 보안을 위해 프론트엔드에는 반드시 'Publishable Key'만 넣어야 합니다! (Secret Key 절대 금지)
-    const SUPABASE_ANON_KEY = "Sb_publishable_-0wSRn0jMdGfcgZPen8Zjw_p2LUkRbh";
+    const SUPABASE_ANON_KEY = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNib2dtaWtwZGxtd2dsdWFoY256Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMDIxMjksImV4cCI6MjA4Nzc3ODEyOX0.nagpgjcC7fbk5Bsi812giOSkiKGHG-Y-UZwWndwFbmY";
 
-    // N8N_WBS_HISTORY 테이블에서 최신 100건을 가져오는 완벽한 REST API 주소
-    const fetchUrl = `${SUPABASE_URL}/rest/v1/N8N_WBS_HISTORY?select=변경일시,전체데이터&order=변경일시.desc&limit=100`;
+    // 🌟 한글 인코딩 에러를 막기 위해 select=* (전체 컬럼 가져오기)로 변경!
+    const fetchUrl = `${SUPABASE_URL}/rest/v1/N8N_WBS_HISTORY?select=*&order=변경일시.desc&limit=100`;
 
     fetch(fetchUrl, {
       method: "GET",
