@@ -7,6 +7,8 @@ import { GanttGroupContext } from "./components/GanttGroupContext";
 import ExcelManager from "./components/ExcelManager";
 import DashboardPopup from "./components/DashboardPopup";
 import ArchitecturePopup from "./components/ArchitecturePopup";
+// 🌟 1. 새로 만든 전체 이력 대시보드 컴포넌트 불러오기
+import HistoryDashboard from "./components/HistoryDashboard"; 
 import "./components/gantt-overrides.css";
 import { BarChart2, ChevronDown, ChevronRight, X, PanelLeftClose, PanelLeftOpen, Database, LayoutDashboard, ExternalLink, Network } from "lucide-react";
 
@@ -32,7 +34,10 @@ export default function App() {
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [isArchitectureOpen, setIsArchitectureOpen] = useState(false);
 
-  const isStandaloneDashboard = new URLSearchParams(window.location.search).get('view') === 'dashboard';
+  // 🌟 2. URL 파라미터 분기 로직 업데이트 (?view=history 처리 추가)
+  const viewParam = new URLSearchParams(window.location.search).get('view');
+  const isStandaloneDashboard = viewParam === 'dashboard';
+  const isHistoryView = viewParam === 'history';
 
   useEffect(() => {
     const remoteDataUrl = `https://raw.githubusercontent.com/cjsarts0509/gantt-_chart_dashboard/data/public/data.json?t=${new Date().getTime()}`;
@@ -53,12 +58,11 @@ export default function App() {
           const parsedStart = new Date(t.start);
           const parsedEnd = new Date(t.end);
           
-          // ★ 괄호 및 괄호 안의 글자(부서명)를 모두 제거하는 클리닝 함수
           const cleanName = (val: any) => {
             if (!val) return "";
             return String(val)
               .split(',')
-              .map(name => name.replace(/\([^)]*\)/g, '').trim()) // (상품지원팀) 제거
+              .map(name => name.replace(/\([^)]*\)/g, '').trim())
               .filter(Boolean)
               .join(', ');
           };
@@ -69,7 +73,6 @@ export default function App() {
             type: "task",
             start: isNaN(parsedStart.getTime()) ? new Date() : parsedStart,
             end: isNaN(parsedEnd.getTime()) ? new Date() : parsedEnd,
-            // 부서명을 제거한 이름만 덮어씌움
             assigneePlan: cleanName(t.assigneePlan || t["_xb2f4__xb2f9__xc790__x005b__xae"] || t["담당자(기획)"]),
             assigneeIT: cleanName(t.assigneeIT || t["_xb2f4__xb2f9__xc790__x005b_IT_x"] || t["담당자(IT)"])
           };
@@ -98,8 +101,10 @@ export default function App() {
     const ro = new ResizeObserver((entries) => { for (const entry of entries) setGanttContainerHeight(entry.contentRect.height); });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [isStandaloneDashboard]);
+  }, [isStandaloneDashboard, isHistoryView]);
 
+  // 🌟 3. history 파라미터가 있으면 새로 만든 이력 대시보드 렌더링!
+  if (isHistoryView) return <HistoryDashboard />;
   if (isStandaloneDashboard) return <DashboardPopup tasks={tasks} isStandalone={true} />;
 
   const areas = useMemo(() => [...new Set(tasks.map((t) => t.area))].filter(Boolean), [tasks]);
