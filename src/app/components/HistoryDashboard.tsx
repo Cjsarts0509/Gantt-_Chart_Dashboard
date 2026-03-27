@@ -2,8 +2,11 @@ import React, { useEffect, useState } from "react";
 import { History, Database, Loader2, PlusCircle, RefreshCw } from "lucide-react";
 
 interface HistoryData {
-  변경일시: string;
-  전체데이터: any;
+  history_id?: number;
+  요구사항ID?: string;
+  변경일시?: string;
+  변경내역?: any;
+  전체데이터?: any;
 }
 
 export default function HistoryDashboard() {
@@ -11,7 +14,7 @@ export default function HistoryDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 🌟 수파베이스 Project URL & API Key (소문자 e 시작 적용 완료)
+    // 🌟 수파베이스 Project URL & API Key
     const SUPABASE_URL = "https://cbogmikpdlmwgluahcnz.supabase.co"; 
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNib2dtaWtwZGxtd2dsdWFoY256Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMDIxMjksImV4cCI6MjA4Nzc3ODEyOX0.nagpgjcC7fbk5Bsi812giOSkiKGHG-Y-UZwWndwFbmY";
 
@@ -51,7 +54,7 @@ export default function HistoryDashboard() {
 
   return (
     <div className="w-screen h-screen bg-[#F1F5F9] overflow-auto p-8" style={{ fontFamily: "'Pretendard', sans-serif" }}>
-      <div className="max-w-[1500px] mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="max-w-[1600px] mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         
         {/* 상단 헤더 영역 */}
         <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-200 bg-white">
@@ -59,8 +62,8 @@ export default function HistoryDashboard() {
             <History className="w-5 h-5 text-indigo-600" />
           </div>
           <div>
-            <h1 className="text-[18px] font-extrabold text-slate-800">WBS 전체 변경 이력 대시보드</h1>
-            <p className="text-[12px] font-semibold text-slate-400 mt-0.5">수파베이스 실시간 연동 완료 🚀</p>
+            <h1 className="text-[18px] font-extrabold text-slate-800">요구사항 전체 변경 이력 대시보드</h1>
+            <p className="text-[12px] font-semibold text-slate-400 mt-0.5">수파베이스 DB 실시간 연동 완료 🚀</p>
           </div>
         </div>
 
@@ -75,25 +78,25 @@ export default function HistoryDashboard() {
             <table className="w-full text-left border-collapse min-w-max">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="px-5 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">변경일시</th>
-                  <th className="px-5 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap text-center">구분</th>
-                  <th className="px-5 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">요구사항ID</th>
-                  <th className="px-5 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">분류 (영역 &gt; 단계 &gt; 활동)</th>
-                  <th className="px-5 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">산출물 / 화면명</th>
-                  <th className="px-5 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">담당자 (기획/IT)</th>
-                  <th className="px-5 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">일정 (시작~종료)</th>
-                  <th className="px-5 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">상태 (진척율)</th>
-                  <th className="px-5 py-4 text-[13px] font-bold text-slate-600">상세 변경내역</th>
+                  <th className="px-4 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">변경일시</th>
+                  <th className="px-4 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap text-center">이력구분</th>
+                  <th className="px-4 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">요구사항ID</th>
+                  <th className="px-4 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">분류 (시트명 &gt; 업무구분)</th>
+                  <th className="px-4 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">대상 (화면명 / 요구사항명)</th>
+                  <th className="px-4 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">담당자</th>
+                  <th className="px-4 py-4 text-[13px] font-bold text-slate-600 whitespace-nowrap">상태정보</th>
+                  <th className="px-4 py-4 text-[13px] font-bold text-slate-600">상세 변경내역</th>
+                  <th className="px-4 py-4 text-[13px] font-bold text-slate-600">요구사항 상세 내용</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {historyList.map((row, idx) => {
-                  // 1. 날짜 세팅
+                  // 1. 날짜 세팅 (UTC 시간 -> 한국 시간으로 변환)
                   const date = row["변경일시"] 
-                    ? new Date(row["변경일시"]).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" }) 
+                    ? new Date(row["변경일시"]).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) 
                     : "-";
                   
-                  // 2. JSON 데이터 안전하게 파싱
+                  // 2. JSON 데이터 파싱 (전체데이터 컬럼)
                   let fullData = row["전체데이터"];
                   if (typeof fullData === "string") {
                     try { fullData = JSON.parse(fullData); } catch (e) { fullData = {}; }
@@ -101,43 +104,49 @@ export default function HistoryDashboard() {
                     fullData = {};
                   }
 
-                  // 3. 🌟 모든 칼럼 데이터 싹싹 긁어오기 (한글/영문 키값 대응)
-                  const id = fullData["요구사항ID"] || fullData["id"] || "-";
-                  const area = fullData["영역"] || fullData["area"] || "";
-                  const phase = fullData["단계"] || fullData["phase"] || "";
-                  const activity = fullData["활동"] || fullData["activity"] || "";
-                  const deliverable = fullData["산출물"] || fullData["deliverable"] || "";
-                  const taskName = fullData["화면명"] || fullData["요구사항명"] || fullData["taskName"] || "";
-                  
-                  const start = fullData["시작일"] || fullData["start"] || "";
-                  const end = fullData["종료일"] || fullData["end"] || "";
-                  const status = fullData["상태"] || fullData["status"] || "-";
-                  const progress = fullData["진척율"] || fullData["progress"] || "";
-                  
-                  const planAssignee = fullData["담당자(기획)"] || fullData["담당자"] || fullData["assigneePlan"] || "";
-                  const itAssignee = fullData["담당자(IT)"] || fullData["assigneeIT"] || "";
-                  const changes = fullData["변경내역"] || "-";
+                  // 3. JSON 데이터 파싱 (변경내역 컬럼 안에 들어있는 '이력' 텍스트 뽑기)
+                  let changeHistory = row["변경내역"];
+                  let changeText = "-";
+                  if (typeof changeHistory === "string") {
+                    try { 
+                      const parsed = JSON.parse(changeHistory); 
+                      changeText = parsed["이력"] || changeHistory;
+                    } catch (e) { 
+                      changeText = changeHistory || "-"; 
+                    }
+                  } else if (changeHistory && typeof changeHistory === "object") {
+                    changeText = changeHistory["이력"] || JSON.stringify(changeHistory);
+                  }
 
-                  // 4. 데이터 보기 좋게 조립
-                  const categoryPath = [area, phase, activity].filter(Boolean).join(" > ") || "-";
-                  const names = [deliverable, taskName].filter(Boolean).join(" / ") || "-";
-                  const schedule = (start || end) ? `${start || '?'} ~ ${end || '?'}` : "-";
-                  const statusDisplay = progress ? `${status} (${progress}%)` : status;
-                  const assignees = [planAssignee, itAssignee].filter(Boolean).join(" / ") || "-";
+                  // 4. 요구사항 명세서의 모든 칼럼 데이터 싹싹 긁어오기 (CSV 기준)
+                  const id = row["요구사항ID"] || fullData["요구사항ID"] || "-";
+                  const sheetName = fullData["시트명"] || "-";
+                  const workCategory = fullData["업무구분"] || "-";
+                  const screenName = fullData["화면명"] || "-";
+                  const reqName = fullData["요구사항명"] || "";
+                  const assignee = fullData["담당자"] || "-";
+                  const reqStatus = fullData["요구사항 상태"] || "-";
+                  const reqType = fullData["구분(현행/신규/개선/제외)"] || fullData["유형"] || "-";
+                  const importance = fullData["중요도"] || "";
+                  
+                  // 아주 긴 요구사항 내용
+                  const reqContent = fullData["요구사항 내용"] || "-";
 
-                  // 5. 🌟 신규 vs 변경 뱃지 판단 로직
-                  // "신규"라는 단어가 변경내역, 이력구분, 상태 등에 있으면 신규로 판정!
-                  const isNew = 
-                    String(fullData["이력구분"]).includes("신규") || 
-                    String(fullData["작업구분"]).includes("신규") || 
-                    String(changes).includes("신규");
+                  // 5. 보기 좋게 데이터 조립
+                  const categoryPath = [sheetName, workCategory].filter(c => c && c !== "-").join(" > ") || "-";
+                  const names = [screenName, reqName].filter(n => n && n !== "-").join(" / ") || "-";
+                  const statusDisplay = [reqStatus, reqType].filter(s => s && s !== "-").join(" | ") || "-";
+
+                  // 6. 🌟 신규 vs 변경 뱃지 판단 로직 (문자열에 "신규"가 포함되어 있으면 신규)
+                  const isNew = String(changeText).includes("신규") || String(reqType).includes("신규");
 
                   return (
                     <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="px-5 py-4 text-[12px] font-medium text-slate-500 whitespace-nowrap">{date}</td>
+                      {/* 날짜 */}
+                      <td className="px-4 py-4 text-[12px] font-medium text-slate-500 whitespace-nowrap">{date}</td>
                       
                       {/* 신규/변경 뱃지 영역 */}
-                      <td className="px-5 py-4 text-center">
+                      <td className="px-4 py-4 text-center">
                         {isNew ? (
                           <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-600">
                             <PlusCircle className="w-3 h-3" />
@@ -151,20 +160,37 @@ export default function HistoryDashboard() {
                         )}
                       </td>
 
-                      <td className="px-5 py-4">
+                      {/* 요구사항 ID */}
+                      <td className="px-4 py-4">
                         <span className="px-2 py-1 text-[11px] font-bold bg-slate-100 text-slate-600 rounded-md border border-slate-200 whitespace-nowrap">
                           {id}
                         </span>
                       </td>
                       
-                      <td className="px-5 py-4 text-[12px] font-semibold text-slate-500 whitespace-nowrap">{categoryPath}</td>
-                      <td className="px-5 py-4 text-[13px] font-extrabold text-slate-700 whitespace-nowrap">{names}</td>
-                      <td className="px-5 py-4 text-[12px] font-medium text-slate-600 whitespace-nowrap">{assignees}</td>
-                      <td className="px-5 py-4 text-[12px] font-medium text-slate-500 whitespace-nowrap tracking-tight">{schedule}</td>
-                      <td className="px-5 py-4 text-[12px] font-bold text-slate-600 whitespace-nowrap">{statusDisplay}</td>
+                      {/* 텍스트 데이터들 */}
+                      <td className="px-4 py-4 text-[12px] font-semibold text-slate-500 whitespace-nowrap">{categoryPath}</td>
                       
-                      <td className="px-5 py-4 text-[13px] font-medium text-orange-600 leading-relaxed break-keep min-w-[250px]">
-                        {changes}
+                      {/* 화면명/요구사항명 + 중요도 뱃지 */}
+                      <td className="px-4 py-4 text-[13px] font-extrabold text-slate-700 whitespace-nowrap">
+                        {names}
+                        {importance && importance !== "minor" && (
+                          <span className="ml-2 px-1.5 py-0.5 text-[10px] bg-red-50 text-red-500 rounded border border-red-100 uppercase">
+                            {importance}
+                          </span>
+                        )}
+                      </td>
+                      
+                      <td className="px-4 py-4 text-[12px] font-medium text-slate-600 whitespace-nowrap">{assignee}</td>
+                      <td className="px-4 py-4 text-[12px] font-bold text-slate-600 whitespace-nowrap">{statusDisplay}</td>
+                      
+                      {/* 파싱된 이력 텍스트 (예: ✨ 신규 요구사항 등록) */}
+                      <td className="px-4 py-4 text-[13px] font-medium text-orange-600 leading-relaxed break-keep min-w-[150px]">
+                        {changeText}
+                      </td>
+
+                      {/* 매우 긴 요구사항 상세 내용 (줄바꿈 허용) */}
+                      <td className="px-4 py-4 text-[12px] font-medium text-slate-600 whitespace-pre-wrap leading-relaxed min-w-[300px] break-keep">
+                        {reqContent}
                       </td>
                     </tr>
                   );
