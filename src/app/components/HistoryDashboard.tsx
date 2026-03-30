@@ -11,7 +11,6 @@ interface HistoryData {
   reqId?: string;
 }
 
-// 🌟 엑셀에서 관리하는 11개 핵심 항목 리스트
 const FIELDS = [
   "업무구분", "요구사항명", "요구사항 내용", "구분(현행/신규/개선/제외)",
   "화면명", "중요도", "개발순위", "출처", "담당자", "요구사항 상태", "변경구분"
@@ -40,12 +39,9 @@ export default function HistoryDashboard() {
       })
       .then((data) => {
         const rawData = Array.isArray(data) ? data : [];
-        
-        // 🌟 1. 과거순으로 정렬하여 이전 데이터와 비교할 준비를 합니다.
         const chronological = [...rawData].reverse();
         const lastStateMap: Record<string, any> = {};
 
-        // 🌟 2. 데이터를 돌면서 이전 상태와 비교해 바뀐 항목을 찾아냅니다.
         const processedData = chronological.map(row => {
           let fullData: any = {};
           if (typeof row["전체데이터"] === "string") {
@@ -57,20 +53,16 @@ export default function HistoryDashboard() {
           const reqId = row["요구사항ID"] || fullData["요구사항ID"] || "-";
           const changedFields = new Set<string>();
 
-          // 이전에 저장된 해당 ID의 데이터가 있다면, 현재와 11개 항목을 각각 비교!
           if (lastStateMap[reqId]) {
             FIELDS.forEach(f => {
-              // null, undefined 처리를 위해 String으로 변환 후 비교
               if (String(fullData[f] || "") !== String(lastStateMap[reqId][f] || "")) {
                 changedFields.add(f);
               }
             });
           }
 
-          // 현재 상태를 다음 비교를 위해 저장
           lastStateMap[reqId] = { ...fullData };
 
-          // 변경내역 텍스트 파싱
           let changeText = "-";
           try {
             const parsed = typeof row["변경내역"] === "string" ? JSON.parse(row["변경내역"]) : row["변경내역"];
@@ -82,7 +74,6 @@ export default function HistoryDashboard() {
           return { ...row, parsedData: fullData, changedFields, changeText, reqId };
         });
 
-        // 🌟 3. 다시 최신순으로 뒤집어서 화면에 띄웁니다!
         setHistoryList(processedData.reverse());
         setLoading(false);
       })
@@ -102,20 +93,26 @@ export default function HistoryDashboard() {
   }
 
   return (
-    <div className="w-screen h-screen bg-[#F1F5F9] overflow-auto p-8" style={{ fontFamily: "'Pretendard', sans-serif" }}>
-      <div className="max-w-[1600px] mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    /* 🌟 전체 레이아웃을 flex-col로 잡고 h-screen으로 고정하여 화면 밖으로 안 나가게 함 */
+    <div className="flex flex-col w-screen h-screen bg-[#F1F5F9] p-4 md:p-8" style={{ fontFamily: "'Pretendard', sans-serif" }}>
+      
+      {/* 🌟 흰색 카드를 전체 높이(flex-1)로 잡고 내부 스크롤 허용 */}
+      <div className="flex flex-col flex-1 max-w-[1800px] mx-auto w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-200 bg-white">
+        {/* 상단 헤더 (고정됨) */}
+        <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-200 bg-white z-20">
           <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
             <History className="w-5 h-5 text-indigo-600" />
           </div>
           <div>
             <h1 className="text-[18px] font-extrabold text-slate-800">요구사항 전체 변경 이력 대시보드</h1>
-            <p className="text-[12px] font-semibold text-slate-400 mt-0.5">최근 100건의 업데이트 내역 및 상세 비교</p>
+            <p className="text-[12px] font-semibold text-slate-400 mt-0.5">최근 100건 실시간 데이터 및 항목별 변경 추적</p>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* 🌟 테이블 본문 영역: 여기가 핵심입니다. 
+            flex-1과 overflow-auto를 주어 가로/세로 스크롤바가 항상 이 영역 안에서만 보이게 함 */}
+        <div className="flex-1 overflow-auto bg-white">
           {historyList.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-4">
               <Database className="w-12 h-12 text-slate-200" />
@@ -124,29 +121,27 @@ export default function HistoryDashboard() {
           ) : (
             <table className="w-full text-left border-collapse min-w-max">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="px-4 py-3 text-[13px] font-bold text-slate-600 whitespace-nowrap bg-[#f1f5f9]">변경일시</th>
-                  <th className="px-4 py-3 text-[13px] font-bold text-slate-600 whitespace-nowrap bg-[#f1f5f9]">이력구분</th>
-                  <th className="px-4 py-3 text-[13px] font-bold text-slate-600 whitespace-nowrap bg-[#f1f5f9]">요구사항ID</th>
-                  {/* 엑셀의 11개 핵심 컬럼을 순서대로 헤더에 배치 */}
+                {/* 🌟 sticky top-0을 사용하여 세로 스크롤 시에도 헤더가 상단에 고정됨 */}
+                <tr className="sticky top-0 z-10">
+                  <th className="px-4 py-3 text-[13px] font-bold text-slate-600 bg-slate-100 border-b border-slate-200">변경일시</th>
+                  <th className="px-4 py-3 text-[13px] font-bold text-slate-600 bg-slate-100 border-b border-slate-200 text-center">구분</th>
+                  <th className="px-4 py-3 text-[13px] font-bold text-slate-600 bg-slate-100 border-b border-slate-200">요구사항ID</th>
                   {FIELDS.map(f => (
-                    <th key={f} className="px-4 py-3 text-[13px] font-bold text-slate-600 whitespace-nowrap bg-[#f1f5f9]">{f}</th>
+                    <th key={f} className="px-4 py-3 text-[13px] font-bold text-slate-600 bg-slate-100 border-b border-slate-200">{f}</th>
                   ))}
-                  <th className="px-4 py-3 text-[13px] font-bold text-slate-600 bg-[#f1f5f9] min-w-[150px]">상세 변경내역</th>
+                  <th className="px-4 py-3 text-[13px] font-bold text-slate-600 bg-slate-100 border-b border-slate-200">상세 변경내역</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-slate-100">
                 {historyList.map((row, idx) => {
                   const date = row["변경일시"] 
                     ? new Date(row["변경일시"]).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) 
                     : "-";
-                  
                   const isNew = String(row.changeText).includes("신규") || String(row.parsedData?.["구분(현행/신규/개선/제외)"] || "").includes("신규");
 
                   return (
                     <tr key={idx} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-4 text-[12px] font-medium text-slate-500 whitespace-nowrap">{date}</td>
-                      
                       <td className="px-4 py-4 text-center whitespace-nowrap">
                         {isNew ? (
                           <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-600">
@@ -160,27 +155,21 @@ export default function HistoryDashboard() {
                           </div>
                         )}
                       </td>
-
                       <td className="px-4 py-4 whitespace-nowrap">
                         <span className="px-2 py-1 text-[11px] font-bold bg-slate-100 text-slate-600 rounded-md border border-slate-200">
                           {row.reqId}
                         </span>
                       </td>
-                      
-                      {/* 🌟 11개 컬럼을 돌면서 데이터 출력! (변경되었으면 빨간색 굵게) */}
                       {FIELDS.map(f => {
                         const val = row.parsedData?.[f] || "-";
                         const isChanged = row.changedFields?.has(f);
-                        // 요구사항 내용은 길 수 있으므로 넓게 펼쳐줌
-                        const isLongText = f === "요구사항 내용"; 
-
+                        const isLongText = f === "요구사항 내용";
                         return (
-                          <td key={f} className={`px-4 py-4 text-[12px] ${isLongText ? "min-w-[250px] whitespace-pre-wrap break-keep leading-relaxed" : "whitespace-nowrap"} ${isChanged ? "text-red-500 font-bold" : "text-slate-600 font-medium"}`}>
+                          <td key={f} className={`px-4 py-4 text-[12px] ${isLongText ? "min-w-[300px] whitespace-pre-wrap break-keep leading-relaxed" : "whitespace-nowrap"} ${isChanged ? "text-red-500 font-bold" : "text-slate-600 font-medium"}`}>
                             {val}
                           </td>
                         );
                       })}
-
                       <td className="px-4 py-4 text-[12px] font-medium text-orange-600 leading-relaxed break-keep">
                         {row.changeText}
                       </td>
@@ -191,7 +180,6 @@ export default function HistoryDashboard() {
             </table>
           )}
         </div>
-        
       </div>
     </div>
   );
