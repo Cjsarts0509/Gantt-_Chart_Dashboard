@@ -22,7 +22,6 @@ const getPlannedProgress = (start: Date, end: Date, targetDate: Date) => {
 export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = false }: Props) {
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
 
-  // 주간 목표일: 직전 일요일 자정
   const targetDate = useMemo(() => {
     const now = new Date();
     const day = now.getDay();
@@ -34,8 +33,11 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
   }, []);
 
   const { overallPlanned, overallActual, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount } = useMemo(() => {
-    // 설계 및 '기타/빈칸' 영역 제외
-    const validTasks = tasks.filter(t => t.phase !== '설계' && t.phase && t.area && String(t.area).trim() !== '');
+    // 🌟 강력한 필터: 설계 제외 + 빈칸 제외 + '기타' 텍스트 완전 제외!
+    const validTasks = tasks.filter(t => {
+      const areaName = String(t.area || "").trim();
+      return t.phase !== '설계' && t.phase && areaName !== '' && areaName !== '기타' && areaName !== 'undefined';
+    });
     
     let buildTotalActual = 0, buildTotalPlanned = 0, buildCount = 0;
     let testTotalActual = 0, testTotalPlanned = 0, testCount = 0;
@@ -95,20 +97,16 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
     const oActual = wSum > 0 ? Math.round(((buildActualAvg * 0.7) + (testActualAvg * 0.3)) / wSum) : 0;
     const oPlanned = wSum > 0 ? Math.round(((buildPlannedAvg * 0.7) + (testPlannedAvg * 0.3)) / wSum) : 0;
 
-    // 🌟 정렬 로직 업데이트 적용
     details.sort((a, b) => {
-      // 1순위: 계획 대비 지연 항목을 무조건 최상단으로 올림
       const isDelayedA = a.actualProg < a.plannedProg ? 1 : 0;
       const isDelayedB = b.actualProg < b.plannedProg ? 1 : 0;
       if (isDelayedA !== isDelayedB) return isDelayedB - isDelayedA; 
       
-      // 2순위: 산출물 오름차순 (가나다순)
       const delA = a.deliverable || "";
       const delB = b.deliverable || "";
       if (delA < delB) return -1;
       if (delA > delB) return 1;
       
-      // 3순위: 실제 진행률 오름차순 (낮은게 위로)
       return a.actualProg - b.actualProg;
     });
 
