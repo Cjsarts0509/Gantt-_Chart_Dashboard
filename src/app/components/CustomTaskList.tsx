@@ -8,7 +8,6 @@ export const COL_WIDTHS = {
   start: 80, end: 80, progress: 60, status: 75,
 };
 
-// 🌟 상태별 진행률 및 디자인 매핑 (요청사항 반영)
 export const STATUS_MAP: Record<string, { progress: number; color: string }> = {
   시작전: { progress: 0, color: "bg-slate-50 text-slate-500 border-slate-200" },
   진행중: { progress: 0, color: "bg-blue-50 text-blue-600 border-blue-200" },
@@ -44,23 +43,24 @@ export const CustomTaskListHeader: React.FC<any> = ({ headerHeight, rowWidth, fo
     if (ctx.hiddenCols?.has(key)) return null;
     const isSorted = ctx.sortConfig?.key === key;
 
+    // 🌟 위아래 2줄(flex-col) 배치로 글자 짤림 방지 및 기능버튼 상시 노출 적용
     return (
-      <div className="flex items-center justify-between px-2 text-[12.5px] font-bold text-slate-500 border-r border-slate-200 bg-slate-50 group tracking-tight" style={{ width: COL_WIDTHS[key] }}>
-        <div className="flex items-center gap-1 overflow-hidden">
-          <span className="truncate">{label}</span>
+      <div className="flex flex-col items-center justify-center p-1 border-r border-slate-200 bg-slate-50 tracking-tight" style={{ width: COL_WIDTHS[key], height: '100%' }}>
+        <div className="flex items-center gap-1 w-full justify-center px-1">
+          <span className="text-[12px] font-bold text-slate-600 truncate">{label}</span>
           {isGroupCol && (
-            <button onClick={groupToggle} className="p-0.5 rounded text-slate-400 hover:bg-white hover:text-indigo-600 hover:shadow-sm transition-all flex-shrink-0">
+            <button onClick={groupToggle} className="p-0.5 rounded text-slate-400 hover:bg-white hover:text-indigo-600">
               {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
           )}
         </div>
         
-        {/* 정렬 & 숨김 버튼 (Hover 시 노출) */}
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={() => ctx.setSortConfig(key)} className={`p-0.5 rounded ${isSorted ? 'text-indigo-600 bg-indigo-50' : 'text-slate-400 hover:text-indigo-600 hover:bg-white'}`}>
+        {/* 상시 노출되는 정렬/숨김 버튼 (새 줄에 배치) */}
+        <div className="flex items-center gap-1 mt-0.5">
+          <button onClick={() => ctx.setSortConfig(key)} className={`p-0.5 rounded ${isSorted ? 'text-indigo-600 bg-indigo-100' : 'text-slate-400 hover:bg-slate-200 hover:text-indigo-600'}`}>
             {isSorted ? (ctx.sortConfig?.dir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3" />}
           </button>
-          <button onClick={() => ctx.toggleColVisibility(key)} className="p-0.5 rounded text-slate-400 hover:text-rose-500 hover:bg-white" title="열 숨기기">
+          <button onClick={() => ctx.toggleColVisibility(key)} className="p-0.5 rounded text-slate-400 hover:bg-slate-200 hover:text-rose-500" title="열 숨기기">
             <EyeOff className="w-3 h-3" />
           </button>
         </div>
@@ -74,7 +74,7 @@ export const CustomTaskListHeader: React.FC<any> = ({ headerHeight, rowWidth, fo
       {renderHeader('phase', '단계', true, ctx.togglePhaseColumn, ctx.phaseCollapsed)}
       {renderHeader('activity', '활동', true, ctx.toggleActivityColumn, ctx.activityCollapsed)}
       {renderHeader('deliverable', '산출물', true, ctx.toggleDeliverableColumn, ctx.deliverableCollapsed)}
-      {renderHeader('taskName', '작업')}
+      {renderHeader('taskName', '화면명')} {/* 🌟 '작업' -> '화면명' 변경 */}
       {renderHeader('assigneePlan', '담당자(기획)')}
       {renderHeader('assigneeIT', '담당자(IT)')}
       {renderHeader('start', '시작일')}
@@ -97,7 +97,7 @@ export const CustomTaskListTable: React.FC<any> = ({ rowHeight, rowWidth, fontFa
         const isSelected = t.id === selectedTaskId;
         const areaColor = getDynamicColor(t.area, 'area');
         const phaseColor = getDynamicColor(t.phase, 'phase');
-        const statusMeta = STATUS_MAP[t.status] || { progress: 0, color: "bg-slate-50 text-slate-500" };
+        const statusMeta = STATUS_MAP[t.status] || { progress: 0, color: "bg-slate-50 text-slate-500 border-slate-200" };
         
         return (
           <div key={t.id} className={`flex border-b border-slate-100 transition-colors ${isSelected ? "bg-indigo-50/50" : "hover:bg-slate-50"}`} style={{ height: rowHeight, width: rowWidth, fontFamily, fontSize }}>
@@ -110,10 +110,7 @@ export const CustomTaskListTable: React.FC<any> = ({ rowHeight, rowWidth, fontFa
             {!ctx.hiddenCols.has('assigneeIT') && <div className={`${cellClass} px-3 justify-start text-[11.5px] text-slate-600`} style={{ width: COL_WIDTHS.assigneeIT }}>{t.assigneeIT}</div>}
             {!ctx.hiddenCols.has('start') && <div className={`${cellClass} font-medium text-slate-500`} style={{ width: COL_WIDTHS.start }}>{formatDate(t.originalStart || t.start)}</div>}
             {!ctx.hiddenCols.has('end') && <div className={`${cellClass} font-medium text-slate-500`} style={{ width: COL_WIDTHS.end }}>{formatDate(t.originalEnd || t.end)}</div>}
-            
-            {/* 진행률은 상태값에 따라 자동 매핑된 값 표출 */}
             {!ctx.hiddenCols.has('progress') && <div className={`${cellClass} font-bold text-indigo-500`} style={{ width: COL_WIDTHS.progress }}>{t.progress}%</div>}
-            
             {!ctx.hiddenCols.has('status') && (
               <div className={cellClass} style={{ width: COL_WIDTHS.status }}>
                 <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${statusMeta.color}`}>

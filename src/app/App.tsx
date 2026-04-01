@@ -6,7 +6,7 @@ import { CustomTaskListHeader, CustomTaskListTable, COL_WIDTHS, STATUS_MAP } fro
 import { GanttGroupContext } from "./components/GanttGroupContext";
 import ExcelManager from "./components/ExcelManager";
 import DashboardPopup from "./components/DashboardPopup";
-import WeeklyDashboardPopup from "./components/WeeklyDashboardPopup"; // 🌟 추가
+import WeeklyDashboardPopup from "./components/WeeklyDashboardPopup";
 import ArchitecturePopup from "./components/ArchitecturePopup";
 import HistoryDashboard from "./components/HistoryDashboard"; 
 import "./components/gantt-overrides.css";
@@ -32,10 +32,9 @@ export default function App() {
   const [deliverableCollapsed, setDeliverableCollapsed] = useState(false);
   
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
-  const [isWeeklyDashboardOpen, setIsWeeklyDashboardOpen] = useState(false); // 🌟 추가
+  const [isWeeklyDashboardOpen, setIsWeeklyDashboardOpen] = useState(false);
   const [isArchitectureOpen, setIsArchitectureOpen] = useState(false);
 
-  // 🌟 컬럼 숨김 및 정렬을 위한 State 추가
   const [hiddenCols, setHiddenCols] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfigState] = useState<{ key: string, dir: 'asc'|'desc' } | null>(null);
 
@@ -65,7 +64,6 @@ export default function App() {
             end: isNaN(parsedEnd.getTime()) ? new Date() : parsedEnd,
             assigneePlan: cleanName(t.assigneePlan || t["_xb2f4__xb2f9__xc790__x005b__xae"] || t["담당자(기획)"]),
             assigneeIT: cleanName(t.assigneeIT || t["_xb2f4__xb2f9__xc790__x005b_IT_x"] || t["담당자(IT)"]),
-            // 🌟 상태값에 따른 초기 진행률 강제 부여
             progress: STATUS_MAP[t.status]?.progress ?? Number(t.progress) ?? 0 
           };
         });
@@ -75,7 +73,6 @@ export default function App() {
       .catch(err => console.log("로드 실패:", err));
   }, []);
 
-  // 🌟 컨텍스트 액션들
   const toggleAreaColumn = useCallback(() => setAreaCollapsed(p => !p), []);
   const togglePhaseColumn = useCallback(() => setPhaseCollapsed(p => !p), []);
   const toggleActivityColumn = useCallback(() => setActivityCollapsed(p => !p), []);
@@ -89,7 +86,6 @@ export default function App() {
     hiddenCols, toggleColVisibility, sortConfig, setSortConfig
   }), [areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed, hiddenCols, sortConfig]);
 
-  // 🌟 동적 테이블 넓이 계산
   const currentListWidth = useMemo(() => Object.entries(COL_WIDTHS).filter(([k]) => !hiddenCols.has(k)).reduce((acc, [_, w]) => acc + w, 0), [hiddenCols]);
 
   const ganttWrapperRef = useRef<HTMLDivElement>(null);
@@ -120,7 +116,6 @@ export default function App() {
     return map;
   }, [tasks, phasesByArea]);
 
-  // 🌟 정렬이 포함된 필터링 로직 (계층 구조 유지하며 정렬)
   const filteredTasks = useMemo(() => {
     let result = tasks.filter((t) => {
       if (treeFilter.selectedArea && t.area !== treeFilter.selectedArea) return false;
@@ -224,13 +219,19 @@ export default function App() {
             <div><h1 className="text-[17px] font-extrabold text-slate-800 leading-tight">프로젝트 일정 관리</h1></div>
           </div>
           <div className="flex items-center gap-4">
-            {/* 숨긴 컬럼 초기화 버튼 */}
+            {/* 🌟 기존 버튼 복구 */}
+            <button onClick={() => setIsArchitectureOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm">
+              <Network className="w-4 h-4" /> 로직 보기
+            </button>
+            <a href="https://kyobobookcokr.sharepoint.com/sites/PJT2" target="_self" className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 hover:border-blue-200 transition-all shadow-sm">
+              <ExternalLink className="w-4 h-4" /> 팀 사이트
+            </a>
+            
             {hiddenCols.size > 0 && (
               <button onClick={() => setHiddenCols(new Set())} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition-all">
                 <RotateCcw className="w-3.5 h-3.5" /> 숨김 취소
               </button>
             )}
-            {/* 🌟 주간 보고 대시보드 버튼 */}
             <button onClick={() => setIsWeeklyDashboardOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-all shadow-sm">
               <CalendarClock className="w-4 h-4" /> 주간 점검
             </button>
@@ -246,7 +247,6 @@ export default function App() {
           </div>
         </header>
 
-        {/* 좌측 필터 트리 및 우측 간트 차트 (기존 동일 유지) */}
         <div className="flex items-center gap-2 px-5 py-2.5 bg-white border-b border-slate-200 shrink-0">
           <button onClick={() => setFilterPanelOpen(!filterPanelOpen)} className={`flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-bold transition-all shadow-sm ${filterPanelOpen ? "bg-indigo-50 text-indigo-600 border border-indigo-100" : "bg-white text-slate-600 border border-slate-200"}`}>
             {filterPanelOpen ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeftOpen className="w-3.5 h-3.5" />} 필터 {treeFilter.selectedArea && <span className="ml-0.5 w-1.5 h-1.5 rounded-full bg-indigo-500" />}
@@ -254,19 +254,50 @@ export default function App() {
         </div>
 
         <div className="flex flex-1 overflow-hidden min-w-0 p-3 gap-3">
+          
           <div className="shrink-0 bg-white border border-slate-200 rounded-xl overflow-hidden transition-all duration-300 shadow-sm" style={{ width: filterPanelOpen ? 230 : 0 }}>
-             {/* 기존 필터 UI 구조 유지 */}
+             {/* 🌟 전체 필터 트리 복구 완료 */}
              <div className="w-[230px] h-full overflow-y-auto p-3">
                 <button onClick={resetFilter} className="w-full text-left px-3 py-2 rounded-lg text-[12px] font-bold hover:bg-slate-50 flex items-center gap-2 mb-2"><BarChart2 className="w-3.5 h-3.5" /> 전체 보기</button>
-                {areas.map(area => (
-                   <div key={area} className="mb-1">
+                {areas.map(area => {
+                  const isAreaExpanded = expandedAreas.has(area);
+                  const isAreaFiltered = treeFilter.selectedArea === area;
+                  const phases = phasesByArea.get(area) || [];
+                  return (
+                    <div key={area} className="mb-1">
                       <div className="flex items-center gap-1 group">
-                         <button onClick={() => toggleArea(area)} className="p-1 text-slate-400">{expandedAreas.has(area) ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}</button>
-                         <button onClick={() => selectFilter(area, null, null)} className="flex-1 text-left px-2 py-1.5 text-[12px] font-bold hover:bg-slate-50">{area}</button>
+                         <button onClick={() => toggleArea(area)} className="p-1 rounded-md text-slate-400 hover:bg-slate-100">{isAreaExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}</button>
+                         <button onClick={() => selectFilter(area, null, null)} className={`flex-1 text-left px-2 py-1.5 rounded-lg text-[12px] font-bold transition-all ${isAreaFiltered ? "bg-indigo-50 text-indigo-700" : "text-slate-700 hover:bg-slate-50"}`}>{area}</button>
                       </div>
-                      {/* 생략: 2단계, 3단계 구조 */}
-                   </div>
-                ))}
+                      <div className="overflow-hidden transition-all duration-200 ease-in-out" style={{ maxHeight: isAreaExpanded ? 2000 : 0, opacity: isAreaExpanded ? 1 : 0 }}>
+                        {phases.map(phase => {
+                          const phaseKey = `${area}||${phase}`;
+                          const isPhaseExpanded = expandedPhases.has(phaseKey);
+                          const isPhaseFiltered = isAreaFiltered && treeFilter.selectedPhase === phase;
+                          const activities = activitiesByAreaPhase.get(phaseKey) || [];
+                          return (
+                            <div key={phase} className="pl-5 mt-0.5">
+                              <div className="flex items-center gap-1 group">
+                                <button onClick={() => togglePhase(area, phase)} className="p-1 rounded-md text-slate-400 hover:bg-slate-100">{isPhaseExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}</button>
+                                <button onClick={() => selectFilter(area, phase, null)} className={`flex-1 text-left px-2 py-1.5 rounded-lg text-[11px] font-bold transition-all ${isPhaseFiltered ? "bg-indigo-50/70 text-indigo-600" : "text-slate-600 hover:bg-slate-50"}`}>{phase}</button>
+                              </div>
+                              <div className="overflow-hidden transition-all duration-200 ease-in-out" style={{ maxHeight: isPhaseExpanded ? 1000 : 0, opacity: isPhaseExpanded ? 1 : 0 }}>
+                                {activities.map(act => {
+                                  const isActFiltered = isPhaseFiltered && treeFilter.selectedActivity === act;
+                                  return (
+                                    <div key={act} className="pl-6 mt-0.5">
+                                      <button onClick={() => selectFilter(area, phase, act)} className={`w-full text-left px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${isActFiltered ? "bg-blue-50/70 text-blue-600 font-bold" : "text-slate-500 hover:bg-slate-50"}`}>{act}</button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
              </div>
           </div>
 
