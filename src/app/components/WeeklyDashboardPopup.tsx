@@ -157,7 +157,8 @@ export default function WeeklyDashboardPopup({ tasks, onClose }: Props) {
                   <tbody>
                     {filteredDelayedTasks.map((t, idx) => (
                       <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50/50 text-[12px] text-slate-700">
-                        <td className="p-3 font-semibold text-slate-500">{t.area} > {t.phase}</td>
+                        {/* 🌟 에러 수정: '>' 대신 '&gt;' 사용 */}
+                        <td className="p-3 font-semibold text-slate-500">{t.area} &gt; {t.phase}</td>
                         <td className="p-3 font-bold">{t.taskName}</td>
                         <td className="p-3">{t.assigneePlan} / {t.assigneeIT}</td>
                         <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full bg-slate-100 text-[11px] font-bold">{t.status}</span></td>
