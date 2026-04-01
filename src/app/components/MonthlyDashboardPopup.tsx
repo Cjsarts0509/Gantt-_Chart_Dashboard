@@ -33,7 +33,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
     const details: any[] = [];
 
     validTasks.forEach(t => {
-      const area = t.area || '기타';
+      const area = String(t.area).trim();
       if (!aStats[area]) {
         aStats[area] = { buildActualSum: 0, buildPlannedSum: 0, buildCount: 0, testActualSum: 0, testPlannedSum: 0, testCount: 0 };
       }
