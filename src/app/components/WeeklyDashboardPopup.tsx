@@ -34,13 +34,13 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
 
   const { overallPlanned, overallActual, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount } = useMemo(() => {
     
-    // 🌟 [핵심] 빈칸 탭 완벽 제거: area 값이 진짜로 존재하는지 깐깐하게 검사
     const validTasks = tasks.filter(t => {
       if (t.phase === '설계' || !t.phase) return false;
       
-      const areaName = String(t.area || "").trim();
-      // 값이 비어있거나, 쓰레기값이면 여기서 원천 차단 (입구컷!)
-      if (!areaName || areaName === '기타' || areaName === 'undefined' || areaName === 'null') {
+      // 🌟 [1차 폭격] 눈에 안 보이는 투명 문자(Zero-width)와 모든 공백을 완벽히 제거
+      const areaName = String(t.area || "").replace(/[\s\u200B-\u200D\uFEFF]/g, '').toLowerCase();
+      
+      if (!areaName || areaName === '기타' || areaName.includes('undefined') || areaName.includes('null') || areaName.includes('object')) {
         return false; 
       }
       return true;
@@ -75,22 +75,28 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
       details.push({ ...t, actualProg, plannedProg });
     });
 
-    const processedAStats = Object.keys(aStats).map(area => {
-      const s = aStats[area];
-      const bActAvg = s.buildCount > 0 ? s.buildActualSum / s.buildCount : 0;
-      const bPlnAvg = s.buildCount > 0 ? s.buildPlannedSum / s.buildCount : 0;
-      const tActAvg = s.testCount > 0 ? s.testActualSum / s.testCount : 0;
-      const tPlnAvg = s.testCount > 0 ? s.testPlannedSum / s.testCount : 0;
-      
-      let wSum = 0;
-      if (s.buildCount > 0) wSum += 0.7;
-      if (s.testCount > 0) wSum += 0.3;
-      
-      const act = wSum > 0 ? Math.round(((bActAvg * 0.7) + (tActAvg * 0.3)) / wSum) : 0;
-      const pln = wSum > 0 ? Math.round(((bPlnAvg * 0.7) + (tPlnAvg * 0.3)) / wSum) : 0;
-      
-      return { area, actualProg: act, plannedProg: pln, gap: act - pln };
-    });
+    // 🌟 [2차 폭격] 화면에 UI로 그리기 직전에, 키값이 빈칸이면 배열에서 강제로 찢어버림
+    const processedAStats = Object.keys(aStats)
+      .filter(area => {
+         const cleanArea = String(area).replace(/[\s\u200B-\u200D\uFEFF]/g, '');
+         return cleanArea.length > 0 && cleanArea !== '기타' && cleanArea !== 'undefined' && cleanArea !== 'null';
+      })
+      .map(area => {
+        const s = aStats[area];
+        const bActAvg = s.buildCount > 0 ? s.buildActualSum / s.buildCount : 0;
+        const bPlnAvg = s.buildCount > 0 ? s.buildPlannedSum / s.buildCount : 0;
+        const tActAvg = s.testCount > 0 ? s.testActualSum / s.testCount : 0;
+        const tPlnAvg = s.testCount > 0 ? s.testPlannedSum / s.testCount : 0;
+        
+        let wSum = 0;
+        if (s.buildCount > 0) wSum += 0.7;
+        if (s.testCount > 0) wSum += 0.3;
+        
+        const act = wSum > 0 ? Math.round(((bActAvg * 0.7) + (tActAvg * 0.3)) / wSum) : 0;
+        const pln = wSum > 0 ? Math.round(((bPlnAvg * 0.7) + (tPlnAvg * 0.3)) / wSum) : 0;
+        
+        return { area, actualProg: act, plannedProg: pln, gap: act - pln };
+      });
 
     const buildActualAvg = buildCount > 0 ? buildTotalActual / buildCount : 0;
     const buildPlannedAvg = buildCount > 0 ? buildTotalPlanned / buildCount : 0;
