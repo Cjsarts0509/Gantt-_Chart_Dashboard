@@ -29,10 +29,20 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
   }, []);
 
   const { overallPlanned, overallActual, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount } = useMemo(() => {
-    // 🌟 강력한 필터: 설계 제외 + 빈칸 제외 + '기타' 텍스트 완전 제외!
+    
+    // 🌟 [기타/빈칸/쓰레기값 완전 박멸 필터]
     const validTasks = tasks.filter(t => {
-      const areaName = String(t.area || "").trim();
-      return t.phase !== '설계' && t.phase && areaName !== '' && areaName !== '기타' && areaName !== 'undefined';
+      if (!t.phase || t.phase === '설계') return false; // 설계 제외
+      if (!t.area) return false; // 아예 값이 없으면 제외
+      
+      // 띄어쓰기 전부 없애고 소문자로 변환해서 검사 (혹시 모를 변수 차단)
+      const cleanArea = String(t.area).replace(/\s+/g, '').toLowerCase(); 
+      
+      // 빈칸, 기타, undefined, null 글자 자체를 원천 차단
+      if (cleanArea === '' || cleanArea.includes('기타') || cleanArea === 'undefined' || cleanArea === 'null') {
+        return false;
+      }
+      return true;
     });
     
     let buildTotalActual = 0, buildTotalPlanned = 0, buildCount = 0;
@@ -43,6 +53,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
     const details: any[] = [];
 
     validTasks.forEach(t => {
+      // 위에서 검열을 통과한 진짜 구분값만 사용
       const area = String(t.area).trim();
       if (!aStats[area]) {
         aStats[area] = { buildActualSum: 0, buildPlannedSum: 0, buildCount: 0, testActualSum: 0, testPlannedSum: 0, testCount: 0 };
