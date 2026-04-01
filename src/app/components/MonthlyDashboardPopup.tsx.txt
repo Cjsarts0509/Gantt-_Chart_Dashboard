@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { X, CalendarClock, AlertTriangle, TrendingDown, CheckCircle2, ListTodo } from "lucide-react";
+import { X, CalendarDays, AlertTriangle, TrendingDown, CheckCircle2, ListTodo } from "lucide-react";
 import { WBSTask } from "./mockData";
 import { STATUS_MAP } from "./CustomTaskList";
 
@@ -19,17 +19,13 @@ const getPlannedProgress = (start: Date, end: Date, targetDate: Date) => {
   return Math.round(((t - s) / (e - s)) * 100);
 };
 
-export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = false }: Props) {
+export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = false }: Props) {
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
 
   const targetDate = useMemo(() => {
     const now = new Date();
-    const day = now.getDay();
-    const diff = day === 0 ? -7 : -day; 
-    const lastSunday = new Date(now);
-    lastSunday.setDate(now.getDate() + diff);
-    lastSunday.setHours(23, 59, 59, 999);
-    return lastSunday;
+    const endOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+    return endOfPrevMonth;
   }, []);
 
   const { overallPlanned, overallActual, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount } = useMemo(() => {
@@ -125,8 +121,8 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
     <div className={containerClass}>
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50 shrink-0">
         <div className="flex items-center gap-2">
-          <CalendarClock className="w-5 h-5 text-indigo-600" />
-          <h2 className="text-[16px] font-bold text-slate-800 tracking-tight">주간 진행률 및 계획 대비 점검</h2>
+          <CalendarDays className="w-5 h-5 text-indigo-600" />
+          <h2 className="text-[16px] font-bold text-slate-800 tracking-tight">월간 진행률 및 계획 대비 점검</h2>
           <span className="ml-2 text-[12px] text-slate-500 font-medium">(*기준: {targetDate.toLocaleDateString()} / 구축 70% + 테스트 30%)</span>
         </div>
         {isStandalone ? (

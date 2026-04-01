@@ -7,7 +7,7 @@ import { GanttGroupContext } from "./components/GanttGroupContext";
 import ExcelManager from "./components/ExcelManager";
 import DashboardPopup from "./components/DashboardPopup";
 import WeeklyDashboardPopup from "./components/WeeklyDashboardPopup";
-import MonthlyDashboardPopup from "./components/MonthlyDashboardPopup"; // 🌟 월간 컴포넌트 추가
+import MonthlyDashboardPopup from "./components/MonthlyDashboardPopup";
 import ArchitecturePopup from "./components/ArchitecturePopup";
 import HistoryDashboard from "./components/HistoryDashboard"; 
 import "./components/gantt-overrides.css";
@@ -34,18 +34,17 @@ export default function App() {
   
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [isWeeklyDashboardOpen, setIsWeeklyDashboardOpen] = useState(false);
-  const [isMonthlyDashboardOpen, setIsMonthlyDashboardOpen] = useState(false); // 🌟 월간 모달 상태 추가
+  const [isMonthlyDashboardOpen, setIsMonthlyDashboardOpen] = useState(false);
   const [isArchitectureOpen, setIsArchitectureOpen] = useState(false);
 
   const [hiddenCols, setHiddenCols] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfigState] = useState<{ key: string, dir: 'asc'|'desc' } | null>(null);
 
-  // 🌟 전용 URL 분기 처리
   const viewParam = new URLSearchParams(window.location.search).get('view');
   const isStandaloneDashboard = viewParam === 'dashboard';
   const isHistoryView = viewParam === 'history';
-  const isWeeklyView = viewParam === 'weekly';   // ?view=weekly
-  const isMonthlyView = viewParam === 'monthly'; // ?view=monthly
+  const isWeeklyView = viewParam === 'weekly';
+  const isMonthlyView = viewParam === 'monthly';
 
   useEffect(() => {
     const remoteDataUrl = `https://raw.githubusercontent.com/cjsarts0509/gantt-_chart_dashboard/data/public/data.json?t=${new Date().getTime()}`;
@@ -59,16 +58,33 @@ export default function App() {
         const parsedTasks = data.map((t: any, index: number) => {
           const parsedStart = new Date(t.start);
           const parsedEnd = new Date(t.end);
+          // 담당자 이름에서 괄호() 제거용 함수
           const cleanName = (val: any) => val ? String(val).split(',').map(name => name.replace(/\([^)]*\)/g, '').trim()).filter(Boolean).join(', ') : "";
           
+          let itVal = t.assigneeIT || t["담당자(IT)"];
+          let planVal = t.assigneePlan || t["담당자(기획)"];
+          
+          if (!itVal) {
+             const itKey = Object.keys(t).find(k => k.includes('IT') && (k.includes('담당자') || k.includes('xb2f4')));
+             if (itKey) itVal = t[itKey];
+          }
+          if (!planVal) {
+             const planKey = Object.keys(t).find(k => (k.includes('기획') || k.includes('xae')) && (k.includes('담당자') || k.includes('xb2f4')));
+             if (planKey) planVal = t[planKey];
+          }
+
           return {
             ...t, 
             id: t.id ? String(t.id) : `task-${index}`, 
             type: "task",
             start: isNaN(parsedStart.getTime()) ? new Date() : parsedStart,
             end: isNaN(parsedEnd.getTime()) ? new Date() : parsedEnd,
-            assigneePlan: cleanName(t.assigneePlan || t["_xb2f4__xb2f9__xc790__x005b__xae"] || t["담당자(기획)"]),
-            assigneeIT: cleanName(t.assigneeIT || t["_xb2f4__xb2f9__xc790__x005b_IT_x"] || t["담당자(IT)"]),
+            
+            // 🌟 taskName(화면명)을 OData 화면명 키값으로 강제 매핑!
+            taskName: t["OData__xd654__xba74__xba85_"] || t["화면명"] || "",
+            
+            assigneePlan: cleanName(planVal),
+            assigneeIT: cleanName(itVal),
             progress: STATUS_MAP[t.status]?.progress ?? Number(t.progress) ?? 0 
           };
         });
@@ -104,7 +120,6 @@ export default function App() {
     return () => ro.disconnect();
   }, [isStandaloneDashboard, isHistoryView, isWeeklyView, isMonthlyView]);
 
-  // 🌟 URL 분기에 따른 전체 화면 렌더링 반환
   if (isHistoryView) return <HistoryDashboard />;
   if (isStandaloneDashboard) return <DashboardPopup tasks={tasks} isStandalone={true} />;
   if (isWeeklyView) return <WeeklyDashboardPopup tasks={tasks} isStandalone={true} />;
@@ -242,7 +257,6 @@ export default function App() {
 
             <div className="w-px h-6 bg-slate-200 mx-1" />
 
-            {/* 🌟 주간 / 월간 / 전체 요약 버튼 배치 */}
             <button onClick={() => setIsWeeklyDashboardOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-all shadow-sm">
               <CalendarClock className="w-4 h-4" /> 주간 점검
             </button>
@@ -272,7 +286,6 @@ export default function App() {
         </div>
 
         <div className="flex flex-1 overflow-hidden min-w-0 p-3 gap-3">
-          
           <div className="shrink-0 bg-white border border-slate-200 rounded-xl overflow-hidden transition-all duration-300 shadow-sm" style={{ width: filterPanelOpen ? 230 : 0 }}>
              <div className="w-[230px] h-full overflow-y-auto p-3">
                 <button onClick={resetFilter} className="w-full text-left px-3 py-2 rounded-lg text-[12px] font-bold hover:bg-slate-50 flex items-center gap-2 mb-2"><BarChart2 className="w-3.5 h-3.5" /> 전체 보기</button>
