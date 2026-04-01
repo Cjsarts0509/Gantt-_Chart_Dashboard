@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from "react";
-import { X, CalendarClock, AlertTriangle, TrendingDown, CheckCircle2, ListTodo } from "lucide-react";
+import { X, CalendarDays, AlertTriangle, TrendingDown, CheckCircle2, ListTodo } from "lucide-react";
 import { WBSTask } from "./mockData";
 import { STATUS_MAP } from "./CustomTaskList";
 
 interface Props {
   tasks: WBSTask[];
   onClose?: () => void;
-  isStandalone?: boolean; // 🌟 전용 주소(URL) 접속을 위한 속성 추가
+  isStandalone?: boolean;
 }
 
 const getPlannedProgress = (start: Date, end: Date) => {
@@ -19,7 +19,7 @@ const getPlannedProgress = (start: Date, end: Date) => {
   return Math.round(((today - s) / (e - s)) * 100);
 };
 
-export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = false }: Props) {
+export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = false }: Props) {
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
 
   const { overallPlanned, overallActual, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount } = useMemo(() => {
@@ -107,7 +107,6 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
 
   const filteredTasks = selectedArea ? detailedTasks.filter(t => t.area === selectedArea) : [];
 
-  // 🌟 전용 주소(Standalone) 여부에 따른 레이아웃 변경
   const containerClass = isStandalone
     ? "w-screen h-screen bg-[#F8FAFC] flex flex-col overflow-hidden font-sans"
     : "bg-white rounded-xl shadow-2xl w-[1200px] h-[85vh] max-w-[95vw] flex flex-col overflow-hidden relative border border-slate-200 font-sans";
@@ -116,11 +115,10 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
     <div className={containerClass}>
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50 shrink-0">
         <div className="flex items-center gap-2">
-          <CalendarClock className="w-5 h-5 text-indigo-600" />
-          <h2 className="text-[16px] font-bold text-slate-800 tracking-tight">주간 진행률 및 계획 대비 점검</h2>
+          <CalendarDays className="w-5 h-5 text-indigo-600" />
+          <h2 className="text-[16px] font-bold text-slate-800 tracking-tight">월간 진행률 및 계획 대비 점검</h2>
           <span className="ml-2 text-[12px] text-slate-500 font-medium">(*설계 단계 제외 / 구축 70% + 테스트 30% 가중치)</span>
         </div>
-        {/* 🌟 전용 주소 접속 시 '메인으로 가기' 버튼 표시 */}
         {isStandalone ? (
           <button onClick={() => window.location.href = '?'} className="px-3 py-1.5 rounded-md text-[12px] font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
             메인 차트로 돌아가기
@@ -236,10 +234,8 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
     </div>
   );
 
-  // 전용 주소인 경우 백그라운드 없이 화면 자체를 반환
   if (isStandalone) return popupContent;
 
-  // 메인화면에서 버튼으로 연 경우 모달 형태로 반환
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
       {popupContent}

@@ -7,10 +7,11 @@ import { GanttGroupContext } from "./components/GanttGroupContext";
 import ExcelManager from "./components/ExcelManager";
 import DashboardPopup from "./components/DashboardPopup";
 import WeeklyDashboardPopup from "./components/WeeklyDashboardPopup";
+import MonthlyDashboardPopup from "./components/MonthlyDashboardPopup"; // 🌟 월간 컴포넌트 추가
 import ArchitecturePopup from "./components/ArchitecturePopup";
 import HistoryDashboard from "./components/HistoryDashboard"; 
 import "./components/gantt-overrides.css";
-import { BarChart2, ChevronDown, ChevronRight, X, PanelLeftClose, PanelLeftOpen, Database, LayoutDashboard, ExternalLink, Network, CalendarClock, RotateCcw } from "lucide-react";
+import { BarChart2, ChevronDown, ChevronRight, X, PanelLeftClose, PanelLeftOpen, Database, LayoutDashboard, ExternalLink, Network, CalendarClock, CalendarDays, RotateCcw } from "lucide-react";
 
 interface TreeFilterState { selectedArea: string | null; selectedPhase: string | null; selectedActivity: string | null; }
 const viewModeOptions = [ { label: "일", value: ViewMode.Day }, { label: "주", value: ViewMode.Week }, { label: "월", value: ViewMode.Month } ];
@@ -33,14 +34,18 @@ export default function App() {
   
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [isWeeklyDashboardOpen, setIsWeeklyDashboardOpen] = useState(false);
+  const [isMonthlyDashboardOpen, setIsMonthlyDashboardOpen] = useState(false); // 🌟 월간 모달 상태 추가
   const [isArchitectureOpen, setIsArchitectureOpen] = useState(false);
 
   const [hiddenCols, setHiddenCols] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfigState] = useState<{ key: string, dir: 'asc'|'desc' } | null>(null);
 
+  // 🌟 전용 URL 분기 처리
   const viewParam = new URLSearchParams(window.location.search).get('view');
   const isStandaloneDashboard = viewParam === 'dashboard';
   const isHistoryView = viewParam === 'history';
+  const isWeeklyView = viewParam === 'weekly';   // ?view=weekly
+  const isMonthlyView = viewParam === 'monthly'; // ?view=monthly
 
   useEffect(() => {
     const remoteDataUrl = `https://raw.githubusercontent.com/cjsarts0509/gantt-_chart_dashboard/data/public/data.json?t=${new Date().getTime()}`;
@@ -97,10 +102,13 @@ export default function App() {
     const ro = new ResizeObserver((entries) => { for (const entry of entries) setGanttContainerHeight(entry.contentRect.height); });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [isStandaloneDashboard, isHistoryView]);
+  }, [isStandaloneDashboard, isHistoryView, isWeeklyView, isMonthlyView]);
 
+  // 🌟 URL 분기에 따른 전체 화면 렌더링 반환
   if (isHistoryView) return <HistoryDashboard />;
   if (isStandaloneDashboard) return <DashboardPopup tasks={tasks} isStandalone={true} />;
+  if (isWeeklyView) return <WeeklyDashboardPopup tasks={tasks} isStandalone={true} />;
+  if (isMonthlyView) return <MonthlyDashboardPopup tasks={tasks} isStandalone={true} />;
 
   const areas = useMemo(() => [...new Set(tasks.map((t) => t.area))].filter(Boolean), [tasks]);
   const phasesByArea = useMemo(() => {
@@ -218,8 +226,7 @@ export default function App() {
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shadow-indigo-200 shadow-md"><BarChart2 className="w-5 h-5 text-white" /></div>
             <div><h1 className="text-[17px] font-extrabold text-slate-800 leading-tight">프로젝트 일정 관리</h1></div>
           </div>
-          <div className="flex items-center gap-4">
-            {/* 🌟 기존 버튼 복구 */}
+          <div className="flex items-center gap-3">
             <button onClick={() => setIsArchitectureOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm">
               <Network className="w-4 h-4" /> 로직 보기
             </button>
@@ -232,15 +239,26 @@ export default function App() {
                 <RotateCcw className="w-3.5 h-3.5" /> 숨김 취소
               </button>
             )}
+
+            <div className="w-px h-6 bg-slate-200 mx-1" />
+
+            {/* 🌟 주간 / 월간 / 전체 요약 버튼 배치 */}
             <button onClick={() => setIsWeeklyDashboardOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-all shadow-sm">
               <CalendarClock className="w-4 h-4" /> 주간 점검
+            </button>
+            <button onClick={() => setIsMonthlyDashboardOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-all shadow-sm">
+              <CalendarDays className="w-4 h-4" /> 월간 점검
             </button>
             <button onClick={() => setIsDashboardOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-indigo-600 text-white border border-indigo-500 hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200">
               <LayoutDashboard className="w-4 h-4" /> 전체 요약
             </button>
-            <div className="w-px h-6 bg-slate-200" />
+
+            <div className="w-px h-6 bg-slate-200 mx-1" />
+            
             <ExcelManager tasks={tasks} visibleTasks={ganttTasks} onUpload={(newTasks) => setTasks(newTasks)} />
-            <div className="w-px h-6 bg-slate-200" />
+            
+            <div className="w-px h-6 bg-slate-200 mx-1" />
+            
             <div className="flex items-center gap-1 bg-slate-100/80 rounded-lg p-1 border border-slate-200/50">
               {viewModeOptions.map((opt) => (<button key={opt.value} className={`px-4 py-1.5 rounded-md text-[12px] font-bold transition-all ${viewMode === opt.value ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`} onClick={() => setViewMode(opt.value)}>{opt.label}</button>))}
             </div>
@@ -256,7 +274,6 @@ export default function App() {
         <div className="flex flex-1 overflow-hidden min-w-0 p-3 gap-3">
           
           <div className="shrink-0 bg-white border border-slate-200 rounded-xl overflow-hidden transition-all duration-300 shadow-sm" style={{ width: filterPanelOpen ? 230 : 0 }}>
-             {/* 🌟 전체 필터 트리 복구 완료 */}
              <div className="w-[230px] h-full overflow-y-auto p-3">
                 <button onClick={resetFilter} className="w-full text-left px-3 py-2 rounded-lg text-[12px] font-bold hover:bg-slate-50 flex items-center gap-2 mb-2"><BarChart2 className="w-3.5 h-3.5" /> 전체 보기</button>
                 {areas.map(area => {
@@ -325,6 +342,7 @@ export default function App() {
         
         {isDashboardOpen && <DashboardPopup tasks={tasks} onClose={() => setIsDashboardOpen(false)} />}
         {isWeeklyDashboardOpen && <WeeklyDashboardPopup tasks={tasks} onClose={() => setIsWeeklyDashboardOpen(false)} />}
+        {isMonthlyDashboardOpen && <MonthlyDashboardPopup tasks={tasks} onClose={() => setIsMonthlyDashboardOpen(false)} />}
         {isArchitectureOpen && <ArchitecturePopup onClose={() => setIsArchitectureOpen(false)} />}
       </div>
     </GanttGroupContext.Provider>
