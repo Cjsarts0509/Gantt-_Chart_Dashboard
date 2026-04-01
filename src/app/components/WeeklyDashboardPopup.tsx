@@ -34,22 +34,20 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
 
   const { overallPlanned, overallActual, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount } = useMemo(() => {
     
-    // 🌟 1. 데이터 클렌징 (입구에서 완벽하게 세탁 후 박제)
+    // 🌟 1. 데이터 클렌징 (궁극의 문자 검열 필터)
     const validTasks = tasks.reduce((acc, t) => {
-      // 단계 검열
       if (t.phase === '설계' || !t.phase) return acc;
-      // 구분값 아예 없으면 버림
       if (!t.area) return acc;
 
       const cleanArea = String(t.area).trim();
-      const testArea = cleanArea.replace(/[\s\u200B-\u200D\uFEFF]/g, '').toLowerCase();
       
-      // 쓰레기값이면 버림
-      if (!testArea || testArea === '기타' || testArea === 'undefined' || testArea === 'null') {
-        return acc;
+      // ★ 핵심: 한글, 영문, 숫자가 단 하나라도 포함되어 있는지 검사 (없으면 쓰레기값)
+      const hasMeaningfulChar = /[a-zA-Z0-9가-힣]/.test(cleanArea);
+      
+      if (!hasMeaningfulChar || cleanArea.includes('기타') || cleanArea.includes('undefined') || cleanArea.includes('null')) {
+        return acc; // 진짜 글자가 없으면 가차없이 버림!
       }
       
-      // ★ 여기가 핵심: 검열을 통과했다면, 찌꺼기 없는 깔끔한 area로 덮어씌워서 내려보냄
       acc.push({ ...t, area: cleanArea });
       return acc;
     }, [] as any[]);
@@ -62,9 +60,7 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
     const details: any[] = [];
 
     validTasks.forEach(t => {
-      // 🌟 2. 사용자님 말씀대로 기존의 String(t.area).trim() 제거! 
-      // 위에서 이미 완벽히 청소된 값을 그대로 갖다 씁니다.
-      const area = t.area; 
+      const area = t.area; // 검열을 통과한 완벽한 텍스트만 들어옵니다
       
       if (!aStats[area]) {
         aStats[area] = { buildActualSum: 0, buildPlannedSum: 0, buildCount: 0, testActualSum: 0, testPlannedSum: 0, testCount: 0 };

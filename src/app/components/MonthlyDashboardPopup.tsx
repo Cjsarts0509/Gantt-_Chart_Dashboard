@@ -9,21 +9,44 @@ interface Props {
   isStandalone?: boolean;
 }
 
-const getPlannedProgress = (start: Date, end: Date) => {
-  const today = new Date().getTime();
+const getPlannedProgress = (start: Date, end: Date, targetDate: Date) => {
+  const t = targetDate.getTime();
   const s = new Date(start).getTime();
   const e = new Date(end).getTime();
-  if (today < s) return 0;
-  if (today > e) return 100;
+  if (t < s) return 0;
+  if (t >= e) return 100;
   if (s === e) return 100;
-  return Math.round(((today - s) / (e - s)) * 100);
+  return Math.round(((t - s) / (e - s)) * 100);
 };
 
 export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = false }: Props) {
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
 
+  const targetDate = useMemo(() => {
+    const now = new Date();
+    const endOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    return endOfCurrentMonth;
+  }, []);
+
   const { overallPlanned, overallActual, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount } = useMemo(() => {
-    const validTasks = tasks.filter(t => t.phase !== '설계' && t.phase);
+    
+    // 🌟 1. 데이터 클렌징 (궁극의 문자 검열 필터)
+    const validTasks = tasks.reduce((acc, t) => {
+      if (t.phase === '설계' || !t.phase) return acc;
+      if (!t.area) return acc;
+
+      const cleanArea = String(t.area).trim();
+      
+      // ★ 핵심: 한글, 영문, 숫자가 단 하나라도 포함되어 있는지 검사 (없으면 쓰레기값)
+      const hasMeaningfulChar = /[a-zA-Z0-9가-힣]/.test(cleanArea);
+      
+      if (!hasMeaningfulChar || cleanArea.includes('기타') || cleanArea.includes('undefined') || cleanArea.includes('null')) {
+        return acc; // 진짜 글자가 없으면 가차없이 버림!
+      }
+      
+      acc.push({ ...t, area: cleanArea });
+      return acc;
+    }, [] as any[]);
     
     let buildTotalActual = 0, buildTotalPlanned = 0, buildCount = 0;
     let testTotalActual = 0, testTotalPlanned = 0, testCount = 0;
@@ -33,13 +56,14 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
     const details: any[] = [];
 
     validTasks.forEach(t => {
-      const area = String(t.area).trim();
+      const area = t.area; // 검열을 통과한 완벽한 텍스트만 들어옵니다
+      
       if (!aStats[area]) {
         aStats[area] = { buildActualSum: 0, buildPlannedSum: 0, buildCount: 0, testActualSum: 0, testPlannedSum: 0, testCount: 0 };
       }
       
       const actualProg = STATUS_MAP[t.status || ""]?.progress ?? Number(t.progress) ?? 0;
-      const plannedProg = getPlannedProgress(new Date(t.start), new Date(t.end));
+      const plannedProg = getPlannedProgress(t.start, t.end, targetDate);
       
       if (actualProg === 100) compCount++;
 
@@ -87,10 +111,12 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
       const isDelayedA = a.actualProg < a.plannedProg ? 1 : 0;
       const isDelayedB = b.actualProg < b.plannedProg ? 1 : 0;
       if (isDelayedA !== isDelayedB) return isDelayedB - isDelayedA; 
+      
       const delA = a.deliverable || "";
       const delB = b.deliverable || "";
-      if (delA > delB) return -1;
-      if (delA < delB) return 1;
+      if (delA < delB) return -1;
+      if (delA > delB) return 1;
+      
       return a.actualProg - b.actualProg;
     });
 
@@ -103,7 +129,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
       completedCount: compCount,
       incompleteCount: validTasks.length - compCount
     };
-  }, [tasks]);
+  }, [tasks, targetDate]);
 
   const filteredTasks = selectedArea ? detailedTasks.filter(t => t.area === selectedArea) : [];
 
@@ -117,7 +143,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
         <div className="flex items-center gap-2">
           <CalendarDays className="w-5 h-5 text-indigo-600" />
           <h2 className="text-[16px] font-bold text-slate-800 tracking-tight">월간 진행률 및 계획 대비 점검</h2>
-          <span className="ml-2 text-[12px] text-slate-500 font-medium">(*설계 단계 제외 / 구축 70% + 테스트 30% 가중치)</span>
+          <span className="ml-2 text-[12px] text-slate-500 font-medium">(*기준: {targetDate.toLocaleDateString()} / 구축 70% + 테스트 30%)</span>
         </div>
         {isStandalone ? (
           <button onClick={() => window.location.href = '?'} className="px-3 py-1.5 rounded-md text-[12px] font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
@@ -167,7 +193,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
             </div>
           </div>
 
-          <div className="flex-1 overflow-auto p-4">
+          <div className="flex-1 overflow-auto bg-white flex flex-col">
             {!selectedArea ? (
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -196,37 +222,70 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
                 </tbody>
               </table>
             ) : (
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 text-[12px] text-slate-500 font-bold border-b border-slate-200">
-                    <th className="p-3">구분</th>
-                    <th className="p-3">산출물</th>
-                    <th className="p-3">화면명</th>
-                    <th className="p-3">담당자</th>
-                    <th className="p-3 text-center">상태</th>
-                    <th className="p-3 text-right">계획 진행률</th>
-                    <th className="p-3 text-right">실제 진행률</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredTasks.map((t, idx) => {
-                    const isDelayed = t.actualProg < t.plannedProg;
-                    return (
-                      <tr key={idx} className={`border-b border-slate-100 hover:bg-slate-50 text-[12px] text-slate-700 ${isDelayed ? 'bg-rose-50/30' : ''}`}>
-                        <td className="p-3 font-semibold text-slate-500">{t.area}</td>
-                        <td className="p-3 font-bold text-slate-600">{t.deliverable}</td>
-                        <td className="p-3 font-bold">{t.taskName}</td>
-                        <td className="p-3">{t.assigneePlan} / {t.assigneeIT}</td>
-                        <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full bg-slate-100 text-[11px] font-bold border border-slate-200">{t.status || '대기'}</span></td>
-                        <td className="p-3 text-right text-slate-400">{t.plannedProg}%</td>
-                        <td className={`p-3 text-right font-bold ${isDelayed ? 'text-rose-600' : 'text-indigo-600'}`}>
-                          {t.actualProg}% {isDelayed && <span className="ml-1 text-[10px] text-rose-500">({t.actualProg - t.plannedProg}%)</span>}
-                        </td>
+              <div className="flex flex-col h-full">
+                {(() => {
+                  const stat = areaStats.find(s => s.area === selectedArea);
+                  if (!stat) return null;
+                  return (
+                    <div className="flex items-center justify-between px-5 py-3 bg-indigo-50/30 border-b border-indigo-100 shrink-0">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                        <span className="text-[14px] font-extrabold text-indigo-900">{stat.area} 진행 현황 요약</span>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-md border border-indigo-100 shadow-sm text-[12px] font-bold">
+                          <span className="text-slate-500">계획 진행률</span>
+                          <span className="text-slate-700">{stat.plannedProg}%</span>
+                        </div>
+                        <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-md border border-indigo-100 shadow-sm text-[12px] font-bold">
+                          <span className="text-indigo-600">실제 진행률</span>
+                          <span className="text-indigo-700">{stat.actualProg}%</span>
+                        </div>
+                        <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-md border border-indigo-100 shadow-sm text-[12px] font-bold">
+                          <span className="text-slate-500">GAP</span>
+                          <span className={stat.gap < 0 ? 'text-rose-600' : 'text-emerald-600'}>{stat.gap}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+                
+                <div className="flex-1 overflow-auto p-4">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-[12px] text-slate-500 font-bold border-b border-slate-200">
+                        <th className="p-3">구분</th>
+                        <th className="p-3">산출물</th>
+                        <th className="p-3">화면명</th>
+                        <th className="p-3">담당자(기획)</th>
+                        <th className="p-3">담당자(IT)</th>
+                        <th className="p-3 text-center">상태</th>
+                        <th className="p-3 text-right">계획 진행률</th>
+                        <th className="p-3 text-right">실제 진행률</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody>
+                      {filteredTasks.map((t, idx) => {
+                        const isDelayed = t.actualProg < t.plannedProg;
+                        return (
+                          <tr key={idx} className={`border-b border-slate-100 hover:bg-slate-50 text-[12px] text-slate-700 ${isDelayed ? 'bg-rose-50/30' : ''}`}>
+                            <td className="p-3 font-semibold text-slate-500">{t.area}</td>
+                            <td className="p-3 font-bold text-slate-600">{t.deliverable}</td>
+                            <td className="p-3 font-bold">{t.taskName}</td>
+                            <td className="p-3">{t.assigneePlan}</td>
+                            <td className="p-3 text-indigo-600">{t.assigneeIT}</td>
+                            <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full bg-slate-100 text-[11px] font-bold border border-slate-200">{t.status || '대기'}</span></td>
+                            <td className="p-3 text-right text-slate-400">{t.plannedProg}%</td>
+                            <td className={`p-3 text-right font-bold ${isDelayed ? 'text-rose-600' : 'text-indigo-600'}`}>
+                              {t.actualProg}% {isDelayed && <span className="ml-1 text-[10px] text-rose-500">({t.actualProg - t.plannedProg}%)</span>}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             )}
           </div>
         </div>
