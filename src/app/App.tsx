@@ -256,10 +256,7 @@ export default function App() {
             )}
 
             <div className="w-px h-6 bg-slate-200 mx-1" />
-
-            <button onClick={() => setIsWeeklyDashboardOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-all shadow-sm">
-              <CalendarClock className="w-4 h-4" /> 주간 점검
-            </button>
+            
             <button onClick={() => setIsMonthlyDashboardOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-all shadow-sm">
               <CalendarDays className="w-4 h-4" /> 월간 점검
             </button>
