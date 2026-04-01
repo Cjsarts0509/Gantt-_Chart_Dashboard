@@ -22,13 +22,16 @@ const getPlannedProgress = (start: Date, end: Date, targetDate: Date) => {
 export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = false }: Props) {
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
 
+  // 🌟 월간 목표일: '이번 달'의 마지막 날짜 자정 기준!
   const targetDate = useMemo(() => {
     const now = new Date();
-    const endOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
-    return endOfPrevMonth;
+    // month + 1 한 뒤 day에 0을 넣으면 현재 속한 달의 마지막 날을 정확히 반환합니다.
+    const endOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    return endOfCurrentMonth;
   }, []);
 
   const { overallPlanned, overallActual, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount } = useMemo(() => {
+    // 설계 및 '기타/빈칸' 영역 제외
     const validTasks = tasks.filter(t => t.phase !== '설계' && t.phase && t.area && String(t.area).trim() !== '');
     
     let buildTotalActual = 0, buildTotalPlanned = 0, buildCount = 0;
@@ -89,14 +92,20 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
     const oActual = wSum > 0 ? Math.round(((buildActualAvg * 0.7) + (testActualAvg * 0.3)) / wSum) : 0;
     const oPlanned = wSum > 0 ? Math.round(((buildPlannedAvg * 0.7) + (testPlannedAvg * 0.3)) / wSum) : 0;
 
+    // 🌟 정렬 로직 업데이트 적용
     details.sort((a, b) => {
+      // 1순위: 계획 대비 지연 항목을 무조건 최상단으로 올림
       const isDelayedA = a.actualProg < a.plannedProg ? 1 : 0;
       const isDelayedB = b.actualProg < b.plannedProg ? 1 : 0;
       if (isDelayedA !== isDelayedB) return isDelayedB - isDelayedA; 
+      
+      // 2순위: 산출물 오름차순 (가나다순)
       const delA = a.deliverable || "";
       const delB = b.deliverable || "";
-      if (delA > delB) return -1;
-      if (delA < delB) return 1;
+      if (delA < delB) return -1;
+      if (delA > delB) return 1;
+      
+      // 3순위: 실제 진행률 오름차순 (낮은게 위로)
       return a.actualProg - b.actualProg;
     });
 
@@ -203,7 +212,6 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
               </table>
             ) : (
               <div className="flex flex-col h-full">
-                {/* 🌟 선택된 영역 요약 배너 추가 */}
                 {(() => {
                   const stat = areaStats.find(s => s.area === selectedArea);
                   if (!stat) return null;
