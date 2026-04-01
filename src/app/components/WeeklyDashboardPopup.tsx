@@ -34,17 +34,25 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
 
   const { overallPlanned, overallActual, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount } = useMemo(() => {
     
-    const validTasks = tasks.filter(t => {
-      if (t.phase === '설계' || !t.phase) return false;
+    // 🌟 1. 데이터 클렌징 (입구에서 완벽하게 세탁 후 박제)
+    const validTasks = tasks.reduce((acc, t) => {
+      // 단계 검열
+      if (t.phase === '설계' || !t.phase) return acc;
+      // 구분값 아예 없으면 버림
+      if (!t.area) return acc;
+
+      const cleanArea = String(t.area).trim();
+      const testArea = cleanArea.replace(/[\s\u200B-\u200D\uFEFF]/g, '').toLowerCase();
       
-      // 🌟 [1차 폭격] 눈에 안 보이는 투명 문자(Zero-width)와 모든 공백을 완벽히 제거
-      const areaName = String(t.area || "").replace(/[\s\u200B-\u200D\uFEFF]/g, '').toLowerCase();
-      
-      if (!areaName || areaName === '기타' || areaName.includes('undefined') || areaName.includes('null') || areaName.includes('object')) {
-        return false; 
+      // 쓰레기값이면 버림
+      if (!testArea || testArea === '기타' || testArea === 'undefined' || testArea === 'null') {
+        return acc;
       }
-      return true;
-    });
+      
+      // ★ 여기가 핵심: 검열을 통과했다면, 찌꺼기 없는 깔끔한 area로 덮어씌워서 내려보냄
+      acc.push({ ...t, area: cleanArea });
+      return acc;
+    }, [] as any[]);
     
     let buildTotalActual = 0, buildTotalPlanned = 0, buildCount = 0;
     let testTotalActual = 0, testTotalPlanned = 0, testCount = 0;
@@ -54,7 +62,10 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
     const details: any[] = [];
 
     validTasks.forEach(t => {
-      const area = String(t.area).trim();
+      // 🌟 2. 사용자님 말씀대로 기존의 String(t.area).trim() 제거! 
+      // 위에서 이미 완벽히 청소된 값을 그대로 갖다 씁니다.
+      const area = t.area; 
+      
       if (!aStats[area]) {
         aStats[area] = { buildActualSum: 0, buildPlannedSum: 0, buildCount: 0, testActualSum: 0, testPlannedSum: 0, testCount: 0 };
       }
@@ -75,28 +86,22 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
       details.push({ ...t, actualProg, plannedProg });
     });
 
-    // 🌟 [2차 폭격] 화면에 UI로 그리기 직전에, 키값이 빈칸이면 배열에서 강제로 찢어버림
-    const processedAStats = Object.keys(aStats)
-      .filter(area => {
-         const cleanArea = String(area).replace(/[\s\u200B-\u200D\uFEFF]/g, '');
-         return cleanArea.length > 0 && cleanArea !== '기타' && cleanArea !== 'undefined' && cleanArea !== 'null';
-      })
-      .map(area => {
-        const s = aStats[area];
-        const bActAvg = s.buildCount > 0 ? s.buildActualSum / s.buildCount : 0;
-        const bPlnAvg = s.buildCount > 0 ? s.buildPlannedSum / s.buildCount : 0;
-        const tActAvg = s.testCount > 0 ? s.testActualSum / s.testCount : 0;
-        const tPlnAvg = s.testCount > 0 ? s.testPlannedSum / s.testCount : 0;
-        
-        let wSum = 0;
-        if (s.buildCount > 0) wSum += 0.7;
-        if (s.testCount > 0) wSum += 0.3;
-        
-        const act = wSum > 0 ? Math.round(((bActAvg * 0.7) + (tActAvg * 0.3)) / wSum) : 0;
-        const pln = wSum > 0 ? Math.round(((bPlnAvg * 0.7) + (tPlnAvg * 0.3)) / wSum) : 0;
-        
-        return { area, actualProg: act, plannedProg: pln, gap: act - pln };
-      });
+    const processedAStats = Object.keys(aStats).map(area => {
+      const s = aStats[area];
+      const bActAvg = s.buildCount > 0 ? s.buildActualSum / s.buildCount : 0;
+      const bPlnAvg = s.buildCount > 0 ? s.buildPlannedSum / s.buildCount : 0;
+      const tActAvg = s.testCount > 0 ? s.testActualSum / s.testCount : 0;
+      const tPlnAvg = s.testCount > 0 ? s.testPlannedSum / s.testCount : 0;
+      
+      let wSum = 0;
+      if (s.buildCount > 0) wSum += 0.7;
+      if (s.testCount > 0) wSum += 0.3;
+      
+      const act = wSum > 0 ? Math.round(((bActAvg * 0.7) + (tActAvg * 0.3)) / wSum) : 0;
+      const pln = wSum > 0 ? Math.round(((bPlnAvg * 0.7) + (tPlnAvg * 0.3)) / wSum) : 0;
+      
+      return { area, actualProg: act, plannedProg: pln, gap: act - pln };
+    });
 
     const buildActualAvg = buildCount > 0 ? buildTotalActual / buildCount : 0;
     const buildPlannedAvg = buildCount > 0 ? buildTotalPlanned / buildCount : 0;
