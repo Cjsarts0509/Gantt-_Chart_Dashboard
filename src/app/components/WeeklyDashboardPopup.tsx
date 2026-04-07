@@ -35,7 +35,7 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
     return lastSunday;
   }, []);
 
-  const { overallPlanned, overallActual, overallStatusCounts, overallMonthTotalCount, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount, effectiveTargetDate } = useMemo(() => {
+  const { overallPlanned, overallActual, overallStatusCounts, overallMonthTotalCount, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount, droppedCount, effectiveTargetDate } = useMemo(() => {
     
     const validTasks = tasks.reduce((acc, t) => {
       if (t.phase === '설계' || !t.phase) return acc;
@@ -75,9 +75,11 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
     let buildTotalActual = 0, buildTotalPlanned = 0, buildCount = 0;
     let testTotalActual = 0, testTotalPlanned = 0, testCount = 0;
     
-    // 🌟 상단 요약 카드를 위한 변수 (필터링된 건수만 카운트)
-    let filteredActiveTaskCount = 0; 
-    let filteredCompCount = 0;
+    // 상단 요약 카드를 위한 변수 세분화
+    let filteredTotalTaskCount = 0; // 개발제외 포함 전체 건수
+    let filteredCompCount = 0; // 100% 완료 건수
+    let filteredIncompleteCount = 0; // 미완료 건수
+    let filteredDroppedCount = 0; // 개발제외 건수
 
     validTasks.forEach(t => {
       const area = t.area; 
@@ -93,7 +95,7 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
       const actualProg = STATUS_MAP[t.status || ""]?.progress ?? Number(t.progress) ?? 0;
       const plannedProg = getPlannedProgress(t.start, t.end, calcTargetDate);
 
-      // 1. 진척률(%) 모수: 필터 상관없이 전체 데이터로 누적 (과거 요구사항 유지)
+      // 1. 진척률(%) 모수: 제외 항목 빼고 누적
       if (!isExcluded) {
         if (t.phase === '구축') {
           buildTotalActual += actualProg; buildTotalPlanned += plannedProg; buildCount++;
@@ -106,16 +108,20 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
 
       const isStartedByTarget = endOfSelectedMonth ? new Date(t.start).getTime() <= endOfSelectedMonth.getTime() : true;
 
-      // 2. 하단 리스트 및 상단 건수 박스: 필터링된 달까지만 카운트!
+      // 2. 하단 리스트 및 상단 건수 박스: 필터링된 달까지만 카운트 (개발제외 합산 포함)
       if (isStartedByTarget) {
         aStats[area].statusCounts[finalStatus]++;
         overallStatusCounts[finalStatus]++;
-        aStats[area].monthTotalCount++;
+        aStats[area].monthTotalCount++; // 개발제외 포함하여 누적 항목 수 +1
         overallMonthTotalCount++;
 
-        if (!isExcluded) {
-          filteredActiveTaskCount++;
+        filteredTotalTaskCount++; // 전체 건수에 개발제외 포함
+
+        if (isExcluded) {
+          filteredDroppedCount++;
+        } else {
           if (actualProg === 100) filteredCompCount++;
+          else filteredIncompleteCount++;
         }
 
         details.push({ ...t, actualProg, plannedProg, isExcluded });
@@ -171,9 +177,10 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
       overallMonthTotalCount,
       areaStats: processedAStats, 
       detailedTasks: details,
-      totalValidCount: filteredActiveTaskCount, // 🌟 상단 카드는 필터링된 건수로 내보냄!
+      totalValidCount: filteredTotalTaskCount, // 🌟 전체 항목 수 (개발제외 포함)
       completedCount: filteredCompCount,
-      incompleteCount: filteredActiveTaskCount - filteredCompCount,
+      incompleteCount: filteredIncompleteCount, // 🌟 순수 미완료 건수
+      droppedCount: filteredDroppedCount,
       effectiveTargetDate: calcTargetDate
     };
   }, [tasks, targetDate, selectedMonth]);
@@ -207,9 +214,13 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
         <div className="grid grid-cols-3 gap-5 shrink-0">
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
             <div>
-              {/* 🌟 선택된 월에 따라 상단 카드 텍스트가 동적으로 변경됨 */}
               <p className="text-[13px] font-bold text-slate-500 mb-1">{selectedMonth ? `${selectedMonth}월 누적 항목 수` : '전체 대상 항목 수'}</p>
-              <div className="flex items-baseline gap-1"><p className="text-[30px] font-extrabold text-slate-800 leading-none">{totalValidCount}</p><span className="text-[14px] font-bold text-slate-400">건</span></div>
+              <div className="flex items-baseline gap-1">
+                <p className="text-[30px] font-extrabold text-slate-800 leading-none">{totalValidCount}</p>
+                <span className="text-[14px] font-bold text-slate-400">건</span>
+                {/* 🌟 개발제외 건수 포함 안내 문구 추가 */}
+                {droppedCount > 0 && <span className="ml-1 text-[11px] font-semibold text-slate-400">(개발제외 {droppedCount}건 포함)</span>}
+              </div>
             </div>
             <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center"><ListTodo className="w-6 h-6 text-slate-600" /></div>
           </div>
@@ -264,8 +275,8 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
                         </select>
                       </div>
                     </th>
-                    <th className="p-3 text-center border-r border-slate-200" rowSpan={2}>계획 진행률<br/><span className="text-[10px] font-normal text-slate-400">(전체모수 기준)</span></th>
-                    <th className="p-3 text-center" rowSpan={2}>실제 진행률<br/><span className="text-[10px] font-normal text-slate-400">(전체모수 기준)</span></th>
+                    <th className="p-3 text-center border-r border-slate-200" rowSpan={2}>계획 진행률<br/><span className="text-[10px] font-normal text-slate-400">(진척모수 기준)</span></th>
+                    <th className="p-3 text-center" rowSpan={2}>실제 진행률<br/><span className="text-[10px] font-normal text-slate-400">(진척모수 기준)</span></th>
                   </tr>
                   <tr className="bg-slate-50 text-[11px] text-slate-500 font-bold border-b border-slate-200">
                     {STATUS_COLUMNS.map((col, i) => (
