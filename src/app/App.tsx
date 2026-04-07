@@ -11,13 +11,19 @@ import MonthlyDashboardPopup from "./components/MonthlyDashboardPopup";
 import ArchitecturePopup from "./components/ArchitecturePopup";
 import HistoryDashboard from "./components/HistoryDashboard"; 
 import "./components/gantt-overrides.css";
-import { BarChart2, ChevronDown, ChevronRight, X, PanelLeftClose, PanelLeftOpen, Database, LayoutDashboard, ExternalLink, Network, CalendarClock, CalendarDays, RotateCcw } from "lucide-react";
+import { BarChart2, ChevronDown, ChevronRight, X, PanelLeftClose, PanelLeftOpen, Database, LayoutDashboard, ExternalLink, Network, CalendarClock, CalendarDays, RotateCcw, Settings2 } from "lucide-react";
+
+// 🌟 새로 만든 V2 관리자 페이지 임포트
+import V2AdminPage from "./v2/page";
 
 interface TreeFilterState { selectedArea: string | null; selectedPhase: string | null; selectedActivity: string | null; }
 const viewModeOptions = [ { label: "일", value: ViewMode.Day }, { label: "주", value: ViewMode.Week }, { label: "월", value: ViewMode.Month } ];
 const COLUMN_WIDTH_MAP: Record<string, number> = { [ViewMode.Day]: 60, [ViewMode.Week]: 150, [ViewMode.Month]: 300 };
 
 export default function App() {
+  // 🌟 V2 화면 토글 스위치 상태
+  const [showV2, setShowV2] = useState(false);
+
   const [tasks, setTasks] = useState<WBSTask[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Week);
   const columnWidth = COLUMN_WIDTH_MAP[viewMode] || 300;
@@ -58,7 +64,6 @@ export default function App() {
         const parsedTasks = data.map((t: any, index: number) => {
           const parsedStart = new Date(t.start);
           const parsedEnd = new Date(t.end);
-          // 담당자 이름에서 괄호() 제거용 함수
           const cleanName = (val: any) => val ? String(val).split(',').map(name => name.replace(/\([^)]*\)/g, '').trim()).filter(Boolean).join(', ') : "";
           
           let itVal = t.assigneeIT || t["담당자(IT)"];
@@ -79,10 +84,7 @@ export default function App() {
             type: "task",
             start: isNaN(parsedStart.getTime()) ? new Date() : parsedStart,
             end: isNaN(parsedEnd.getTime()) ? new Date() : parsedEnd,
-            
-            // 🌟 taskName(화면명)을 OData 화면명 키값으로 강제 매핑!
             taskName: t["OData__xd654__xba74__xba85_"] || t["화면명"] || "",
-            
             assigneePlan: cleanName(planVal),
             assigneeIT: cleanName(itVal),
             progress: STATUS_MAP[t.status]?.progress ?? Number(t.progress) ?? 0 
@@ -118,7 +120,22 @@ export default function App() {
     const ro = new ResizeObserver((entries) => { for (const entry of entries) setGanttContainerHeight(entry.contentRect.height); });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [isStandaloneDashboard, isHistoryView, isWeeklyView, isMonthlyView]);
+  }, [isStandaloneDashboard, isHistoryView, isWeeklyView, isMonthlyView, showV2]);
+
+  // 🌟 V2 화면 렌더링 블록
+  if (showV2) {
+    return (
+      <div className="relative">
+        <button 
+          onClick={() => setShowV2(false)} 
+          className="absolute top-6 right-6 z-[9999] px-4 py-2 bg-slate-800 text-white font-bold rounded-lg shadow-lg hover:bg-slate-700 transition-colors flex items-center gap-2"
+        >
+          <X className="w-4 h-4" /> 기존 대시보드로 돌아가기
+        </button>
+        <V2AdminPage />
+      </div>
+    );
+  }
 
   if (isHistoryView) return <HistoryDashboard />;
   if (isStandaloneDashboard) return <DashboardPopup tasks={tasks} isStandalone={true} />;
@@ -262,6 +279,16 @@ export default function App() {
             </button>
             <button onClick={() => setIsDashboardOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-indigo-600 text-white border border-indigo-500 hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200">
               <LayoutDashboard className="w-4 h-4" /> 전체 요약
+            </button>
+
+            <div className="w-px h-6 bg-slate-200 mx-1" />
+
+            {/* 🌟 V2 화면 켜기 스위치 */}
+            <button 
+              onClick={() => setShowV2(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-slate-800 text-white hover:bg-slate-900 transition-all shadow-md border border-slate-700"
+            >
+              <Settings2 className="w-4 h-4" /> V2 관리자
             </button>
 
             <div className="w-px h-6 bg-slate-200 mx-1" />
