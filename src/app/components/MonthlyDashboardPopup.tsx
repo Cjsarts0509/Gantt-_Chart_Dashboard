@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { X, CalendarClock, AlertTriangle, CheckCircle2, ListTodo } from "lucide-react";
+import { X, CalendarDays, AlertTriangle, CheckCircle2, ListTodo } from "lucide-react";
 import { WBSTask } from "./mockData";
 import { STATUS_MAP } from "./CustomTaskList";
 
@@ -21,18 +21,14 @@ const getPlannedProgress = (start: Date, end: Date, targetDate: Date) => {
 
 const STATUS_COLUMNS = ['시작전', '진행중', '개발완료', '단위테스트중', '최종완료', '수정필요', '개발제외', '보류중'];
 
-export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = false }: Props) {
+export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = false }: Props) {
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
 
   const targetDate = useMemo(() => {
     const now = new Date();
-    const day = now.getDay();
-    const diff = day === 0 ? -7 : -day; 
-    const lastSunday = new Date(now);
-    lastSunday.setDate(now.getDate() + diff);
-    lastSunday.setHours(23, 59, 59, 999);
-    return lastSunday;
+    const endOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    return endOfCurrentMonth;
   }, []);
 
   const { overallPlanned, overallActual, overallStatusCounts, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount, effectiveTargetDate } = useMemo(() => {
@@ -180,8 +176,8 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
     <div className={containerClass}>
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50 shrink-0">
         <div className="flex items-center gap-2">
-          <CalendarClock className="w-5 h-5 text-indigo-600" />
-          <h2 className="text-[16px] font-bold text-slate-800 tracking-tight">주간 진행률 및 계획 대비 점검</h2>
+          <CalendarDays className="w-5 h-5 text-indigo-600" />
+          <h2 className="text-[16px] font-bold text-slate-800 tracking-tight">월간 진행률 및 계획 대비 점검</h2>
           {/* 🌟 동기화된 기준일 텍스트 */}
           <span className="ml-2 text-[12px] text-slate-500 font-medium">(*기준: {effectiveTargetDate.toLocaleDateString()} / 개발제외 항목 제외)</span>
         </div>
