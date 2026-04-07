@@ -33,6 +33,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
 
   const { overallPlanned, overallActual, overallStatusCounts, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount } = useMemo(() => {
     
+    // 1. 전체 유효 데이터 추출
     const validTasks = tasks.reduce((acc, t) => {
       if (t.phase === '설계' || !t.phase) return acc;
       if (!t.area) return acc;
@@ -47,6 +48,22 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
       return acc;
     }, [] as any[]);
 
+    const overallStatusCounts: Record<string, number> = {};
+    STATUS_COLUMNS.forEach(k => overallStatusCounts[k] = 0);
+
+    const aStats: Record<string, any> = {};
+    const details: any[] = [];
+
+    // 🌟 [핵심 변경] 전체 프로젝트에 존재하는 모든 구분값(area)을 먼저 기본 틀로 세팅!
+    validTasks.forEach(t => {
+      const area = t.area;
+      if (!aStats[area]) {
+        aStats[area] = { buildActualSum: 0, buildPlannedSum: 0, buildCount: 0, testActualSum: 0, testPlannedSum: 0, testCount: 0, statusCounts: {} };
+        STATUS_COLUMNS.forEach(k => aStats[area].statusCounts[k] = 0);
+      }
+    });
+
+    // 2. 월별 필터링 적용
     const endOfSelectedMonth = selectedMonth !== null 
       ? new Date(targetDate.getFullYear(), selectedMonth, 0, 23, 59, 59, 999) 
       : null;
@@ -59,20 +76,10 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
     let testTotalActual = 0, testTotalPlanned = 0, testCount = 0;
     let activeTaskCount = 0; 
     let compCount = 0;
-    
-    const overallStatusCounts: Record<string, number> = {};
-    STATUS_COLUMNS.forEach(k => overallStatusCounts[k] = 0);
 
-    const aStats: Record<string, any> = {};
-    const details: any[] = [];
-
+    // 3. 필터링된 데이터만 미리 만들어둔 틀(aStats)에 채워넣기
     monthFilteredTasks.forEach(t => {
       const area = t.area; 
-      
-      if (!aStats[area]) {
-        aStats[area] = { buildActualSum: 0, buildPlannedSum: 0, buildCount: 0, testActualSum: 0, testPlannedSum: 0, testCount: 0, statusCounts: {} };
-        STATUS_COLUMNS.forEach(k => aStats[area].statusCounts[k] = 0);
-      }
       
       let rawStatus = String(t.status || "").replace(/\s/g, '');
       if (rawStatus === '대기' || !rawStatus) rawStatus = '시작전';
@@ -104,6 +111,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
       details.push({ ...t, actualProg, plannedProg, isExcluded });
     });
 
+    // 4. 통계 계산
     const processedAStats = Object.keys(aStats).map(area => {
       const s = aStats[area];
       const bActAvg = s.buildCount > 0 ? s.buildActualSum / s.buildCount : 0;
@@ -288,7 +296,6 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
                           <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
                           <span className="text-[14px] font-extrabold text-indigo-900">{stat.area} 진행 현황 요약</span>
                         </div>
-                        {/* 🌟 상세 탭 상단에도 동일한 월별 필터 추가 (상태 동기화됨) */}
                         <select
                           value={selectedMonth || ''}
                           onChange={(e) => setSelectedMonth(e.target.value ? Number(e.target.value) : null)}
