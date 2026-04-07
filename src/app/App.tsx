@@ -1,147 +1,236 @@
-import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { Gantt, ViewMode } from "gantt-task-react";
-import "gantt-task-react/dist/index.css";
-import { WBSTask } from "./components/mockData";
-import { CustomTaskListHeader, CustomTaskListTable, COL_WIDTHS, STATUS_MAP } from "./components/CustomTaskList";
+import React, { useState, useEffect, useMemo, useCallback, useRef, useContext } from 'react';
+import { Gantt, ViewMode } from 'gantt-task-react';
+import 'gantt-task-react/dist/index.css';
+import { createClient } from '@supabase/supabase-js';
+import { Plus, Save, X, RefreshCw, LayoutDashboard, ChevronDown, ChevronRight, BarChart2, Trash2, CalendarDays, RotateCcw, ArrowUpDown, Network } from 'lucide-react';
+import "./components/gantt-overrides.css";
+
+// 기존 컴포넌트 임포트 (경로 유지)
 import { GanttGroupContext } from "./components/GanttGroupContext";
 import ExcelManager from "./components/ExcelManager";
 import DashboardPopup from "./components/DashboardPopup";
 import WeeklyDashboardPopup from "./components/WeeklyDashboardPopup";
 import MonthlyDashboardPopup from "./components/MonthlyDashboardPopup";
 import ArchitecturePopup from "./components/ArchitecturePopup";
-import HistoryDashboard from "./components/HistoryDashboard"; 
-import "./components/gantt-overrides.css";
-import { BarChart2, ChevronDown, ChevronRight, X, PanelLeftClose, PanelLeftOpen, Database, LayoutDashboard, ExternalLink, Network, CalendarDays, RotateCcw } from "lucide-react";
 
-interface TreeFilterState { selectedArea: string | null; selectedPhase: string | null; selectedActivity: string | null; }
-const viewModeOptions = [ { label: "일", value: ViewMode.Day }, { label: "주", value: ViewMode.Week }, { label: "월", value: ViewMode.Month } ];
-const COLUMN_WIDTH_MAP: Record<string, number> = { [ViewMode.Day]: 60, [ViewMode.Week]: 150, [ViewMode.Month]: 300 };
+// 🌟 Supabase 설정 (V2 엔진)
+const supabaseUrl = 'https://cbogmikpdlmwgluahcnz.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNib2dtaWtwZGxtd2dsdWFoY256Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMDIxMjksImV4cCI6MjA4Nzc3ODEyOX0.nagpgjcC7fbk5Bsi812giOSkiKGHG-Y-UZwWndwFbmY';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// 🌟 상태 -> 진행률 자동 변환기
+const getProgressFromStatus = (status: string) => {
+  switch(status) {
+    case '시작전': return 0;
+    case '진행중': return 20;
+    case '개발완료': return 40;
+    case '단위테스트중': return 50;
+    case '수정필요': return 60;
+    case '최종완료': return 100;
+    case '개발제외': return 0;
+    case '보류중': return 0;
+    default: return 0;
+  }
+};
+
+// 🌟 V2 전용 15개 칼럼 정의
+const COL_DEF = [
+  { id: 'project_id', label: '범용성', width: 90 },
+  { id: 'category', label: '카테고리', width: 80 },
+  { id: 'phase', label: '단계', width: 80 },
+  { id: 'area', label: '구분', width: 80 },
+  { id: 'req_id', label: '요구사항ID', width: 90 },
+  { id: 'req_name', label: '요구사항명', width: 160 },
+  { id: 'req_desc', label: '요구사항 내용', width: 160 },
+  { id: 'dev_direction', label: '개발방향', width: 70 },
+  { id: 'dev_priority', label: '개발순위', width: 70 },
+  { id: 'screen_id', label: '화면ID', width: 90 },
+  { id: 'screen_name', label: '화면명', width: 140 },
+  { id: 'assignee_plan', label: '담당자(기획)', width: 80 },
+  { id: 'assignee_it', label: '담당자(IT)', width: 80 },
+  { id: 'start_date', label: '시작일', width: 90 },
+  { id: 'end_date', label: '종료일', width: 90 },
+  { id: 'status', label: '상태', width: 80 }
+];
+
+// 🌟 간트 차트 좌측 V2 헤더 (정렬 기능 내장)
+const V2TaskListHeader = ({ headerHeight, fontFamily, fontSize }: any) => {
+  const { hiddenCols, sortConfig, setSortConfig } = useContext(GanttGroupContext);
+  return (
+    <div className="flex border-b border-slate-200 bg-slate-100 text-slate-600 font-bold" style={{ height: headerHeight, fontFamily, fontSize: '11px' }}>
+      {COL_DEF.map(col => {
+        if (hiddenCols.has(col.id)) return null;
+        const isSorted = sortConfig?.key === col.id;
+        return (
+          <div 
+            key={col.id} 
+            className="flex items-center justify-center border-r border-slate-200 shrink-0 cursor-pointer hover:bg-slate-200 transition-colors select-none" 
+            style={{ width: col.width }}
+            onClick={() => setSortConfig(col.id)}
+          >
+            {col.label}
+            {isSorted && <ArrowUpDown className="w-3 h-3 ml-1 text-indigo-500" />}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// 🌟 간트 차트 좌측 V2 테이블 바디 (더블클릭 수정 내장)
+const V2TaskListTable = ({ rowHeight, rowWidth, tasks, fontFamily, fontSize }: any) => {
+  const { hiddenCols } = useContext(GanttGroupContext);
+  return (
+    <div style={{ fontFamily, fontSize: '11px' }}>
+      {tasks.map((t: any) => {
+        const raw = t._raw || {};
+        return (
+          <div 
+            key={t.id} 
+            className="flex border-b border-slate-100 hover:bg-indigo-50/40 transition-colors cursor-pointer" 
+            style={{ height: rowHeight, width: rowWidth }}
+            onDoubleClick={(e) => { e.stopPropagation(); if (t.onDoubleClick) t.onDoubleClick(e); }}
+            title="더블클릭하여 수정"
+          >
+            {!hiddenCols.has('project_id') && <div className="flex items-center px-2 border-r border-slate-100 shrink-0 truncate text-slate-500" style={{ width: COL_DEF.find(c=>c.id==='project_id')?.width }}>{raw.project_id}</div>}
+            {!hiddenCols.has('category') && <div className="flex items-center justify-center border-r border-slate-100 shrink-0" style={{ width: COL_DEF.find(c=>c.id==='category')?.width }}>{raw.category}</div>}
+            {!hiddenCols.has('phase') && <div className="flex items-center justify-center border-r border-slate-100 shrink-0 font-bold" style={{ width: COL_DEF.find(c=>c.id==='phase')?.width }}>{raw.phase}</div>}
+            {!hiddenCols.has('area') && <div className="flex items-center justify-center border-r border-slate-100 shrink-0" style={{ width: COL_DEF.find(c=>c.id==='area')?.width }}>{raw.area}</div>}
+            {!hiddenCols.has('req_id') && <div className="flex items-center px-2 border-r border-slate-100 shrink-0 text-[10px] text-slate-400" style={{ width: COL_DEF.find(c=>c.id==='req_id')?.width }}>{raw.req_id}</div>}
+            {!hiddenCols.has('req_name') && <div className="flex items-center px-2 border-r border-slate-100 shrink-0 font-bold text-slate-700 truncate" style={{ width: COL_DEF.find(c=>c.id==='req_name')?.width }}>{raw.req_name}</div>}
+            {!hiddenCols.has('req_desc') && <div className="flex items-center px-2 border-r border-slate-100 shrink-0 truncate text-slate-500" style={{ width: COL_DEF.find(c=>c.id==='req_desc')?.width }}>{raw.req_desc}</div>}
+            {!hiddenCols.has('dev_direction') && <div className="flex items-center justify-center border-r border-slate-100 shrink-0" style={{ width: COL_DEF.find(c=>c.id==='dev_direction')?.width }}>{raw.dev_direction}</div>}
+            {!hiddenCols.has('dev_priority') && <div className="flex items-center justify-center border-r border-slate-100 shrink-0" style={{ width: COL_DEF.find(c=>c.id==='dev_priority')?.width }}>{raw.dev_priority}</div>}
+            {!hiddenCols.has('screen_id') && <div className="flex items-center px-2 border-r border-slate-100 shrink-0 text-[10px] text-slate-400 truncate" style={{ width: COL_DEF.find(c=>c.id==='screen_id')?.width }}>{raw.screen_id}</div>}
+            {!hiddenCols.has('screen_name') && <div className="flex items-center px-2 border-r border-slate-100 shrink-0 font-bold text-slate-700 truncate" style={{ width: COL_DEF.find(c=>c.id==='screen_name')?.width }}>{raw.screen_name}</div>}
+            {!hiddenCols.has('assignee_plan') && <div className="flex items-center justify-center border-r border-slate-100 shrink-0 text-slate-600" style={{ width: COL_DEF.find(c=>c.id==='assignee_plan')?.width }}>{raw.assignee_plan}</div>}
+            {!hiddenCols.has('assignee_it') && <div className="flex items-center justify-center border-r border-slate-100 shrink-0 text-indigo-600 font-medium" style={{ width: COL_DEF.find(c=>c.id==='assignee_it')?.width }}>{raw.assignee_it}</div>}
+            {!hiddenCols.has('start_date') && <div className="flex items-center justify-center border-r border-slate-100 shrink-0 text-slate-500" style={{ width: COL_DEF.find(c=>c.id==='start_date')?.width }}>{raw.start_date}</div>}
+            {!hiddenCols.has('end_date') && <div className="flex items-center justify-center border-r border-slate-100 shrink-0 text-slate-500" style={{ width: COL_DEF.find(c=>c.id==='end_date')?.width }}>{raw.end_date}</div>}
+            {!hiddenCols.has('status') && <div className="flex items-center justify-center shrink-0" style={{ width: COL_DEF.find(c=>c.id==='status')?.width }}>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${raw.status === '개발제외' ? 'bg-slate-200 text-slate-500' : 'bg-indigo-50 text-indigo-600'}`}>{raw.status}</span>
+            </div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const INITIAL_FORM_STATE = {
+  project_id: '기본프로젝트', category: '', phase: '', area: '',
+  req_id: '', req_name: '', req_desc: '', dev_direction: '신규', dev_priority: '3순위',
+  screen_id: '', screen_name: '', assignee_plan: '', assignee_it: '',
+  start_date: '', end_date: '', status: '시작전', progress: 0
+};
 
 export default function App() {
-  const [tasks, setTasks] = useState<WBSTask[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Week);
-  const columnWidth = COLUMN_WIDTH_MAP[viewMode] || 300;
-  
-  const [treeFilter, setTreeFilter] = useState<TreeFilterState>({ selectedArea: null, selectedPhase: null, selectedActivity: null });
-  const [expandedAreas, setExpandedAreas] = useState<Set<string>>(new Set());
+
+  // 컨텍스트 및 UI 상태
+  const [hiddenCols, setHiddenCols] = useState<Set<string>>(new Set());
+  const [sortConfig, setSortConfigState] = useState<{ key: string, dir: 'asc'|'desc' } | null>(null);
+  const [treeFilter, setTreeFilter] = useState({ selectedCategory: null as string | null, selectedPhase: null as string | null, selectedArea: null as string | null });
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [filterPanelOpen, setFilterPanelOpen] = useState(true);
-  
-  const [areaCollapsed, setAreaCollapsed] = useState(false);
-  const [phaseCollapsed, setPhaseCollapsed] = useState(false);
-  const [activityCollapsed, setActivityCollapsed] = useState(false);
-  const [deliverableCollapsed, setDeliverableCollapsed] = useState(false);
-  
+
+  // 모달 및 팝업 상태
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState<any>(INITIAL_FORM_STATE);
+  const [isEditing, setIsEditing] = useState(false);
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [isWeeklyDashboardOpen, setIsWeeklyDashboardOpen] = useState(false);
   const [isMonthlyDashboardOpen, setIsMonthlyDashboardOpen] = useState(false);
   const [isArchitectureOpen, setIsArchitectureOpen] = useState(false);
 
-  const [hiddenCols, setHiddenCols] = useState<Set<string>>(new Set());
-  const [sortConfig, setSortConfigState] = useState<{ key: string, dir: 'asc'|'desc' } | null>(null);
+  // Supabase 데이터 로드
+  const fetchTasks = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase.from('wbs_tasks_v2').select('*').order('created_at', { ascending: false });
+    if (!error && data) {
+      setTasks(data);
+      setExpandedCategories(new Set(data.map(t => t.category).filter(Boolean)));
+    }
+    setIsLoading(false);
+  };
 
-  const viewParam = new URLSearchParams(window.location.search).get('view');
-  const isStandaloneDashboard = viewParam === 'dashboard';
-  const isHistoryView = viewParam === 'history';
-  const isWeeklyView = viewParam === 'weekly';
-  const isMonthlyView = viewParam === 'monthly';
+  useEffect(() => { fetchTasks(); }, []);
 
-  useEffect(() => {
-    const remoteDataUrl = `https://raw.githubusercontent.com/cjsarts0509/gantt-_chart_dashboard/data/public/data.json?t=${new Date().getTime()}`;
-    const localDataUrl = `${import.meta.env.BASE_URL}data.json`;
+  // CRUD 핸들러
+  const handleChange = (e: any) => {
+    const { name, value } = e.target;
+    let updates: any = { [name]: value };
+    if (name === 'status') updates.progress = getProgressFromStatus(value);
+    setFormData((prev: any) => ({ ...prev, ...updates }));
+  };
 
-    fetch(remoteDataUrl)
-      .then(res => { if (!res.ok) throw new Error('Remote not found'); return res.json(); })
-      .catch(err => fetch(localDataUrl).then(res => res.json()))
-      .then(data => {
-        if (!Array.isArray(data)) return;
-        const parsedTasks = data.map((t: any, index: number) => {
-          const parsedStart = new Date(t.start);
-          const parsedEnd = new Date(t.end);
-          const cleanName = (val: any) => val ? String(val).split(',').map(name => name.replace(/\([^)]*\)/g, '').trim()).filter(Boolean).join(', ') : "";
-          
-          let itVal = t.assigneeIT || t["담당자(IT)"];
-          let planVal = t.assigneePlan || t["담당자(기획)"];
-          if (!itVal) { const itKey = Object.keys(t).find(k => k.includes('IT') && (k.includes('담당자') || k.includes('xb2f4'))); if (itKey) itVal = t[itKey]; }
-          if (!planVal) { const planKey = Object.keys(t).find(k => (k.includes('기획') || k.includes('xae')) && (k.includes('담당자') || k.includes('xb2f4'))); if (planKey) planVal = t[planKey]; }
+  const handleSave = async () => {
+    if (!formData.start_date || !formData.end_date) { alert('시작일과 종료일은 필수입니다!'); return; }
+    setIsLoading(true);
+    try {
+      if (isEditing && formData.id) await supabase.from('wbs_tasks_v2').update(formData).eq('id', formData.id);
+      else { const { id, ...newTask } = formData; await supabase.from('wbs_tasks_v2').insert([newTask]); }
+      setIsModalOpen(false);
+      fetchTasks();
+    } catch (err: any) { alert('저장 실패: ' + err.message); }
+    setIsLoading(false);
+  };
 
-          return {
-            ...t, 
-            id: t.id ? String(t.id) : `task-${index}`, 
-            type: "task",
-            start: isNaN(parsedStart.getTime()) ? new Date() : parsedStart,
-            end: isNaN(parsedEnd.getTime()) ? new Date() : parsedEnd,
-            taskName: t["OData__xd654__xba74__xba85_"] || t["화면명"] || "",
-            assigneePlan: cleanName(planVal),
-            assigneeIT: cleanName(itVal),
-            progress: STATUS_MAP[t.status]?.progress ?? Number(t.progress) ?? 0 
-          };
-        });
-        setTasks(parsedTasks);
-        setExpandedAreas(new Set(parsedTasks.map((t: any) => t.area).filter(Boolean)));
-      })
-      .catch(err => console.log("로드 실패:", err));
-  }, []);
+  const handleDelete = async () => {
+    if (!formData.id || !confirm('정말 삭제할까요?')) return;
+    setIsLoading(true);
+    await supabase.from('wbs_tasks_v2').delete().eq('id', formData.id);
+    setIsModalOpen(false);
+    fetchTasks();
+  };
 
-  const toggleAreaColumn = useCallback(() => setAreaCollapsed(p => !p), []);
-  const togglePhaseColumn = useCallback(() => setPhaseCollapsed(p => !p), []);
-  const toggleActivityColumn = useCallback(() => setActivityCollapsed(p => !p), []);
-  const toggleDeliverableColumn = useCallback(() => setDeliverableCollapsed(p => !p), []);
+  const openModal = (task?: any) => {
+    if (task) { const safeTask = JSON.parse(JSON.stringify(task)); setFormData(safeTask); setIsEditing(true); } 
+    else { setFormData(INITIAL_FORM_STATE); setIsEditing(false); }
+    setIsModalOpen(true);
+  };
+
+  const handleExcelUpload = async (newTasks: any[]) => {
+    setIsLoading(true);
+    try {
+      const formattedTasks = newTasks.map(t => ({
+        project_id: t.project_id || '기본프로젝트', category: t.category || '', phase: t.phase || '', area: t.area || '',
+        req_id: t.req_id || '', req_name: t.req_name || '', req_desc: t.req_desc || '',
+        dev_direction: t.dev_direction || '신규', dev_priority: t.dev_priority || '3순위',
+        screen_id: t.screen_id || '', screen_name: t.screen_name || t.taskName || '',
+        assignee_plan: t.assignee_plan || t.assigneePlan || '', assignee_it: t.assignee_it || t.assigneeIT || '',
+        start_date: t.start instanceof Date ? t.start.toISOString().split('T')[0] : t.start_date,
+        end_date: t.end instanceof Date ? t.end.toISOString().split('T')[0] : t.end_date,
+        status: t.status || '시작전', progress: t.progress || 0
+      }));
+      await supabase.from('wbs_tasks_v2').insert(formattedTasks);
+      fetchTasks();
+      alert('엑셀 데이터가 DB에 성공적으로 업로드되었습니다!');
+    } catch (err: any) { alert('엑셀 업로드 실패: ' + err.message); }
+    setIsLoading(false);
+  };
+
+  // 컨텍스트 등록 (정렬, 숨기기)
   const toggleColVisibility = useCallback((col: string) => { setHiddenCols(prev => { const n = new Set(prev); n.has(col) ? n.delete(col) : n.add(col); return n; }); }, []);
   const setSortConfig = useCallback((key: string) => { setSortConfigState(prev => prev?.key === key && prev.dir === 'asc' ? { key, dir: 'desc' } : { key, dir: 'asc' }); }, []);
+  const groupContextValue = useMemo(() => ({ hiddenCols, toggleColVisibility, sortConfig, setSortConfig }), [hiddenCols, sortConfig]);
 
-  const groupContextValue = useMemo(() => ({
-    areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed,
-    toggleAreaColumn, togglePhaseColumn, toggleActivityColumn, toggleDeliverableColumn,
-    hiddenCols, toggleColVisibility, sortConfig, setSortConfig
-  }), [areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed, hiddenCols, sortConfig]);
-
-  const currentListWidth = useMemo(() => Object.entries(COL_WIDTHS).filter(([k]) => !hiddenCols.has(k)).reduce((acc, [_, w]) => acc + w, 0), [hiddenCols]);
-  const ganttWrapperRef = useRef<HTMLDivElement>(null);
-  const [ganttContainerHeight, setGanttContainerHeight] = useState(0);
-
-  useEffect(() => {
-    const el = ganttWrapperRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver((entries) => { for (const entry of entries) setGanttContainerHeight(entry.contentRect.height); });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [isStandaloneDashboard, isHistoryView, isWeeklyView, isMonthlyView]);
-
-  if (isHistoryView) return <HistoryDashboard />;
-  if (isStandaloneDashboard) return <DashboardPopup tasks={tasks} isStandalone={true} />;
-  if (isWeeklyView) return <WeeklyDashboardPopup tasks={tasks} isStandalone={true} />;
-  if (isMonthlyView) return <MonthlyDashboardPopup tasks={tasks} isStandalone={true} />;
-
-  const areas = useMemo(() => [...new Set(tasks.map((t) => t.area))].filter(Boolean), [tasks]);
-  const phasesByArea = useMemo(() => {
-    const map = new Map<string, string[]>();
-    for (const area of areas) map.set(area, [...new Set(tasks.filter((t) => t.area === area).map((t) => t.phase))].filter(Boolean));
-    return map;
-  }, [tasks, areas]);
-  const activitiesByAreaPhase = useMemo(() => {
-    const map = new Map<string, string[]>();
-    for (const [area, phases] of phasesByArea) {
-      for (const phase of phases) map.set(`${area}||${phase}`, [...new Set(tasks.filter((t) => t.area === area && t.phase === phase).map((t) => t.activity))].filter(Boolean));
-    }
-    return map;
-  }, [tasks, phasesByArea]);
-
-  const filteredTasks = useMemo(() => {
-    let result = tasks.filter((t) => {
-      if (treeFilter.selectedArea && t.area !== treeFilter.selectedArea) return false;
+  // 데이터 가공 로직
+  const filteredAndSortedTasks = useMemo(() => {
+    let result = tasks.filter(t => {
+      if (treeFilter.selectedCategory && t.category !== treeFilter.selectedCategory) return false;
       if (treeFilter.selectedPhase && t.phase !== treeFilter.selectedPhase) return false;
-      if (treeFilter.selectedActivity && t.activity !== treeFilter.selectedActivity) return false;
+      if (treeFilter.selectedArea && t.area !== treeFilter.selectedArea) return false;
       return true;
     });
 
     if (sortConfig) {
-      result.sort((a: any, b: any) => {
-        if (a.area !== b.area) return (a.area || "").localeCompare(b.area || "");
-        if (a.phase !== b.phase) return (a.phase || "").localeCompare(b.phase || "");
-        if (a.activity !== b.activity) return (a.activity || "").localeCompare(b.activity || "");
-        let valA = a[sortConfig.key] || "";
-        let valB = b[sortConfig.key] || "";
+      result.sort((a, b) => {
+        let valA = String(a[sortConfig.key] || "");
+        let valB = String(b[sortConfig.key] || "");
         if (valA < valB) return sortConfig.dir === 'asc' ? -1 : 1;
         if (valA > valB) return sortConfig.dir === 'asc' ? 1 : -1;
         return 0;
@@ -150,188 +239,239 @@ export default function App() {
     return result;
   }, [tasks, treeFilter, sortConfig]);
 
-  const visibleTasks = useMemo(() => {
-    const counts = { area: new Map(), phase: new Map(), act: new Map(), del: new Map() };
-    const comp = { area: new Map(), phase: new Map(), act: new Map(), del: new Map() };
-    for (const t of filteredTasks) {
-      counts.area.set(t.area, (counts.area.get(t.area) || 0) + 1);
-      const pk = `${t.area}||${t.phase}`; counts.phase.set(pk, (counts.phase.get(pk) || 0) + 1);
-      const ak = `${t.area}||${t.phase}||${t.activity}`; counts.act.set(ak, (counts.act.get(ak) || 0) + 1);
-      const dk = `${t.area}||${t.phase}||${t.activity}||${t.deliverable}`; counts.del.set(dk, (counts.del.get(dk) || 0) + 1);
-      if (t.status === "최종완료" || t.status === "개발제외") {
-        comp.area.set(t.area, (comp.area.get(t.area) || 0) + 1);
-        comp.phase.set(pk, (comp.phase.get(pk) || 0) + 1);
-        comp.act.set(ak, (comp.act.get(ak) || 0) + 1);
-        comp.del.set(dk, (comp.del.get(dk) || 0) + 1);
-      }
+  const ganttTasks = filteredAndSortedTasks.map((t) => {
+    let sd = new Date(t.start_date);
+    let ed = new Date(t.end_date);
+    if (isNaN(sd.getTime())) sd = new Date();
+    if (isNaN(ed.getTime())) ed = new Date();
+    return {
+      id: t.id, name: t.req_name || t.screen_name || '(이름없음)',
+      start: sd, end: ed, progress: t.progress || 0,
+      dependencies: [], type: 'task',
+      styles: { backgroundColor: '#38BDF8', progressColor: '#0284C7' },
+      _raw: t, onDoubleClick: () => openModal(t)
+    };
+  });
+
+  // 대시보드 및 엑셀용 호환 데이터 변환 (기존 기능 100% 호환용)
+  const dashboardCompatibleTasks = useMemo(() => tasks.map(t => ({
+    id: t.id, area: t.area, phase: t.phase, deliverable: t.req_name, taskName: t.screen_name,
+    assigneePlan: t.assignee_plan, assigneeIT: t.assignee_it,
+    start: new Date(t.start_date || Date.now()), end: new Date(t.end_date || Date.now()),
+    progress: t.progress, status: t.status
+  })), [tasks]);
+
+  const categories = useMemo(() => [...new Set(tasks.map(t => t.category).filter(Boolean))], [tasks]);
+  const phasesByCategory = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const cat of categories) map.set(cat, [...new Set(tasks.filter(t => t.category === cat).map(t => t.phase).filter(Boolean))]);
+    return map;
+  }, [tasks, categories]);
+  const areasByCategoryPhase = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const [cat, phases] of phasesByCategory) {
+      for (const phase of phases) map.set(`${cat}||${phase}`, [...new Set(tasks.filter(t => t.category === cat && t.phase === phase).map(t => t.area).filter(Boolean))]);
     }
-    const seen = { area: new Set(), phase: new Set(), act: new Set(), del: new Set() };
-    const result: any[] = [];
-    for (const t of filteredTasks) {
-      const pk = `${t.area}||${t.phase}`;
-      const ak = `${t.area}||${t.phase}||${t.activity}`;
-      const dk = `${t.area}||${t.phase}||${t.activity}||${t.deliverable}`;
-      const baseMeta = {
-        __areaCount: counts.area.get(t.area), __phaseCount: counts.phase.get(pk),
-        __activityCount: counts.act.get(ak), __deliverableCount: counts.del.get(dk),
-        __areaCompleted: comp.area.get(t.area) || 0, __phaseCompleted: comp.phase.get(pk) || 0,
-        __actCompleted: comp.act.get(ak) || 0, __delCompleted: comp.del.get(dk) || 0,
-      };
-      if (areaCollapsed) { if (!seen.area.has(t.area)) { seen.area.add(t.area); result.push({ ...t, ...baseMeta }); } continue; }
-      if (phaseCollapsed) { if (!seen.phase.has(pk)) { seen.phase.add(pk); result.push({ ...t, ...baseMeta }); } continue; }
-      if (activityCollapsed) { if (!seen.act.has(ak)) { seen.act.add(ak); result.push({ ...t, ...baseMeta }); } continue; }
-      if (deliverableCollapsed) { if (!seen.del.has(dk)) { seen.del.add(dk); result.push({ ...t, ...baseMeta }); } continue; }
-      result.push({ ...t, ...baseMeta });
-    }
-    return result;
-  }, [filteredTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
+    return map;
+  }, [tasks, phasesByCategory]);
 
-  const ganttTasks = useMemo(() => {
-    const barBgColor = "#38BDF8";
-    const barProgColor = "#0284C7";
-    const BASE_START_DATE = new Date("2026-03-01T00:00:00");
+  const listWidth = COL_DEF.filter(c => !hiddenCols.has(c.id)).reduce((a, c) => a + c.width, 0);
 
-    return visibleTasks.map((t: any) => {
-      let prog = STATUS_MAP[t.status]?.progress ?? Number(t.progress) ?? 0;
-      if (areaCollapsed) prog = Math.round((t.__areaCompleted / (t.__areaCount || 1)) * 100);
-      else if (phaseCollapsed) prog = Math.round((t.__phaseCompleted / (t.__phaseCount || 1)) * 100);
-      else if (activityCollapsed) prog = Math.round((t.__actCompleted / (t.__activityCount || 1)) * 100);
-      else if (deliverableCollapsed) prog = Math.round((t.__delCompleted / (t.__deliverableCount || 1)) * 100);
-      
-      let finalStart = new Date(t.start instanceof Date ? t.start : new Date(t.start || Date.now()));
-      let finalEnd = new Date(t.end instanceof Date ? t.end : new Date(t.end || Date.now()));
-      if (finalStart < BASE_START_DATE) finalStart = BASE_START_DATE;
-      if (finalEnd < BASE_START_DATE) finalEnd = BASE_START_DATE;
-
-      return {
-        ...t, 
-        name: (t.deliverable && t.taskName) ? `${t.deliverable}[${t.taskName}]` : (t.deliverable || t.taskName),
-        start: finalStart, end: finalEnd, originalStart: t.start, originalEnd: t.end,       
-        progress: prog, dependencies: [], 
-        styles: { backgroundColor: barBgColor, backgroundSelectedColor: barBgColor, progressColor: barProgColor, progressSelectedColor: barProgColor },
-      };
-    });
-  }, [visibleTasks, areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed]);
-
-  const resetFilter = () => { setTreeFilter({ selectedArea: null, selectedPhase: null, selectedActivity: null }); };
-  const toggleArea = (area: string) => { setExpandedAreas((prev) => { const next = new Set(prev); if (next.has(area)) { next.delete(area); setExpandedPhases((pp) => { const np = new Set(pp); for (const key of pp) { if (key.startsWith(`${area}||`)) np.delete(key); } return np; }); } else { next.add(area); } return next; }); };
-  const togglePhase = (area: string, phase: string) => { const key = `${area}||${phase}`; setExpandedPhases((prev) => { const next = new Set(prev); if (next.has(key)) next.delete(key); else next.add(key); return next; }); };
-  const selectFilter = (area: string | null, phase: string | null, activity: string | null) => { setTreeFilter({ selectedArea: area, selectedPhase: phase, selectedActivity: activity }); };
+  const resetFilter = () => setTreeFilter({ selectedCategory: null, selectedPhase: null, selectedArea: null });
+  const toggleCategory = (cat: string) => setExpandedCategories(p => { const n = new Set(p); n.has(cat) ? n.delete(cat) : n.add(cat); return n; });
+  const togglePhase = (cat: string, phase: string) => setExpandedPhases(p => { const k = `${cat}||${phase}`; const n = new Set(p); n.has(k) ? n.delete(k) : n.add(k); return n; });
+  const selectFilter = (cat: string | null, phase: string | null, area: string | null) => setTreeFilter({ selectedCategory: cat, selectedPhase: phase, selectedArea: area });
 
   return (
     <GanttGroupContext.Provider value={groupContextValue}>
       <div className="w-screen h-screen bg-[#F1F5F9] flex flex-col overflow-hidden" style={{ fontFamily: "'Pretendard', sans-serif" }}>
+        
+        {/* 헤더 */}
         <header className="flex items-center justify-between px-6 py-4 bg-white/95 backdrop-blur-md border-b border-slate-200 shrink-0 shadow-sm z-10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shadow-indigo-200 shadow-md"><BarChart2 className="w-5 h-5 text-white" /></div>
-            <div><h1 className="text-[17px] font-extrabold text-slate-800 leading-tight">프로젝트 일정 관리</h1></div>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shadow-indigo-200 shadow-md"><LayoutDashboard className="w-5 h-5 text-white" /></div>
+            <div>
+              <h1 className="text-[17px] font-extrabold text-slate-800 leading-tight">프로젝트 관리 V2</h1>
+              <p className="text-[11px] text-slate-500 font-bold tracking-tight">Supabase 통합 데이터 센터</p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={() => setIsArchitectureOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm">
-              <Network className="w-4 h-4" /> 로직 보기
-            </button>
-            <a href="https://kyobobookcokr.sharepoint.com/sites/PJT2" target="_self" className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 hover:border-blue-200 transition-all shadow-sm">
-              <ExternalLink className="w-4 h-4" /> 팀 사이트
-            </a>
-            {hiddenCols.size > 0 && (
-              <button onClick={() => setHiddenCols(new Set())} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition-all">
-                <RotateCcw className="w-3.5 h-3.5" /> 숨김 취소
-              </button>
-            )}
+            <button onClick={() => setIsArchitectureOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm"><Network className="w-4 h-4" /> 로직 보기</button>
+            {hiddenCols.size > 0 && <button onClick={() => setHiddenCols(new Set())} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100"><RotateCcw className="w-3.5 h-3.5" /> 숨김 취소</button>}
+            
             <div className="w-px h-6 bg-slate-200 mx-1" />
-            <button onClick={() => setIsMonthlyDashboardOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-all shadow-sm">
-              <CalendarDays className="w-4 h-4" /> 월간 점검
-            </button>
-            <button onClick={() => setIsDashboardOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-indigo-600 text-white border border-indigo-500 hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200">
-              <LayoutDashboard className="w-4 h-4" /> 전체 요약
-            </button>
+            
+            <button onClick={() => setIsWeeklyDashboardOpen(true)} className="px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 shadow-sm">주간 점검</button>
+            <button onClick={() => setIsMonthlyDashboardOpen(true)} className="px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 shadow-sm"><CalendarDays className="w-4 h-4 inline mr-1" /> 월간 점검</button>
+            <button onClick={() => setIsDashboardOpen(true)} className="px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-indigo-600 text-white border border-indigo-500 hover:bg-indigo-700 shadow-md">전체 요약</button>
+            
             <div className="w-px h-6 bg-slate-200 mx-1" />
-            <ExcelManager tasks={tasks} visibleTasks={ganttTasks} onUpload={(newTasks) => setTasks(newTasks)} />
+            <ExcelManager tasks={dashboardCompatibleTasks} visibleTasks={ganttTasks} onUpload={handleExcelUpload} />
             <div className="w-px h-6 bg-slate-200 mx-1" />
-            <div className="flex items-center gap-1 bg-slate-100/80 rounded-lg p-1 border border-slate-200/50">
-              {viewModeOptions.map((opt) => (<button key={opt.value} className={`px-4 py-1.5 rounded-md text-[12px] font-bold transition-all ${viewMode === opt.value ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`} onClick={() => setViewMode(opt.value)}>{opt.label}</button>))}
+            <button onClick={fetchTasks} className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 bg-white"><RefreshCw className={`w-4 h-4 text-slate-600 ${isLoading ? 'animate-spin' : ''}`} /></button>
+            <button onClick={() => openModal()} className="px-4 py-2 bg-slate-800 text-white rounded-lg font-bold text-[12px] hover:bg-black shadow-md flex items-center gap-2"><Plus className="w-4 h-4" /> 신규 등록</button>
+            <div className="flex items-center gap-1 bg-slate-100/80 rounded-lg p-1 ml-1 border border-slate-200/50">
+              {[{ l: "일", v: ViewMode.Day }, { l: "주", v: ViewMode.Week }, { l: "월", v: ViewMode.Month }].map((opt) => (
+                <button key={opt.v} onClick={() => setViewMode(opt.v as ViewMode)} className={`px-4 py-1.5 rounded-md text-[12px] font-bold transition-all ${viewMode === opt.v ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>{opt.l}</button>
+              ))}
             </div>
           </div>
         </header>
 
-        <div className="flex items-center gap-2 px-5 py-2.5 bg-white border-b border-slate-200 shrink-0">
-          <button onClick={() => setFilterPanelOpen(!filterPanelOpen)} className={`flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-bold transition-all shadow-sm ${filterPanelOpen ? "bg-indigo-50 text-indigo-600 border border-indigo-100" : "bg-white text-slate-600 border border-slate-200"}`}>
-            {filterPanelOpen ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeftOpen className="w-3.5 h-3.5" />} 필터 {treeFilter.selectedArea && <span className="ml-0.5 w-1.5 h-1.5 rounded-full bg-indigo-500" />}
-          </button>
-        </div>
-
-        <div className="flex flex-1 overflow-hidden min-w-0 p-3 gap-3">
-          <div className="shrink-0 bg-white border border-slate-200 rounded-xl overflow-hidden transition-all duration-300 shadow-sm" style={{ width: filterPanelOpen ? 230 : 0 }}>
-             <div className="w-[230px] h-full overflow-y-auto p-3">
-                <button onClick={resetFilter} className="w-full text-left px-3 py-2 rounded-lg text-[12px] font-bold hover:bg-slate-50 flex items-center gap-2 mb-2"><BarChart2 className="w-3.5 h-3.5" /> 전체 보기</button>
-                {areas.map(area => {
-                  const isAreaExpanded = expandedAreas.has(area);
-                  const isAreaFiltered = treeFilter.selectedArea === area;
-                  const phases = phasesByArea.get(area) || [];
-                  return (
-                    <div key={area} className="mb-1">
-                      <div className="flex items-center gap-1 group">
-                         <button onClick={() => toggleArea(area)} className="p-1 rounded-md text-slate-400 hover:bg-slate-100">{isAreaExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}</button>
-                         <button onClick={() => selectFilter(area, null, null)} className={`flex-1 text-left px-2 py-1.5 rounded-lg text-[12px] font-bold transition-all ${isAreaFiltered ? "bg-indigo-50 text-indigo-700" : "text-slate-700 hover:bg-slate-50"}`}>{area}</button>
-                      </div>
-                      <div className="overflow-hidden transition-all duration-200 ease-in-out" style={{ maxHeight: isAreaExpanded ? 2000 : 0, opacity: isAreaExpanded ? 1 : 0 }}>
-                        {phases.map(phase => {
-                          const phaseKey = `${area}||${phase}`;
-                          const isPhaseExpanded = expandedPhases.has(phaseKey);
-                          const isPhaseFiltered = isAreaFiltered && treeFilter.selectedPhase === phase;
-                          const activities = activitiesByAreaPhase.get(phaseKey) || [];
+        {/* 메인 뷰 */}
+        <div className="flex flex-1 overflow-hidden p-3 gap-3">
+          
+          {/* 필터 트리 */}
+          <div className="w-[230px] shrink-0 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
+            <div className="p-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+              <span className="text-[12px] font-extrabold text-slate-700">분류 필터 트리</span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2">
+              <button onClick={resetFilter} className="w-full text-left px-3 py-2 rounded-lg text-[12px] font-bold hover:bg-slate-100 flex items-center gap-2 mb-2"><BarChart2 className="w-3.5 h-3.5" /> 전체 보기</button>
+              {categories.map(cat => {
+                const isCatExp = expandedCategories.has(cat);
+                const isCatSel = treeFilter.selectedCategory === cat;
+                return (
+                  <div key={cat} className="mb-1">
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => toggleCategory(cat)} className="p-1 text-slate-400 hover:bg-slate-100 rounded">{isCatExp ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}</button>
+                      <button onClick={() => selectFilter(cat, null, null)} className={`flex-1 text-left px-2 py-1.5 rounded-lg text-[12px] font-bold ${isCatSel ? "bg-indigo-50 text-indigo-700" : "text-slate-700 hover:bg-slate-50"}`}>{cat}</button>
+                    </div>
+                    {isCatExp && (
+                      <div className="pl-5 mt-0.5 border-l border-slate-100 ml-2.5">
+                        {(phasesByCategory.get(cat) || []).map(phase => {
+                          const isPhaseExp = expandedPhases.has(`${cat}||${phase}`);
+                          const isPhaseSel = isCatSel && treeFilter.selectedPhase === phase;
                           return (
-                            <div key={phase} className="pl-5 mt-0.5">
-                              <div className="flex items-center gap-1 group">
-                                <button onClick={() => togglePhase(area, phase)} className="p-1 rounded-md text-slate-400 hover:bg-slate-100">{isPhaseExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}</button>
-                                <button onClick={() => selectFilter(area, phase, null)} className={`flex-1 text-left px-2 py-1.5 rounded-lg text-[11px] font-bold transition-all ${isPhaseFiltered ? "bg-indigo-50/70 text-indigo-600" : "text-slate-600 hover:bg-slate-50"}`}>{phase}</button>
+                            <div key={phase} className="mt-0.5">
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => togglePhase(cat, phase)} className="p-1 text-slate-400 hover:bg-slate-100 rounded">{isPhaseExp ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}</button>
+                                <button onClick={() => selectFilter(cat, phase, null)} className={`flex-1 text-left px-2 py-1.5 rounded-lg text-[11px] font-bold ${isPhaseSel ? "bg-indigo-50/70 text-indigo-600" : "text-slate-600 hover:bg-slate-50"}`}>{phase}</button>
                               </div>
-                              <div className="overflow-hidden transition-all duration-200 ease-in-out" style={{ maxHeight: isPhaseExpanded ? 1000 : 0, opacity: isPhaseExpanded ? 1 : 0 }}>
-                                {activities.map(act => {
-                                  const isActFiltered = isPhaseFiltered && treeFilter.selectedActivity === act;
-                                  return (
-                                    <div key={act} className="pl-6 mt-0.5">
-                                      <button onClick={() => selectFilter(area, phase, act)} className={`w-full text-left px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${isActFiltered ? "bg-blue-50/70 text-blue-600 font-bold" : "text-slate-500 hover:bg-slate-50"}`}>{act}</button>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                              {isPhaseExp && (
+                                <div className="pl-6 mt-0.5">
+                                  {(areasByCategoryPhase.get(`${cat}||${phase}`) || []).map(area => {
+                                    const isAreaSel = isPhaseSel && treeFilter.selectedArea === area;
+                                    return (
+                                      <button key={area} onClick={() => selectFilter(cat, phase, area)} className={`w-full text-left px-2 py-1.5 rounded-lg text-[11px] font-semibold mt-0.5 ${isAreaSel ? "bg-blue-50/70 text-blue-600 font-bold" : "text-slate-500 hover:bg-slate-50"}`}>{area}</button>
+                                    );
+                                  })}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
                       </div>
-                    </div>
-                  );
-                })}
-             </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          <div ref={ganttWrapperRef} className="flex-1 relative bg-white overflow-hidden shadow-sm border border-slate-200 rounded-xl gantt-wrapper" style={{ '--task-list-width': `${currentListWidth}px` } as React.CSSProperties}>
-            {ganttTasks.length > 0 ? (
-              <Gantt 
-                tasks={ganttTasks} 
-                viewMode={viewMode} 
-                listCellWidth={String(currentListWidth)} 
-                columnWidth={columnWidth} 
-                rowHeight={38}
-                headerHeight={48} 
-                barCornerRadius={6}
-                barFill={70} 
-                fontSize="12" 
-                locale="ko-KR" 
-                TaskListHeader={CustomTaskListHeader} 
-                TaskListTable={CustomTaskListTable} 
-                todayColor="rgba(99, 102, 241, 0.04)" 
-                ganttHeight={ganttContainerHeight > 0 ? ganttContainerHeight - 48 - 26 : 500} 
-              />
-            ) : (<div className="flex flex-col items-center justify-center h-full text-slate-400 gap-5"><Database className="w-12 h-12 text-slate-200" /><p className="text-[15px] font-bold text-slate-400">데이터를 불러오는 중입니다.</p></div>)}
+          {/* 간트 차트 (가로 스크롤 대응) */}
+          <div className="flex-1 overflow-x-auto overflow-y-hidden bg-white border border-slate-200 rounded-xl shadow-sm gantt-wrapper">
+            <div style={{ minWidth: '2400px', height: '100%' }}>
+              {ganttTasks.length > 0 ? (
+                <Gantt 
+                  tasks={ganttTasks} 
+                  viewMode={viewMode} 
+                  listCellWidth={String(listWidth)} 
+                  columnWidth={viewMode === ViewMode.Day ? 60 : viewMode === ViewMode.Week ? 150 : 300} 
+                  rowHeight={38}
+                  headerHeight={48} 
+                  barCornerRadius={6}
+                  barFill={70} 
+                  fontSize="12" 
+                  locale="ko-KR" 
+                  TaskListHeader={V2TaskListHeader} 
+                  TaskListTable={V2TaskListTable}   
+                  todayColor="rgba(99, 102, 241, 0.04)" 
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-slate-400 font-bold text-sm">해당 필터에 데이터가 없습니다.</div>
+              )}
+            </div>
           </div>
         </div>
-        
-        {isDashboardOpen && <DashboardPopup tasks={tasks} onClose={() => setIsDashboardOpen(false)} />}
-        {isWeeklyDashboardOpen && <WeeklyDashboardPopup tasks={tasks} onClose={() => setIsWeeklyDashboardOpen(false)} />}
-        {isMonthlyDashboardOpen && <MonthlyDashboardPopup tasks={tasks} onClose={() => setIsMonthlyDashboardOpen(false)} />}
+
+        {/* 팝업 컴포넌트들 */}
+        {isDashboardOpen && <DashboardPopup tasks={dashboardCompatibleTasks} onClose={() => setIsDashboardOpen(false)} />}
+        {isWeeklyDashboardOpen && <WeeklyDashboardPopup tasks={dashboardCompatibleTasks} onClose={() => setIsWeeklyDashboardOpen(false)} />}
+        {isMonthlyDashboardOpen && <MonthlyDashboardPopup tasks={dashboardCompatibleTasks} onClose={() => setIsMonthlyDashboardOpen(false)} />}
         {isArchitectureOpen && <ArchitecturePopup onClose={() => setIsArchitectureOpen(false)} />}
+
+        {/* 신규 등록/수정 모달 */}
+        {isModalOpen && (
+          <div className="fixed inset-0 z-[9999] flex justify-center items-center bg-slate-900/60 backdrop-blur-sm p-4">
+            <div className="w-[800px] max-h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+               <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 shrink-0">
+                  <h2 className="text-lg font-black text-slate-800">{isEditing ? '업무 상세 수정' : '신규 업무 등록'}</h2>
+                  <div className="flex gap-2">
+                    {isEditing && <button onClick={handleDelete} className="p-2 text-rose-500 hover:bg-rose-100 rounded-lg"><Trash2 className="w-4 h-4" /></button>}
+                    <button onClick={() => setIsModalOpen(false)} className="p-2 text-slate-400 hover:bg-slate-200 rounded-lg"><X className="w-5 h-5" /></button>
+                  </div>
+               </div>
+               
+               <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">범용성</label><input name="project_id" value={formData.project_id || ''} onChange={handleChange} className="w-full p-2 border rounded" /></div>
+                    <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">카테고리</label><input name="category" value={formData.category || ''} onChange={handleChange} className="w-full p-2 border rounded" /></div>
+                    <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">단계</label><input name="phase" value={formData.phase || ''} onChange={handleChange} className="w-full p-2 border rounded" /></div>
+                    <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">구분</label><input name="area" value={formData.area || ''} onChange={handleChange} className="w-full p-2 border rounded" /></div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">요구사항ID</label><input name="req_id" value={formData.req_id || ''} onChange={handleChange} className="w-full p-2 border rounded" /></div>
+                    <div className="col-span-2"><label className="block text-xs font-bold mb-1 text-slate-500">요구사항명</label><input name="req_name" value={formData.req_name || ''} onChange={handleChange} className="w-full p-2 border rounded font-bold" /></div>
+                    <div className="col-span-3"><label className="block text-xs font-bold mb-1 text-slate-500">요구사항 내용</label><textarea name="req_desc" value={formData.req_desc || ''} onChange={handleChange} rows={2} className="w-full p-2 border rounded" /></div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="col-span-1">
+                      <label className="block text-xs font-bold mb-1 text-slate-500">개발방향</label>
+                      <select name="dev_direction" value={formData.dev_direction || '신규'} onChange={handleChange} className="w-full p-2 border rounded">
+                        <option value="신규">신규</option><option value="수정">수정</option><option value="삭제">삭제</option>
+                      </select>
+                    </div>
+                    <div className="col-span-1">
+                      <label className="block text-xs font-bold mb-1 text-slate-500">우선순위</label>
+                      <select name="dev_priority" value={formData.dev_priority || '3순위'} onChange={handleChange} className="w-full p-2 border rounded">
+                        <option value="1순위">1순위</option><option value="2순위">2순위</option><option value="3순위">3순위</option><option value="4순위">4순위</option><option value="5순위">5순위</option>
+                      </select>
+                    </div>
+                    <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">화면ID</label><input name="screen_id" value={formData.screen_id || ''} onChange={handleChange} className="w-full p-2 border rounded" /></div>
+                    <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">화면명</label><input name="screen_name" value={formData.screen_name || ''} onChange={handleChange} className="w-full p-2 border rounded" /></div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">시작일</label><input type="date" name="start_date" value={formData.start_date || ''} onChange={handleChange} className="w-full p-2 border rounded" /></div>
+                    <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">종료일</label><input type="date" name="end_date" value={formData.end_date || ''} onChange={handleChange} className="w-full p-2 border rounded" /></div>
+                    <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">기획 담당</label><input name="assignee_plan" value={formData.assignee_plan || ''} onChange={handleChange} className="w-full p-2 border rounded" /></div>
+                    <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">IT 담당</label><input name="assignee_it" value={formData.assignee_it || ''} onChange={handleChange} className="w-full p-2 border rounded" /></div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                    <div>
+                      <label className="block text-xs font-extrabold mb-1 text-indigo-800">상태</label>
+                      <select name="status" value={formData.status || '시작전'} onChange={handleChange} className="w-full p-2 border border-indigo-200 rounded font-bold text-indigo-700 outline-none">
+                        <option value="시작전">시작전 (0%)</option><option value="진행중">진행중 (20%)</option><option value="개발완료">개발완료 (40%)</option>
+                        <option value="단위테스트중">단위테스트중 (50%)</option><option value="수정필요">수정필요 (60%)</option><option value="최종완료">최종완료 (100%)</option>
+                        <option value="보류중">보류중 (0%)</option><option value="개발제외">개발제외 (0%)</option>
+                      </select>
+                    </div>
+                    <div><label className="block text-xs font-extrabold mb-1 text-indigo-800">진행률</label><div className="w-full p-2 border border-indigo-200 rounded bg-white text-indigo-600 font-black text-center">{formData.progress}%</div></div>
+                  </div>
+               </div>
+               
+               <div className="px-6 py-4 bg-slate-50 border-t shrink-0">
+                 <button onClick={handleSave} className="w-full py-3.5 bg-indigo-600 text-white rounded-xl font-extrabold text-sm hover:bg-indigo-700 shadow-md flex justify-center items-center gap-2">
+                    <Save className="w-5 h-5" /> 저장 완료
+                 </button>
+               </div>
+            </div>
+          </div>
+        )}
       </div>
     </GanttGroupContext.Provider>
   );
