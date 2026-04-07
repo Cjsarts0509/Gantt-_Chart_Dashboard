@@ -35,9 +35,8 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
     return lastSunday;
   }, []);
 
-  const { overallPlanned, overallActual, overallStatusCounts, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount, effectiveTargetDate } = useMemo(() => {
+  const { overallPlanned, overallActual, overallStatusCounts, overallMonthTotalCount, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount, effectiveTargetDate } = useMemo(() => {
     
-    // 1. 전체 유효 데이터 추출
     const validTasks = tasks.reduce((acc, t) => {
       if (t.phase === '설계' || !t.phase) return acc;
       if (!t.area) return acc;
@@ -54,15 +53,15 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
 
     const overallStatusCounts: Record<string, number> = {};
     STATUS_COLUMNS.forEach(k => overallStatusCounts[k] = 0);
+    let overallMonthTotalCount = 0; // 🌟 전체 누적 건수
 
     const aStats: Record<string, any> = {};
     const details: any[] = [];
 
-    // 구분값 기본 틀 세팅
     validTasks.forEach(t => {
       const area = t.area;
       if (!aStats[area]) {
-        aStats[area] = { buildActualSum: 0, buildPlannedSum: 0, buildCount: 0, testActualSum: 0, testPlannedSum: 0, testCount: 0, statusCounts: {} };
+        aStats[area] = { buildActualSum: 0, buildPlannedSum: 0, buildCount: 0, testActualSum: 0, testPlannedSum: 0, testCount: 0, statusCounts: {}, monthTotalCount: 0 };
         STATUS_COLUMNS.forEach(k => aStats[area].statusCounts[k] = 0);
       }
     });
@@ -71,7 +70,6 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
       ? new Date(targetDate.getFullYear(), selectedMonth, 0, 23, 59, 59, 999) 
       : null;
 
-    // 🌟 핵심 1: 계획 진행률 채점 기준일은 선택된 월의 말일로 설정
     const calcTargetDate = endOfSelectedMonth || targetDate;
     
     let buildTotalActual = 0, buildTotalPlanned = 0, buildCount = 0;
@@ -79,7 +77,6 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
     let activeTaskCount = 0; 
     let compCount = 0;
 
-    // 🌟 핵심 2: 필터링하지 않고 전체 32개 항목을 모두 돌면서 "전체 누적" 모수로 진행률 합산
     validTasks.forEach(t => {
       const area = t.area; 
       
@@ -94,7 +91,6 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
       const actualProg = STATUS_MAP[t.status || ""]?.progress ?? Number(t.progress) ?? 0;
       const plannedProg = getPlannedProgress(t.start, t.end, calcTargetDate);
 
-      // 전체 항목에 대해 진척률 계산 (미래 항목은 plannedProg가 0%로 더해져 평균을 정상적으로 맞춰줌)
       if (!isExcluded) {
         activeTaskCount++;
         if (actualProg === 100) compCount++;
@@ -108,12 +104,14 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
         }
       }
 
-      // 🌟 핵심 3: 하단 상세 리스트와 상태 카운트만 선택된 월에 해당하는 항목(예: 7개)으로 필터링
       const isStartedByTarget = endOfSelectedMonth ? new Date(t.start).getTime() <= endOfSelectedMonth.getTime() : true;
 
       if (isStartedByTarget) {
         aStats[area].statusCounts[finalStatus]++;
         overallStatusCounts[finalStatus]++;
+        // 🌟 누적 건수 카운팅
+        aStats[area].monthTotalCount++;
+        overallMonthTotalCount++;
         details.push({ ...t, actualProg, plannedProg, isExcluded });
       }
     });
@@ -132,7 +130,7 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
       const act = wSum > 0 ? Math.round(((bActAvg * 0.7) + (tActAvg * 0.3)) / wSum) : 0;
       const pln = wSum > 0 ? Math.round(((bPlnAvg * 0.7) + (tPlnAvg * 0.3)) / wSum) : 0;
       
-      return { area, actualProg: act, plannedProg: pln, gap: act - pln, statusCounts: s.statusCounts };
+      return { area, actualProg: act, plannedProg: pln, gap: act - pln, statusCounts: s.statusCounts, monthTotalCount: s.monthTotalCount };
     });
 
     const buildActualAvg = buildCount > 0 ? buildTotalActual / buildCount : 0;
@@ -164,6 +162,7 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
       overallPlanned: oPlanned, 
       overallActual: oActual, 
       overallStatusCounts,
+      overallMonthTotalCount,
       areaStats: processedAStats, 
       detailedTasks: details,
       totalValidCount: activeTaskCount,
@@ -242,6 +241,7 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
                   <tr className="bg-slate-50 text-[12px] text-slate-500 font-bold border-b border-slate-200">
                     <th className="p-3 text-center border-r border-slate-200" rowSpan={2}>구분</th>
                     <th className="p-3 text-center border-r border-slate-200" rowSpan={2}>GAP</th>
+                    <th className="p-3 text-center border-r border-slate-200 bg-slate-100" rowSpan={2}>누적 건수<br/><span className="text-[10px] font-normal text-slate-400">(상태 합산)</span></th>
                     <th className="p-2 text-center border-r border-slate-200" colSpan={8}>
                       <div className="flex items-center justify-center gap-2">
                         <span>상태/목록 필터</span>
@@ -270,6 +270,7 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
                   <tr className="bg-indigo-50/50 border-b-2 border-slate-200 text-[12px] font-bold text-slate-800">
                     <td className="p-3 text-center text-indigo-700 border-r border-slate-200">전체 통합 평균</td>
                     <td className={`p-3 text-center border-r border-slate-200 ${overallActual < overallPlanned ? 'text-rose-600' : 'text-emerald-600'}`}>{overallActual - overallPlanned}%</td>
+                    <td className="p-3 text-center text-indigo-800 bg-indigo-100/50 border-r border-slate-300 text-[13px]">{overallMonthTotalCount}</td>
                     {STATUS_COLUMNS.map(k => (
                       <td key={k} className={`p-2 text-center text-slate-600 border-r border-slate-200 ${k === '개발제외' ? 'bg-slate-200/50' : 'bg-indigo-100/30'}`}>{overallStatusCounts[k]}</td>
                     ))}
@@ -280,6 +281,7 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
                     <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50/50 text-[12px] text-slate-700 font-medium">
                       <td className="p-3 text-center border-r border-slate-200">{s.area}</td>
                       <td className={`p-3 text-center font-bold border-r border-slate-200 ${s.gap < 0 ? 'text-rose-500' : 'text-emerald-500'}`}>{s.gap}%</td>
+                      <td className="p-3 text-center font-extrabold text-slate-700 bg-slate-50 border-r border-slate-200">{s.monthTotalCount}</td>
                       {STATUS_COLUMNS.map(k => (
                         <td key={k} className={`p-2 text-center border-r border-slate-200 ${s.statusCounts[k] > 0 ? 'font-bold text-slate-700' : 'text-slate-300'} ${k === '개발제외' ? 'bg-slate-50' : ''}`}>
                           {s.statusCounts[k]}
