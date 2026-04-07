@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { X, CalendarDays, AlertTriangle, TrendingDown, CheckCircle2, ListTodo } from "lucide-react";
+import { X, CalendarDays, AlertTriangle, CheckCircle2, ListTodo } from "lucide-react";
 import { WBSTask } from "./mockData";
 import { STATUS_MAP } from "./CustomTaskList";
 
@@ -19,6 +19,8 @@ const getPlannedProgress = (start: Date, end: Date, targetDate: Date) => {
   return Math.round(((t - s) / (e - s)) * 100);
 };
 
+const STATUS_COLUMNS = ['시작전', '진행중', '개발완료', '단위테스트중', '최종완료', '수정필요', '개발제외', '보류중'];
+
 export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = false }: Props) {
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
 
@@ -28,22 +30,18 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
     return endOfCurrentMonth;
   }, []);
 
-  const { overallPlanned, overallActual, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount } = useMemo(() => {
+  const { overallPlanned, overallActual, overallStatusCounts, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount } = useMemo(() => {
     
-    // 🌟 1. 데이터 클렌징 (궁극의 문자 검열 필터)
     const validTasks = tasks.reduce((acc, t) => {
       if (t.phase === '설계' || !t.phase) return acc;
       if (!t.area) return acc;
 
       const cleanArea = String(t.area).trim();
-      
-      // ★ 핵심: 한글, 영문, 숫자가 단 하나라도 포함되어 있는지 검사 (없으면 쓰레기값)
       const hasMeaningfulChar = /[a-zA-Z0-9가-힣]/.test(cleanArea);
       
       if (!hasMeaningfulChar || cleanArea.includes('기타') || cleanArea.includes('undefined') || cleanArea.includes('null')) {
-        return acc; // 진짜 글자가 없으면 가차없이 버림!
+        return acc; 
       }
-      
       acc.push({ ...t, area: cleanArea });
       return acc;
     }, [] as any[]);
@@ -52,16 +50,31 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
     let testTotalActual = 0, testTotalPlanned = 0, testCount = 0;
     let compCount = 0;
     
+    const overallStatusCounts: Record<string, number> = {};
+    STATUS_COLUMNS.forEach(k => overallStatusCounts[k] = 0);
+
     const aStats: Record<string, any> = {};
     const details: any[] = [];
 
     validTasks.forEach(t => {
-      const area = t.area; // 검열을 통과한 완벽한 텍스트만 들어옵니다
+      const area = t.area; 
       
       if (!aStats[area]) {
-        aStats[area] = { buildActualSum: 0, buildPlannedSum: 0, buildCount: 0, testActualSum: 0, testPlannedSum: 0, testCount: 0 };
+        aStats[area] = { buildActualSum: 0, buildPlannedSum: 0, buildCount: 0, testActualSum: 0, testPlannedSum: 0, testCount: 0, statusCounts: {} };
+        STATUS_COLUMNS.forEach(k => aStats[area].statusCounts[k] = 0);
       }
       
+      // 상태값 정규화 (대기->시작전, 보류->보류중 등 맵핑)
+      let rawStatus = String(t.status || "").replace(/\s/g, '');
+      if (rawStatus === '대기' || !rawStatus) rawStatus = '시작전';
+      if (rawStatus === '보류') rawStatus = '보류중';
+      if (rawStatus === '진행') rawStatus = '진행중';
+      
+      const finalStatus = STATUS_COLUMNS.includes(rawStatus) ? rawStatus : '시작전';
+      
+      aStats[area].statusCounts[finalStatus]++;
+      overallStatusCounts[finalStatus]++;
+
       const actualProg = STATUS_MAP[t.status || ""]?.progress ?? Number(t.progress) ?? 0;
       const plannedProg = getPlannedProgress(t.start, t.end, targetDate);
       
@@ -92,7 +105,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
       const act = wSum > 0 ? Math.round(((bActAvg * 0.7) + (tActAvg * 0.3)) / wSum) : 0;
       const pln = wSum > 0 ? Math.round(((bPlnAvg * 0.7) + (tPlnAvg * 0.3)) / wSum) : 0;
       
-      return { area, actualProg: act, plannedProg: pln, gap: act - pln };
+      return { area, actualProg: act, plannedProg: pln, gap: act - pln, statusCounts: s.statusCounts };
     });
 
     const buildActualAvg = buildCount > 0 ? buildTotalActual / buildCount : 0;
@@ -123,6 +136,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
     return { 
       overallPlanned: oPlanned, 
       overallActual: oActual, 
+      overallStatusCounts,
       areaStats: processedAStats, 
       detailedTasks: details,
       totalValidCount: validTasks.length,
@@ -197,26 +211,40 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
             {!selectedArea ? (
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 text-[13px] text-slate-500 font-bold border-b border-slate-200">
-                    <th className="p-4">구분</th>
-                    <th className="p-4 text-center">계획 진행률</th>
-                    <th className="p-4 text-center">실제 진행률</th>
-                    <th className="p-4 text-center">GAP</th>
+                  <tr className="bg-slate-50 text-[12px] text-slate-500 font-bold border-b border-slate-200">
+                    <th className="p-3 text-center border-r border-slate-200" rowSpan={2}>구분</th>
+                    <th className="p-3 text-center border-r border-slate-200" rowSpan={2}>GAP</th>
+                    <th className="p-2 text-center border-r border-slate-200" colSpan={8}>상태</th>
+                    <th className="p-3 text-center border-r border-slate-200" rowSpan={2}>계획 진행률</th>
+                    <th className="p-3 text-center" rowSpan={2}>실제 진행률</th>
+                  </tr>
+                  <tr className="bg-slate-50 text-[11px] text-slate-500 font-bold border-b border-slate-200">
+                    {STATUS_COLUMNS.map((col, i) => (
+                      <th key={col} className={`p-2 text-center ${i < STATUS_COLUMNS.length - 1 ? 'border-r border-slate-200' : 'border-r border-slate-200'}`}>{col}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="bg-indigo-50/50 border-b-2 border-slate-200 text-[13px] font-bold text-slate-800">
-                    <td className="p-4 text-indigo-700">전체 통합 평균</td>
-                    <td className="p-4 text-center text-slate-600">{overallPlanned}%</td>
-                    <td className="p-4 text-center text-indigo-600">{overallActual}%</td>
-                    <td className={`p-4 text-center ${overallActual < overallPlanned ? 'text-rose-600' : 'text-emerald-600'}`}>{overallActual - overallPlanned}%</td>
+                  <tr className="bg-indigo-50/50 border-b-2 border-slate-200 text-[12px] font-bold text-slate-800">
+                    <td className="p-3 text-center text-indigo-700 border-r border-slate-200">전체 통합 평균</td>
+                    <td className={`p-3 text-center border-r border-slate-200 ${overallActual < overallPlanned ? 'text-rose-600' : 'text-emerald-600'}`}>{overallActual - overallPlanned}%</td>
+                    {STATUS_COLUMNS.map(k => (
+                      <td key={k} className="p-2 text-center text-slate-600 border-r border-slate-200 bg-indigo-100/30">{overallStatusCounts[k]}</td>
+                    ))}
+                    <td className="p-3 text-center text-slate-600 border-r border-slate-200">{overallPlanned}%</td>
+                    <td className="p-3 text-center text-indigo-600">{overallActual}%</td>
                   </tr>
                   {areaStats.map((s, idx) => (
-                    <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50/50 text-[13px] text-slate-700 font-medium">
-                      <td className="p-4">{s.area}</td>
-                      <td className="p-4 text-center text-slate-500">{s.plannedProg}%</td>
-                      <td className="p-4 text-center font-bold text-indigo-600">{s.actualProg}%</td>
-                      <td className={`p-4 text-center font-bold ${s.gap < 0 ? 'text-rose-500' : 'text-emerald-500'}`}>{s.gap}%</td>
+                    <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50/50 text-[12px] text-slate-700 font-medium">
+                      <td className="p-3 text-center border-r border-slate-200">{s.area}</td>
+                      <td className={`p-3 text-center font-bold border-r border-slate-200 ${s.gap < 0 ? 'text-rose-500' : 'text-emerald-500'}`}>{s.gap}%</td>
+                      {STATUS_COLUMNS.map(k => (
+                        <td key={k} className={`p-2 text-center border-r border-slate-200 ${s.statusCounts[k] > 0 ? 'font-bold text-slate-700' : 'text-slate-300'}`}>
+                          {s.statusCounts[k]}
+                        </td>
+                      ))}
+                      <td className="p-3 text-center text-slate-500 border-r border-slate-200">{s.plannedProg}%</td>
+                      <td className="p-3 text-center font-bold text-indigo-600">{s.actualProg}%</td>
                     </tr>
                   ))}
                 </tbody>
