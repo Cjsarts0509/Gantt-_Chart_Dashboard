@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Plus, Edit2, Trash2, Save, X, RefreshCw, LayoutDashboard } from 'lucide-react';
 
-// 🌟 Supabase 클라이언트 초기화 (환경 변수 사용)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// 🌟 V2: 깃허브 페이지용 다이렉트 하드코딩 (환경변수 에러 방지)
+const supabaseUrl = 'https://cbogmikpdlmwgluahcnz.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNib2dtaWtwZGxtd2dsdWFoY256Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMDIxMjksImV4cCI6MjA4Nzc3ODEyOX0.nagpgjcC7fbk5Bsi812giOSkiKGHG-Y-UZwWndwFbmY';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // V2 테이블 타입 정의
