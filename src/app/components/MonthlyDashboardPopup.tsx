@@ -49,7 +49,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
 
     const overallStatusCounts: Record<string, number> = {};
     STATUS_COLUMNS.forEach(k => overallStatusCounts[k] = 0);
-    let overallMonthTotalCount = 0; // 🌟 전체 누적 건수
+    let overallMonthTotalCount = 0;
 
     const aStats: Record<string, any> = {};
     const details: any[] = [];
@@ -70,8 +70,10 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
     
     let buildTotalActual = 0, buildTotalPlanned = 0, buildCount = 0;
     let testTotalActual = 0, testTotalPlanned = 0, testCount = 0;
-    let activeTaskCount = 0; 
-    let compCount = 0;
+    
+    // 🌟 상단 요약 카드를 위한 변수 (필터링된 건수만 카운트)
+    let filteredActiveTaskCount = 0; 
+    let filteredCompCount = 0;
 
     validTasks.forEach(t => {
       const area = t.area; 
@@ -87,10 +89,8 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
       const actualProg = STATUS_MAP[t.status || ""]?.progress ?? Number(t.progress) ?? 0;
       const plannedProg = getPlannedProgress(t.start, t.end, calcTargetDate);
 
+      // 1. 진척률(%) 모수: 필터 상관없이 전체 데이터로 누적
       if (!isExcluded) {
-        activeTaskCount++;
-        if (actualProg === 100) compCount++;
-
         if (t.phase === '구축') {
           buildTotalActual += actualProg; buildTotalPlanned += plannedProg; buildCount++;
           aStats[area].buildActualSum += actualProg; aStats[area].buildPlannedSum += plannedProg; aStats[area].buildCount++;
@@ -102,12 +102,18 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
 
       const isStartedByTarget = endOfSelectedMonth ? new Date(t.start).getTime() <= endOfSelectedMonth.getTime() : true;
 
+      // 2. 하단 리스트 및 상단 건수 박스: 필터링된 달까지만 카운트!
       if (isStartedByTarget) {
         aStats[area].statusCounts[finalStatus]++;
         overallStatusCounts[finalStatus]++;
-        // 🌟 누적 건수 카운팅
         aStats[area].monthTotalCount++;
         overallMonthTotalCount++;
+
+        if (!isExcluded) {
+          filteredActiveTaskCount++;
+          if (actualProg === 100) filteredCompCount++;
+        }
+
         details.push({ ...t, actualProg, plannedProg, isExcluded });
       }
     });
@@ -161,9 +167,9 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
       overallMonthTotalCount,
       areaStats: processedAStats, 
       detailedTasks: details,
-      totalValidCount: activeTaskCount,
-      completedCount: compCount,
-      incompleteCount: activeTaskCount - compCount,
+      totalValidCount: filteredActiveTaskCount, // 🌟 상단 카드는 필터링된 건수로 내보냄!
+      completedCount: filteredCompCount,
+      incompleteCount: filteredActiveTaskCount - filteredCompCount,
       effectiveTargetDate: calcTargetDate
     };
   }, [tasks, targetDate, selectedMonth]);
@@ -197,21 +203,22 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
         <div className="grid grid-cols-3 gap-5 shrink-0">
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
             <div>
-              <p className="text-[13px] font-bold text-slate-500 mb-1">전체 진척률 산정 모수</p>
+              {/* 🌟 선택된 월에 따라 상단 카드 텍스트가 동적으로 변경됨 */}
+              <p className="text-[13px] font-bold text-slate-500 mb-1">{selectedMonth ? `${selectedMonth}월 누적 항목 수` : '전체 대상 항목 수'}</p>
               <div className="flex items-baseline gap-1"><p className="text-[30px] font-extrabold text-slate-800 leading-none">{totalValidCount}</p><span className="text-[14px] font-bold text-slate-400">건</span></div>
             </div>
             <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center"><ListTodo className="w-6 h-6 text-slate-600" /></div>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between border-l-4 border-l-emerald-500">
             <div>
-              <p className="text-[13px] font-bold text-emerald-600 mb-1">전체 완료 (100%)</p>
+              <p className="text-[13px] font-bold text-emerald-600 mb-1">완료 (100%)</p>
               <div className="flex items-baseline gap-1"><p className="text-[30px] font-extrabold text-emerald-700 leading-none">{completedCount}</p><span className="text-[14px] font-bold text-slate-400">건</span></div>
             </div>
             <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center"><CheckCircle2 className="w-6 h-6 text-emerald-600" /></div>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between border-l-4 border-l-rose-500">
             <div>
-              <p className="text-[13px] font-bold text-rose-600 mb-1">전체 미완료</p>
+              <p className="text-[13px] font-bold text-rose-600 mb-1">미완료 (진행중/지연)</p>
               <div className="flex items-baseline gap-1"><p className="text-[30px] font-extrabold text-rose-700 leading-none">{incompleteCount}</p><span className="text-[14px] font-bold text-slate-400">건</span></div>
             </div>
             <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center"><AlertTriangle className="w-6 h-6 text-rose-500" /></div>
