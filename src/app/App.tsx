@@ -11,19 +11,13 @@ import MonthlyDashboardPopup from "./components/MonthlyDashboardPopup";
 import ArchitecturePopup from "./components/ArchitecturePopup";
 import HistoryDashboard from "./components/HistoryDashboard"; 
 import "./components/gantt-overrides.css";
-import { BarChart2, ChevronDown, ChevronRight, X, PanelLeftClose, PanelLeftOpen, Database, LayoutDashboard, ExternalLink, Network, CalendarDays, RotateCcw, Settings2 } from "lucide-react";
-
-// 🌟 V2 페이지 임포트
-import V2AdminPage from "./v2/page";
+import { BarChart2, ChevronDown, ChevronRight, X, PanelLeftClose, PanelLeftOpen, Database, LayoutDashboard, ExternalLink, Network, CalendarDays, RotateCcw } from "lucide-react";
 
 interface TreeFilterState { selectedArea: string | null; selectedPhase: string | null; selectedActivity: string | null; }
 const viewModeOptions = [ { label: "일", value: ViewMode.Day }, { label: "주", value: ViewMode.Week }, { label: "월", value: ViewMode.Month } ];
 const COLUMN_WIDTH_MAP: Record<string, number> = { [ViewMode.Day]: 60, [ViewMode.Week]: 150, [ViewMode.Month]: 300 };
 
 export default function App() {
-  // 🌟 V2 화면 켜기/끄기 스위치 추가
-  const [showV2, setShowV2] = useState(false);
-
   const [tasks, setTasks] = useState<WBSTask[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Week);
   const columnWidth = COLUMN_WIDTH_MAP[viewMode] || 300;
@@ -68,15 +62,8 @@ export default function App() {
           
           let itVal = t.assigneeIT || t["담당자(IT)"];
           let planVal = t.assigneePlan || t["담당자(기획)"];
-          
-          if (!itVal) {
-             const itKey = Object.keys(t).find(k => k.includes('IT') && (k.includes('담당자') || k.includes('xb2f4')));
-             if (itKey) itVal = t[itKey];
-          }
-          if (!planVal) {
-             const planKey = Object.keys(t).find(k => (k.includes('기획') || k.includes('xae')) && (k.includes('담당자') || k.includes('xb2f4')));
-             if (planKey) planVal = t[planKey];
-          }
+          if (!itVal) { const itKey = Object.keys(t).find(k => k.includes('IT') && (k.includes('담당자') || k.includes('xb2f4'))); if (itKey) itVal = t[itKey]; }
+          if (!planVal) { const planKey = Object.keys(t).find(k => (k.includes('기획') || k.includes('xae')) && (k.includes('담당자') || k.includes('xb2f4'))); if (planKey) planVal = t[planKey]; }
 
           return {
             ...t, 
@@ -84,9 +71,7 @@ export default function App() {
             type: "task",
             start: isNaN(parsedStart.getTime()) ? new Date() : parsedStart,
             end: isNaN(parsedEnd.getTime()) ? new Date() : parsedEnd,
-            
             taskName: t["OData__xd654__xba74__xba85_"] || t["화면명"] || "",
-            
             assigneePlan: cleanName(planVal),
             assigneeIT: cleanName(itVal),
             progress: STATUS_MAP[t.status]?.progress ?? Number(t.progress) ?? 0 
@@ -112,7 +97,6 @@ export default function App() {
   }), [areaCollapsed, phaseCollapsed, activityCollapsed, deliverableCollapsed, hiddenCols, sortConfig]);
 
   const currentListWidth = useMemo(() => Object.entries(COL_WIDTHS).filter(([k]) => !hiddenCols.has(k)).reduce((acc, [_, w]) => acc + w, 0), [hiddenCols]);
-
   const ganttWrapperRef = useRef<HTMLDivElement>(null);
   const [ganttContainerHeight, setGanttContainerHeight] = useState(0);
 
@@ -124,7 +108,11 @@ export default function App() {
     return () => ro.disconnect();
   }, [isStandaloneDashboard, isHistoryView, isWeeklyView, isMonthlyView]);
 
-  // 🚨 [에러 해결의 핵심] React 규칙에 맞게 모든 Hook 로직을 조건문(if) 위로 끌어올렸습니다.
+  if (isHistoryView) return <HistoryDashboard />;
+  if (isStandaloneDashboard) return <DashboardPopup tasks={tasks} isStandalone={true} />;
+  if (isWeeklyView) return <WeeklyDashboardPopup tasks={tasks} isStandalone={true} />;
+  if (isMonthlyView) return <MonthlyDashboardPopup tasks={tasks} isStandalone={true} />;
+
   const areas = useMemo(() => [...new Set(tasks.map((t) => t.area))].filter(Boolean), [tasks]);
   const phasesByArea = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -152,7 +140,6 @@ export default function App() {
         if (a.area !== b.area) return (a.area || "").localeCompare(b.area || "");
         if (a.phase !== b.phase) return (a.phase || "").localeCompare(b.phase || "");
         if (a.activity !== b.activity) return (a.activity || "").localeCompare(b.activity || "");
-        
         let valA = a[sortConfig.key] || "";
         let valB = b[sortConfig.key] || "";
         if (valA < valB) return sortConfig.dir === 'asc' ? -1 : 1;
@@ -206,7 +193,6 @@ export default function App() {
 
     return visibleTasks.map((t: any) => {
       let prog = STATUS_MAP[t.status]?.progress ?? Number(t.progress) ?? 0;
-
       if (areaCollapsed) prog = Math.round((t.__areaCompleted / (t.__areaCount || 1)) * 100);
       else if (phaseCollapsed) prog = Math.round((t.__phaseCompleted / (t.__phaseCount || 1)) * 100);
       else if (activityCollapsed) prog = Math.round((t.__actCompleted / (t.__activityCount || 1)) * 100);
@@ -232,31 +218,9 @@ export default function App() {
   const togglePhase = (area: string, phase: string) => { const key = `${area}||${phase}`; setExpandedPhases((prev) => { const next = new Set(prev); if (next.has(key)) next.delete(key); else next.add(key); return next; }); };
   const selectFilter = (area: string | null, phase: string | null, activity: string | null) => { setTreeFilter({ selectedArea: area, selectedPhase: phase, selectedActivity: activity }); };
 
-
-  // 🌟 [최종 화면 렌더링 파트] 조건부 렌더링은 모든 로직 계산이 끝난 맨 밑에서 처리합니다.
-  if (showV2) {
-    return (
-      <div className="relative w-screen h-screen">
-        <button 
-          onClick={() => setShowV2(false)} 
-          className="absolute top-6 right-6 z-[9999] px-4 py-2 bg-slate-800 text-white font-bold rounded-lg shadow-lg hover:bg-slate-700 flex items-center gap-2 transition-colors"
-        >
-          <X className="w-4 h-4" /> 기존 대시보드로 복귀
-        </button>
-        <V2AdminPage />
-      </div>
-    );
-  }
-
-  if (isHistoryView) return <HistoryDashboard />;
-  if (isStandaloneDashboard) return <DashboardPopup tasks={tasks} isStandalone={true} />;
-  if (isWeeklyView) return <WeeklyDashboardPopup tasks={tasks} isStandalone={true} />;
-  if (isMonthlyView) return <MonthlyDashboardPopup tasks={tasks} isStandalone={true} />;
-
   return (
     <GanttGroupContext.Provider value={groupContextValue}>
       <div className="w-screen h-screen bg-[#F1F5F9] flex flex-col overflow-hidden" style={{ fontFamily: "'Pretendard', sans-serif" }}>
-        
         <header className="flex items-center justify-between px-6 py-4 bg-white/95 backdrop-blur-md border-b border-slate-200 shrink-0 shadow-sm z-10">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shadow-indigo-200 shadow-md"><BarChart2 className="w-5 h-5 text-white" /></div>
@@ -269,38 +233,21 @@ export default function App() {
             <a href="https://kyobobookcokr.sharepoint.com/sites/PJT2" target="_self" className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 hover:border-blue-200 transition-all shadow-sm">
               <ExternalLink className="w-4 h-4" /> 팀 사이트
             </a>
-            
             {hiddenCols.size > 0 && (
               <button onClick={() => setHiddenCols(new Set())} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition-all">
                 <RotateCcw className="w-3.5 h-3.5" /> 숨김 취소
               </button>
             )}
-
             <div className="w-px h-6 bg-slate-200 mx-1" />
-            
             <button onClick={() => setIsMonthlyDashboardOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-all shadow-sm">
               <CalendarDays className="w-4 h-4" /> 월간 점검
             </button>
             <button onClick={() => setIsDashboardOpen(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-indigo-600 text-white border border-indigo-500 hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200">
               <LayoutDashboard className="w-4 h-4" /> 전체 요약
             </button>
-
             <div className="w-px h-6 bg-slate-200 mx-1" />
-
-            {/* 🌟 V2 화면 켜기 스위치 */}
-            <button 
-              onClick={() => setShowV2(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold bg-slate-800 text-white hover:bg-slate-900 transition-all shadow-md border border-slate-700"
-            >
-              <Settings2 className="w-4 h-4" /> V2 관리자
-            </button>
-
-            <div className="w-px h-6 bg-slate-200 mx-1" />
-            
             <ExcelManager tasks={tasks} visibleTasks={ganttTasks} onUpload={(newTasks) => setTasks(newTasks)} />
-            
             <div className="w-px h-6 bg-slate-200 mx-1" />
-            
             <div className="flex items-center gap-1 bg-slate-100/80 rounded-lg p-1 border border-slate-200/50">
               {viewModeOptions.map((opt) => (<button key={opt.value} className={`px-4 py-1.5 rounded-md text-[12px] font-bold transition-all ${viewMode === opt.value ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`} onClick={() => setViewMode(opt.value)}>{opt.label}</button>))}
             </div>
