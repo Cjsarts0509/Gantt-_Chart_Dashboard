@@ -35,9 +35,8 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
     return lastSunday;
   }, []);
 
-  const { overallPlanned, overallActual, overallStatusCounts, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount } = useMemo(() => {
+  const { overallPlanned, overallActual, overallStatusCounts, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount, effectiveTargetDate } = useMemo(() => {
     
-    // 1. 전체 유효 데이터 추출 (클렌징)
     const validTasks = tasks.reduce((acc, t) => {
       if (t.phase === '설계' || !t.phase) return acc;
       if (!t.area) return acc;
@@ -58,7 +57,6 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
     const aStats: Record<string, any> = {};
     const details: any[] = [];
 
-    // 🌟 [핵심 변경] 전체 프로젝트에 존재하는 모든 구분값(area)을 먼저 기본 틀로 세팅!
     validTasks.forEach(t => {
       const area = t.area;
       if (!aStats[area]) {
@@ -67,10 +65,12 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
       }
     });
 
-    // 2. 월별 필터링 적용
     const endOfSelectedMonth = selectedMonth !== null 
       ? new Date(targetDate.getFullYear(), selectedMonth, 0, 23, 59, 59, 999) 
       : null;
+
+    // 🌟 핵심 해결 포인트: 선택한 월이 있으면, 채점 기준일(Target Date)도 그 월의 말일로 변경!
+    const calcTargetDate = endOfSelectedMonth || targetDate;
 
     const monthFilteredTasks = endOfSelectedMonth 
       ? validTasks.filter(t => new Date(t.start).getTime() <= endOfSelectedMonth.getTime())
@@ -81,7 +81,6 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
     let activeTaskCount = 0; 
     let compCount = 0;
 
-    // 3. 필터링된 데이터만 미리 만들어둔 틀(aStats)에 채워넣기
     monthFilteredTasks.forEach(t => {
       const area = t.area; 
       
@@ -96,7 +95,8 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
       overallStatusCounts[finalStatus]++;
 
       const actualProg = STATUS_MAP[t.status || ""]?.progress ?? Number(t.progress) ?? 0;
-      const plannedProg = getPlannedProgress(t.start, t.end, targetDate);
+      // 🌟 변경된 기준일(calcTargetDate)을 적용하여 과거 시점의 정확한 계획 진행률 산출
+      const plannedProg = getPlannedProgress(t.start, t.end, calcTargetDate);
       const isExcluded = finalStatus === '개발제외';
 
       if (!isExcluded) {
@@ -115,7 +115,6 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
       details.push({ ...t, actualProg, plannedProg, isExcluded });
     });
 
-    // 4. 통계 계산 (데이터가 0건이면 자연스럽게 0%로 계산됨)
     const processedAStats = Object.keys(aStats).map(area => {
       const s = aStats[area];
       const bActAvg = s.buildCount > 0 ? s.buildActualSum / s.buildCount : 0;
@@ -166,7 +165,8 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
       detailedTasks: details,
       totalValidCount: activeTaskCount,
       completedCount: compCount,
-      incompleteCount: activeTaskCount - compCount
+      incompleteCount: activeTaskCount - compCount,
+      effectiveTargetDate: calcTargetDate // 🌟 UI에 표시할 동적 기준일 반환
     };
   }, [tasks, targetDate, selectedMonth]);
 
@@ -182,7 +182,8 @@ export default function WeeklyDashboardPopup({ tasks, onClose, isStandalone = fa
         <div className="flex items-center gap-2">
           <CalendarClock className="w-5 h-5 text-indigo-600" />
           <h2 className="text-[16px] font-bold text-slate-800 tracking-tight">주간 진행률 및 계획 대비 점검</h2>
-          <span className="ml-2 text-[12px] text-slate-500 font-medium">(*기준: {targetDate.toLocaleDateString()} / 개발제외 항목 제외)</span>
+          {/* 🌟 동기화된 기준일 텍스트 */}
+          <span className="ml-2 text-[12px] text-slate-500 font-medium">(*기준: {effectiveTargetDate.toLocaleDateString()} / 개발제외 항목 제외)</span>
         </div>
         {isStandalone ? (
           <button onClick={() => window.location.href = '?'} className="px-3 py-1.5 rounded-md text-[12px] font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
