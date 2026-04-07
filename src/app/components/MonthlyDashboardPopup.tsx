@@ -33,6 +33,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
 
   const { overallPlanned, overallActual, overallStatusCounts, areaStats, detailedTasks, totalValidCount, completedCount, incompleteCount, effectiveTargetDate } = useMemo(() => {
     
+    // 1. 전체 유효 데이터 추출
     const validTasks = tasks.reduce((acc, t) => {
       if (t.phase === '설계' || !t.phase) return acc;
       if (!t.area) return acc;
@@ -53,6 +54,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
     const aStats: Record<string, any> = {};
     const details: any[] = [];
 
+    // 구분값 기본 틀 세팅
     validTasks.forEach(t => {
       const area = t.area;
       if (!aStats[area]) {
@@ -65,19 +67,16 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
       ? new Date(targetDate.getFullYear(), selectedMonth, 0, 23, 59, 59, 999) 
       : null;
 
-    // 🌟 핵심 해결 포인트: 선택한 월이 있으면, 채점 기준일(Target Date)도 그 월의 말일로 변경!
+    // 🌟 핵심 1: 계획 진행률 채점 기준일은 선택된 월의 말일로 설정
     const calcTargetDate = endOfSelectedMonth || targetDate;
-
-    const monthFilteredTasks = endOfSelectedMonth 
-      ? validTasks.filter(t => new Date(t.start).getTime() <= endOfSelectedMonth.getTime())
-      : validTasks;
     
     let buildTotalActual = 0, buildTotalPlanned = 0, buildCount = 0;
     let testTotalActual = 0, testTotalPlanned = 0, testCount = 0;
     let activeTaskCount = 0; 
     let compCount = 0;
 
-    monthFilteredTasks.forEach(t => {
+    // 🌟 핵심 2: 필터링하지 않고 전체 32개 항목을 모두 돌면서 "전체 누적" 모수로 진행률 합산
+    validTasks.forEach(t => {
       const area = t.area; 
       
       let rawStatus = String(t.status || "").replace(/\s/g, '');
@@ -86,15 +85,12 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
       if (rawStatus === '진행') rawStatus = '진행중';
       
       const finalStatus = STATUS_COLUMNS.includes(rawStatus) ? rawStatus : '시작전';
-      
-      aStats[area].statusCounts[finalStatus]++;
-      overallStatusCounts[finalStatus]++;
-
-      const actualProg = STATUS_MAP[t.status || ""]?.progress ?? Number(t.progress) ?? 0;
-      // 🌟 변경된 기준일(calcTargetDate)을 적용하여 과거 시점의 정확한 계획 진행률 산출
-      const plannedProg = getPlannedProgress(t.start, t.end, calcTargetDate);
       const isExcluded = finalStatus === '개발제외';
 
+      const actualProg = STATUS_MAP[t.status || ""]?.progress ?? Number(t.progress) ?? 0;
+      const plannedProg = getPlannedProgress(t.start, t.end, calcTargetDate);
+
+      // 전체 항목에 대해 진척률 계산 (미래 항목은 plannedProg가 0%로 더해져 평균을 정상적으로 맞춰줌)
       if (!isExcluded) {
         activeTaskCount++;
         if (actualProg === 100) compCount++;
@@ -108,7 +104,14 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
         }
       }
 
-      details.push({ ...t, actualProg, plannedProg, isExcluded });
+      // 🌟 핵심 3: 하단 상세 리스트와 상태 카운트만 선택된 월에 해당하는 항목(예: 7개)으로 필터링
+      const isStartedByTarget = endOfSelectedMonth ? new Date(t.start).getTime() <= endOfSelectedMonth.getTime() : true;
+
+      if (isStartedByTarget) {
+        aStats[area].statusCounts[finalStatus]++;
+        overallStatusCounts[finalStatus]++;
+        details.push({ ...t, actualProg, plannedProg, isExcluded });
+      }
     });
 
     const processedAStats = Object.keys(aStats).map(area => {
@@ -162,7 +165,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
       totalValidCount: activeTaskCount,
       completedCount: compCount,
       incompleteCount: activeTaskCount - compCount,
-      effectiveTargetDate: calcTargetDate // 🌟 UI에 표시할 동적 기준일 반환
+      effectiveTargetDate: calcTargetDate
     };
   }, [tasks, targetDate, selectedMonth]);
 
@@ -178,7 +181,6 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
         <div className="flex items-center gap-2">
           <CalendarDays className="w-5 h-5 text-indigo-600" />
           <h2 className="text-[16px] font-bold text-slate-800 tracking-tight">월간 진행률 및 계획 대비 점검</h2>
-          {/* 🌟 동기화된 기준일 텍스트 */}
           <span className="ml-2 text-[12px] text-slate-500 font-medium">(*기준: {effectiveTargetDate.toLocaleDateString()} / 개발제외 항목 제외)</span>
         </div>
         {isStandalone ? (
@@ -196,21 +198,21 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
         <div className="grid grid-cols-3 gap-5 shrink-0">
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
             <div>
-              <p className="text-[13px] font-bold text-slate-500 mb-1">진척률 산정 대상</p>
+              <p className="text-[13px] font-bold text-slate-500 mb-1">전체 진척률 산정 모수</p>
               <div className="flex items-baseline gap-1"><p className="text-[30px] font-extrabold text-slate-800 leading-none">{totalValidCount}</p><span className="text-[14px] font-bold text-slate-400">건</span></div>
             </div>
             <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center"><ListTodo className="w-6 h-6 text-slate-600" /></div>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between border-l-4 border-l-emerald-500">
             <div>
-              <p className="text-[13px] font-bold text-emerald-600 mb-1">완료 (100%)</p>
+              <p className="text-[13px] font-bold text-emerald-600 mb-1">전체 완료 (100%)</p>
               <div className="flex items-baseline gap-1"><p className="text-[30px] font-extrabold text-emerald-700 leading-none">{completedCount}</p><span className="text-[14px] font-bold text-slate-400">건</span></div>
             </div>
             <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center"><CheckCircle2 className="w-6 h-6 text-emerald-600" /></div>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between border-l-4 border-l-rose-500">
             <div>
-              <p className="text-[13px] font-bold text-rose-600 mb-1">미완료 (진행중/지연)</p>
+              <p className="text-[13px] font-bold text-rose-600 mb-1">전체 미완료</p>
               <div className="flex items-baseline gap-1"><p className="text-[30px] font-extrabold text-rose-700 leading-none">{incompleteCount}</p><span className="text-[14px] font-bold text-slate-400">건</span></div>
             </div>
             <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center"><AlertTriangle className="w-6 h-6 text-rose-500" /></div>
@@ -238,21 +240,21 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
                     <th className="p-3 text-center border-r border-slate-200" rowSpan={2}>GAP</th>
                     <th className="p-2 text-center border-r border-slate-200" colSpan={8}>
                       <div className="flex items-center justify-center gap-2">
-                        <span>상태</span>
+                        <span>상태/목록 필터</span>
                         <select
                           value={selectedMonth || ''}
                           onChange={(e) => setSelectedMonth(e.target.value ? Number(e.target.value) : null)}
                           className="px-2 py-0.5 text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded cursor-pointer outline-none hover:bg-indigo-100 transition-colors"
                         >
-                          <option value="">전체 누적</option>
+                          <option value="">전체 항목</option>
                           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
-                            <option key={m} value={m}>{m}월 누적</option>
+                            <option key={m} value={m}>{m}월까지 리스트</option>
                           ))}
                         </select>
                       </div>
                     </th>
-                    <th className="p-3 text-center border-r border-slate-200" rowSpan={2}>계획 진행률</th>
-                    <th className="p-3 text-center" rowSpan={2}>실제 진행률</th>
+                    <th className="p-3 text-center border-r border-slate-200" rowSpan={2}>계획 진행률<br/><span className="text-[10px] font-normal text-slate-400">(전체모수 기준)</span></th>
+                    <th className="p-3 text-center" rowSpan={2}>실제 진행률<br/><span className="text-[10px] font-normal text-slate-400">(전체모수 기준)</span></th>
                   </tr>
                   <tr className="bg-slate-50 text-[11px] text-slate-500 font-bold border-b border-slate-200">
                     {STATUS_COLUMNS.map((col, i) => (
@@ -295,16 +297,16 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
                       <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
-                          <span className="text-[14px] font-extrabold text-indigo-900">{stat.area} 진행 현황 요약</span>
+                          <span className="text-[14px] font-extrabold text-indigo-900">{stat.area} 상세 항목 리스트</span>
                         </div>
                         <select
                           value={selectedMonth || ''}
                           onChange={(e) => setSelectedMonth(e.target.value ? Number(e.target.value) : null)}
                           className="px-2 py-0.5 text-[11px] font-bold text-indigo-700 bg-white border border-indigo-200 rounded cursor-pointer outline-none hover:bg-indigo-50 transition-colors shadow-sm"
                         >
-                          <option value="">전체 누적</option>
+                          <option value="">전체 항목 보기</option>
                           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
-                            <option key={m} value={m}>{m}월 누적</option>
+                            <option key={m} value={m}>{m}월까지 보기</option>
                           ))}
                         </select>
                       </div>
@@ -341,7 +343,9 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredTasks.map((t, idx) => {
+                      {filteredTasks.length === 0 ? (
+                        <tr><td colSpan={8} className="p-10 text-center text-slate-400 font-bold">해당 월에 진행되는 항목이 없습니다.</td></tr>
+                      ) : filteredTasks.map((t, idx) => {
                         const isDelayed = t.actualProg < t.plannedProg;
                         return (
                           <tr key={idx} className={`border-b border-slate-100 hover:bg-slate-50 text-[12px] text-slate-700 ${isDelayed && !t.isExcluded ? 'bg-rose-50/30' : (t.isExcluded ? 'opacity-50' : '')}`}>
