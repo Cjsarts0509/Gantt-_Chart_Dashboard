@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Gantt, ViewMode } from 'gantt-task-react';
 import 'gantt-task-react/dist/index.css';
-import { Plus, Save, X, RefreshCw, LayoutDashboard, ChevronDown, ChevronRight, BarChart2 } from 'lucide-react';
+import { Plus, Save, X, RefreshCw, LayoutDashboard, ChevronDown, ChevronRight, BarChart2, Trash2 } from 'lucide-react';
 import "../components/gantt-overrides.css";
 
 // 🌟 Supabase 설정
@@ -25,7 +25,7 @@ const getProgressFromStatus = (status: string) => {
   }
 };
 
-// 🌟 칼럼 너비 설정 (총 너비 약 1540px)
+// 🌟 칼럼 너비 설정 (총 너비 1540px)
 const COL_WIDTHS = {
   project_id: 100, category: 80, phase: 80, area: 80,
   req_id: 90, req_name: 180, req_desc: 200,
@@ -35,7 +35,6 @@ const COL_WIDTHS = {
   start_date: 90, end_date: 90, status: 80
 };
 
-// 🌟 간트 차트 좌측 커스텀 헤더
 const AdminTaskListHeader = ({ headerHeight, fontFamily, fontSize }: any) => {
   return (
     <div className="flex border-b border-slate-200 bg-slate-100 text-slate-600 font-bold" style={{ height: headerHeight, fontFamily, fontSize: '11px' }}>
@@ -59,7 +58,6 @@ const AdminTaskListHeader = ({ headerHeight, fontFamily, fontSize }: any) => {
   );
 };
 
-// 🌟 간트 차트 좌측 커스텀 데이터 줄(Row)
 const AdminTaskListTable = ({ rowHeight, rowWidth, tasks, fontFamily, fontSize }: any) => {
   return (
     <div style={{ fontFamily, fontSize: '11px' }}>
@@ -70,7 +68,10 @@ const AdminTaskListTable = ({ rowHeight, rowWidth, tasks, fontFamily, fontSize }
             key={t.id} 
             className="flex border-b border-slate-100 hover:bg-indigo-50/40 transition-colors cursor-pointer" 
             style={{ height: rowHeight, width: rowWidth }}
-            onDoubleClick={t.onDoubleClick} // 더블클릭 시 수정 모달 오픈
+            onDoubleClick={(e) => {
+              e.stopPropagation(); // 🌟 이벤트 버블링 차단 (크래시 방지 1)
+              if (t.onDoubleClick) t.onDoubleClick(e);
+            }}
             title="더블클릭하여 수정하세요"
           >
             <div className="flex items-center px-2 border-r border-slate-100 shrink-0 truncate text-slate-500" style={{ width: COL_WIDTHS.project_id }}>{raw.project_id}</div>
@@ -115,7 +116,6 @@ export default function V2AdminPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Week);
 
-  // 필터 관련 상태 (카테고리 -> 단계 -> 구분)
   const [treeFilter, setTreeFilter] = useState({ selectedCategory: null as string | null, selectedPhase: null as string | null, selectedArea: null as string | null });
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
@@ -125,7 +125,6 @@ export default function V2AdminPage() {
     const { data, error } = await supabase.from('wbs_tasks_v2').select('*').order('created_at', { ascending: false });
     if (!error && data) {
       setTasks(data);
-      // 데이터 불러오면 자동으로 최상위 카테고리는 열어두기
       setExpandedCategories(new Set(data.map(t => t.category).filter(Boolean)));
     }
     setIsLoading(false);
@@ -136,8 +135,6 @@ export default function V2AdminPage() {
   const handleChange = (e: any) => {
     const { name, value } = e.target;
     let updates: any = { [name]: value };
-    
-    // 상태값이 변하면 진행률 자동 세팅
     if (name === 'status') {
       updates.progress = getProgressFromStatus(value);
     }
@@ -166,13 +163,19 @@ export default function V2AdminPage() {
     fetchTasks();
   };
 
+  // 🌟 모달 오픈 시 원본 데이터를 안전하게 깊은 복사하여 크래시 차단
   const openModal = (task?: any) => {
-    if (task) { setFormData(task); setIsEditing(true); } 
-    else { setFormData(INITIAL_FORM_STATE); setIsEditing(false); }
+    if (task) { 
+      const safeTask = JSON.parse(JSON.stringify(task)); 
+      setFormData(safeTask); 
+      setIsEditing(true); 
+    } else { 
+      setFormData(INITIAL_FORM_STATE); 
+      setIsEditing(false); 
+    }
     setIsModalOpen(true);
   };
 
-  // 🌟 필터용 데이터 추출 (카테고리 -> 단계 -> 구분)
   const categories = useMemo(() => [...new Set(tasks.map(t => t.category).filter(Boolean))], [tasks]);
   const phasesByCategory = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -196,31 +199,28 @@ export default function V2AdminPage() {
     });
   }, [tasks, treeFilter]);
 
-  // 🌟 Gantt 컴포넌트용 데이터 변환
-  const ganttTasks = useMemo(() => {
-    if (filteredTasks.length === 0) return [];
-    return filteredTasks.map((t) => {
-      let sd = new Date(t.start_date);
-      let ed = new Date(t.end_date);
-      if (isNaN(sd.getTime())) sd = new Date();
-      if (isNaN(ed.getTime())) ed = new Date();
+  // 🌟 라이브러리 내부 캐싱 버그를 막기 위해 useMemo를 제거하고 매번 신선한 데이터 공급
+  const ganttTasks = filteredTasks.map((t) => {
+    let sd = new Date(t.start_date);
+    let ed = new Date(t.end_date);
+    if (isNaN(sd.getTime())) sd = new Date();
+    if (isNaN(ed.getTime())) ed = new Date();
 
-      return {
-        id: t.id,
-        name: t.req_name || t.screen_name || '(이름없음)',
-        start: sd,
-        end: ed,
-        progress: t.progress || 0,
-        dependencies: [],
-        type: 'task',
-        styles: { backgroundColor: '#38BDF8', progressColor: '#0284C7' },
-        _raw: t, // 커스텀 테이블 렌더링용 원본 데이터 보존
-        onDoubleClick: () => openModal(t) // 🌟 더블클릭 이벤트 연결
-      };
-    });
-  }, [filteredTasks]);
+    return {
+      id: t.id,
+      name: t.req_name || t.screen_name || '(이름없음)',
+      start: sd,
+      end: ed,
+      progress: t.progress || 0,
+      dependencies: [],
+      type: 'task',
+      styles: { backgroundColor: '#38BDF8', progressColor: '#0284C7' },
+      _raw: t, // 원본 데이터 보존
+      onDoubleClick: () => openModal(t) // 원본 객체만 던지기
+    };
+  });
 
-  const listWidth = Object.values(COL_WIDTHS).reduce((a, b) => a + b, 0); // 총 1540px
+  const listWidth = Object.values(COL_WIDTHS).reduce((a, b) => a + b, 0); // 1540px
 
   const toggleCategory = (cat: string) => setExpandedCategories(p => { const n = new Set(p); n.has(cat) ? n.delete(cat) : n.add(cat); return n; });
   const togglePhase = (cat: string, phase: string) => setExpandedPhases(p => { const k = `${cat}||${phase}`; const n = new Set(p); n.has(k) ? n.delete(k) : n.add(k); return n; });
@@ -251,10 +251,9 @@ export default function V2AdminPage() {
         </div>
       </div>
 
-      {/* 메인 영역 (좌측 사이드바 + 우측 간트차트) */}
       <div className="flex flex-1 overflow-hidden p-3 gap-3">
         
-        {/* 🌟 좌측 필터 패널 (카테고리 -> 단계 -> 구분) */}
+        {/* 좌측 필터 패널 */}
         <div className="w-[230px] shrink-0 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
           <div className="p-3 bg-slate-50 border-b border-slate-100"><span className="text-[12px] font-extrabold text-slate-700">분류 필터 트리</span></div>
           <div className="flex-1 overflow-y-auto p-2">
@@ -300,31 +299,33 @@ export default function V2AdminPage() {
           </div>
         </div>
 
-        {/* 🌟 우측 간트 차트 (데이터 그리드 포함) */}
-        <div className="flex-1 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm gantt-wrapper">
-          {ganttTasks.length > 0 ? (
-            <Gantt 
-              tasks={ganttTasks} 
-              viewMode={viewMode} 
-              listCellWidth={String(listWidth)} // 15개 칼럼 전체 너비 할당
-              columnWidth={viewMode === ViewMode.Day ? 60 : viewMode === ViewMode.Week ? 150 : 300} 
-              rowHeight={38}
-              headerHeight={48} 
-              barCornerRadius={6}
-              barFill={70} 
-              fontSize="12" 
-              locale="ko-KR" 
-              TaskListHeader={AdminTaskListHeader} // 🌟 15개 쫙 펼친 헤더
-              TaskListTable={AdminTaskListTable}   // 🌟 15개 쫙 펼친 바디 (더블클릭 지원)
-              todayColor="rgba(99, 102, 241, 0.04)" 
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full text-slate-400 font-bold text-sm">해당 필터에 데이터가 없습니다. (혹은 로딩 중)</div>
-          )}
+        {/* 🌟 가로 스크롤 완벽 지원을 위한 2400px 거대 컨테이너 적용 */}
+        <div className="flex-1 overflow-x-auto overflow-y-hidden bg-white border border-slate-200 rounded-xl shadow-sm gantt-wrapper">
+          <div style={{ minWidth: '2400px', height: '100%' }}>
+            {ganttTasks.length > 0 ? (
+              <Gantt 
+                tasks={ganttTasks} 
+                viewMode={viewMode} 
+                listCellWidth={String(listWidth)} // 1540px 할당
+                columnWidth={viewMode === ViewMode.Day ? 60 : viewMode === ViewMode.Week ? 150 : 300} 
+                rowHeight={38}
+                headerHeight={48} 
+                barCornerRadius={6}
+                barFill={70} 
+                fontSize="12" 
+                locale="ko-KR" 
+                TaskListHeader={AdminTaskListHeader} 
+                TaskListTable={AdminTaskListTable}   
+                todayColor="rgba(99, 102, 241, 0.04)" 
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-slate-400 font-bold text-sm">해당 필터에 데이터가 없습니다. (혹은 로딩 중)</div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* 🌟 수정/등록 모달 팝업 */}
+      {/* 수정/등록 모달 팝업 */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[9999] flex justify-center items-center bg-slate-900/60 backdrop-blur-sm p-4">
           <div className="w-[800px] max-h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -338,46 +339,46 @@ export default function V2AdminPage() {
              
              <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 <div className="grid grid-cols-4 gap-4">
-                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">범용성(프로젝트)</label><input name="project_id" value={formData.project_id} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm bg-slate-50" /></div>
-                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">카테고리</label><input name="category" value={formData.category} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
-                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">단계</label><input name="phase" value={formData.phase} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
-                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">구분</label><input name="area" value={formData.area} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
+                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">범용성(프로젝트)</label><input name="project_id" value={formData.project_id || ''} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm bg-slate-50" /></div>
+                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">카테고리</label><input name="category" value={formData.category || ''} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
+                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">단계</label><input name="phase" value={formData.phase || ''} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
+                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">구분</label><input name="area" value={formData.area || ''} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">요구사항ID</label><input name="req_id" value={formData.req_id} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
-                  <div className="col-span-2"><label className="block text-xs font-bold mb-1 text-slate-500">요구사항명</label><input name="req_name" value={formData.req_name} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm bg-indigo-50/30 font-bold" /></div>
-                  <div className="col-span-3"><label className="block text-xs font-bold mb-1 text-slate-500">요구사항 내용</label><textarea name="req_desc" value={formData.req_desc} onChange={handleChange} rows={2} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
+                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">요구사항ID</label><input name="req_id" value={formData.req_id || ''} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
+                  <div className="col-span-2"><label className="block text-xs font-bold mb-1 text-slate-500">요구사항명</label><input name="req_name" value={formData.req_name || ''} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm bg-indigo-50/30 font-bold" /></div>
+                  <div className="col-span-3"><label className="block text-xs font-bold mb-1 text-slate-500">요구사항 내용</label><textarea name="req_desc" value={formData.req_desc || ''} onChange={handleChange} rows={2} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
                 </div>
 
                 <div className="grid grid-cols-4 gap-4">
                   <div className="col-span-1">
                     <label className="block text-xs font-bold mb-1 text-slate-500">개발방향</label>
-                    <select name="dev_direction" value={formData.dev_direction} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm bg-white">
+                    <select name="dev_direction" value={formData.dev_direction || '신규'} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm bg-white">
                       <option value="신규">신규</option><option value="수정">수정</option><option value="삭제">삭제</option>
                     </select>
                   </div>
                   <div className="col-span-1">
                     <label className="block text-xs font-bold mb-1 text-slate-500">우선순위</label>
-                    <select name="dev_priority" value={formData.dev_priority} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm bg-white">
+                    <select name="dev_priority" value={formData.dev_priority || '3순위'} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm bg-white">
                       <option value="1순위">1순위</option><option value="2순위">2순위</option><option value="3순위">3순위</option><option value="4순위">4순위</option><option value="5순위">5순위</option>
                     </select>
                   </div>
-                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">화면ID</label><input name="screen_id" value={formData.screen_id} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
-                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">화면명</label><input name="screen_name" value={formData.screen_name} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
+                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">화면ID</label><input name="screen_id" value={formData.screen_id || ''} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
+                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">화면명</label><input name="screen_name" value={formData.screen_name || ''} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
                 </div>
 
                 <div className="grid grid-cols-4 gap-4 border-t border-slate-100 pt-4">
-                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">시작일</label><input type="date" name="start_date" value={formData.start_date} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
-                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">종료일</label><input type="date" name="end_date" value={formData.end_date} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
-                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">담당자(기획)</label><input name="assignee_plan" value={formData.assignee_plan} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
-                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">담당자(IT)</label><input name="assignee_it" value={formData.assignee_it} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
+                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">시작일</label><input type="date" name="start_date" value={formData.start_date || ''} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
+                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">종료일</label><input type="date" name="end_date" value={formData.end_date || ''} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
+                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">담당자(기획)</label><input name="assignee_plan" value={formData.assignee_plan || ''} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
+                  <div className="col-span-1"><label className="block text-xs font-bold mb-1 text-slate-500">담당자(IT)</label><input name="assignee_it" value={formData.assignee_it || ''} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded text-sm" /></div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
                   <div>
                     <label className="block text-xs font-extrabold mb-1 text-indigo-800">상태 (상태 변경 시 진행률 자동 세팅)</label>
-                    <select name="status" value={formData.status} onChange={handleChange} className="w-full p-2 border border-indigo-200 rounded text-sm bg-white font-bold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <select name="status" value={formData.status || '시작전'} onChange={handleChange} className="w-full p-2 border border-indigo-200 rounded text-sm bg-white font-bold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none">
                       <option value="시작전">시작전 (0%)</option>
                       <option value="진행중">진행중 (20%)</option>
                       <option value="개발완료">개발완료 (40%)</option>
