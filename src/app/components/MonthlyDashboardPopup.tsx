@@ -48,6 +48,9 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
     
     let buildTotalActual = 0, buildTotalPlanned = 0, buildCount = 0;
     let testTotalActual = 0, testTotalPlanned = 0, testCount = 0;
+    
+    // 진척률 산정에 포함되는 진짜 유효 항목만 카운트
+    let activeTaskCount = 0; 
     let compCount = 0;
     
     const overallStatusCounts: Record<string, number> = {};
@@ -64,7 +67,6 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
         STATUS_COLUMNS.forEach(k => aStats[area].statusCounts[k] = 0);
       }
       
-      // 상태값 정규화 (대기->시작전, 보류->보류중 등 맵핑)
       let rawStatus = String(t.status || "").replace(/\s/g, '');
       if (rawStatus === '대기' || !rawStatus) rawStatus = '시작전';
       if (rawStatus === '보류') rawStatus = '보류중';
@@ -72,23 +74,29 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
       
       const finalStatus = STATUS_COLUMNS.includes(rawStatus) ? rawStatus : '시작전';
       
+      // 🌟 상태값 카운트는 무조건 올림
       aStats[area].statusCounts[finalStatus]++;
       overallStatusCounts[finalStatus]++;
 
       const actualProg = STATUS_MAP[t.status || ""]?.progress ?? Number(t.progress) ?? 0;
       const plannedProg = getPlannedProgress(t.start, t.end, targetDate);
-      
-      if (actualProg === 100) compCount++;
+      const isExcluded = finalStatus === '개발제외';
 
-      if (t.phase === '구축') {
-        buildTotalActual += actualProg; buildTotalPlanned += plannedProg; buildCount++;
-        aStats[area].buildActualSum += actualProg; aStats[area].buildPlannedSum += plannedProg; aStats[area].buildCount++;
-      } else if (t.phase === '테스트') {
-        testTotalActual += actualProg; testTotalPlanned += plannedProg; testCount++;
-        aStats[area].testActualSum += actualProg; aStats[area].testPlannedSum += plannedProg; aStats[area].testCount++;
+      // 🌟 진척률 산정 로직: '개발제외'가 아닐 때만 분모/분자에 더함
+      if (!isExcluded) {
+        activeTaskCount++;
+        if (actualProg === 100) compCount++;
+
+        if (t.phase === '구축') {
+          buildTotalActual += actualProg; buildTotalPlanned += plannedProg; buildCount++;
+          aStats[area].buildActualSum += actualProg; aStats[area].buildPlannedSum += plannedProg; aStats[area].buildCount++;
+        } else if (t.phase === '테스트') {
+          testTotalActual += actualProg; testTotalPlanned += plannedProg; testCount++;
+          aStats[area].testActualSum += actualProg; aStats[area].testPlannedSum += plannedProg; aStats[area].testCount++;
+        }
       }
 
-      details.push({ ...t, actualProg, plannedProg });
+      details.push({ ...t, actualProg, plannedProg, isExcluded });
     });
 
     const processedAStats = Object.keys(aStats).map(area => {
@@ -121,8 +129,8 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
     const oPlanned = wSum > 0 ? Math.round(((buildPlannedAvg * 0.7) + (testPlannedAvg * 0.3)) / wSum) : 0;
 
     details.sort((a, b) => {
-      const isDelayedA = a.actualProg < a.plannedProg ? 1 : 0;
-      const isDelayedB = b.actualProg < b.plannedProg ? 1 : 0;
+      const isDelayedA = a.actualProg < a.plannedProg && !a.isExcluded ? 1 : 0;
+      const isDelayedB = b.actualProg < b.plannedProg && !b.isExcluded ? 1 : 0;
       if (isDelayedA !== isDelayedB) return isDelayedB - isDelayedA; 
       
       const delA = a.deliverable || "";
@@ -139,9 +147,9 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
       overallStatusCounts,
       areaStats: processedAStats, 
       detailedTasks: details,
-      totalValidCount: validTasks.length,
+      totalValidCount: activeTaskCount, // 제외된 항목을 뺀 순수 모수
       completedCount: compCount,
-      incompleteCount: validTasks.length - compCount
+      incompleteCount: activeTaskCount - compCount
     };
   }, [tasks, targetDate]);
 
@@ -157,7 +165,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
         <div className="flex items-center gap-2">
           <CalendarDays className="w-5 h-5 text-indigo-600" />
           <h2 className="text-[16px] font-bold text-slate-800 tracking-tight">월간 진행률 및 계획 대비 점검</h2>
-          <span className="ml-2 text-[12px] text-slate-500 font-medium">(*기준: {targetDate.toLocaleDateString()} / 구축 70% + 테스트 30%)</span>
+          <span className="ml-2 text-[12px] text-slate-500 font-medium">(*기준: {targetDate.toLocaleDateString()} / 구축 70% + 테스트 30% / 개발제외 항목 산정 스킵)</span>
         </div>
         {isStandalone ? (
           <button onClick={() => window.location.href = '?'} className="px-3 py-1.5 rounded-md text-[12px] font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
@@ -174,7 +182,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
         <div className="grid grid-cols-3 gap-5 shrink-0">
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
             <div>
-              <p className="text-[13px] font-bold text-slate-500 mb-1">전체 대상 항목</p>
+              <p className="text-[13px] font-bold text-slate-500 mb-1">진척률 산정 대상</p>
               <div className="flex items-baseline gap-1"><p className="text-[30px] font-extrabold text-slate-800 leading-none">{totalValidCount}</p><span className="text-[14px] font-bold text-slate-400">건</span></div>
             </div>
             <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center"><ListTodo className="w-6 h-6 text-slate-600" /></div>
@@ -229,7 +237,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
                     <td className="p-3 text-center text-indigo-700 border-r border-slate-200">전체 통합 평균</td>
                     <td className={`p-3 text-center border-r border-slate-200 ${overallActual < overallPlanned ? 'text-rose-600' : 'text-emerald-600'}`}>{overallActual - overallPlanned}%</td>
                     {STATUS_COLUMNS.map(k => (
-                      <td key={k} className="p-2 text-center text-slate-600 border-r border-slate-200 bg-indigo-100/30">{overallStatusCounts[k]}</td>
+                      <td key={k} className={`p-2 text-center text-slate-600 border-r border-slate-200 ${k === '개발제외' ? 'bg-slate-200/50' : 'bg-indigo-100/30'}`}>{overallStatusCounts[k]}</td>
                     ))}
                     <td className="p-3 text-center text-slate-600 border-r border-slate-200">{overallPlanned}%</td>
                     <td className="p-3 text-center text-indigo-600">{overallActual}%</td>
@@ -239,7 +247,7 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
                       <td className="p-3 text-center border-r border-slate-200">{s.area}</td>
                       <td className={`p-3 text-center font-bold border-r border-slate-200 ${s.gap < 0 ? 'text-rose-500' : 'text-emerald-500'}`}>{s.gap}%</td>
                       {STATUS_COLUMNS.map(k => (
-                        <td key={k} className={`p-2 text-center border-r border-slate-200 ${s.statusCounts[k] > 0 ? 'font-bold text-slate-700' : 'text-slate-300'}`}>
+                        <td key={k} className={`p-2 text-center border-r border-slate-200 ${s.statusCounts[k] > 0 ? 'font-bold text-slate-700' : 'text-slate-300'} ${k === '개발제외' ? 'bg-slate-50' : ''}`}>
                           {s.statusCounts[k]}
                         </td>
                       ))}
@@ -296,16 +304,19 @@ export default function MonthlyDashboardPopup({ tasks, onClose, isStandalone = f
                       {filteredTasks.map((t, idx) => {
                         const isDelayed = t.actualProg < t.plannedProg;
                         return (
-                          <tr key={idx} className={`border-b border-slate-100 hover:bg-slate-50 text-[12px] text-slate-700 ${isDelayed ? 'bg-rose-50/30' : ''}`}>
+                          <tr key={idx} className={`border-b border-slate-100 hover:bg-slate-50 text-[12px] text-slate-700 ${isDelayed && !t.isExcluded ? 'bg-rose-50/30' : (t.isExcluded ? 'opacity-50' : '')}`}>
                             <td className="p-3 font-semibold text-slate-500">{t.area}</td>
-                            <td className="p-3 font-bold text-slate-600">{t.deliverable}</td>
-                            <td className="p-3 font-bold">{t.taskName}</td>
+                            <td className={`p-3 font-bold ${t.isExcluded ? 'text-slate-400 line-through' : 'text-slate-600'}`}>{t.deliverable}</td>
+                            <td className={`p-3 font-bold ${t.isExcluded ? 'text-slate-400' : ''}`}>{t.taskName}</td>
                             <td className="p-3">{t.assigneePlan}</td>
                             <td className="p-3 text-indigo-600">{t.assigneeIT}</td>
-                            <td className="p-3 text-center"><span className="px-2 py-0.5 rounded-full bg-slate-100 text-[11px] font-bold border border-slate-200">{t.status || '대기'}</span></td>
-                            <td className="p-3 text-right text-slate-400">{t.plannedProg}%</td>
-                            <td className={`p-3 text-right font-bold ${isDelayed ? 'text-rose-600' : 'text-indigo-600'}`}>
-                              {t.actualProg}% {isDelayed && <span className="ml-1 text-[10px] text-rose-500">({t.actualProg - t.plannedProg}%)</span>}
+                            <td className="p-3 text-center"><span className={`px-2 py-0.5 rounded-full text-[11px] font-bold border ${t.isExcluded ? 'bg-slate-200 text-slate-500 border-slate-300' : 'bg-slate-100 border-slate-200'}`}>{t.status || '대기'}</span></td>
+                            
+                            {/* 🌟 개발제외 항목은 진행률 대신 '-' 및 '제외됨' 표시 */}
+                            <td className="p-3 text-right text-slate-400">{t.isExcluded ? '-' : `${t.plannedProg}%`}</td>
+                            <td className={`p-3 text-right font-bold ${isDelayed && !t.isExcluded ? 'text-rose-600' : (t.isExcluded ? 'text-slate-400' : 'text-indigo-600')}`}>
+                              {t.isExcluded ? <span className="font-medium">제외됨</span> : `${t.actualProg}%`}
+                              {isDelayed && !t.isExcluded && <span className="ml-1 text-[10px] text-rose-500">({t.actualProg - t.plannedProg}%)</span>}
                             </td>
                           </tr>
                         );
